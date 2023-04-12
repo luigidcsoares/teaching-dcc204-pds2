@@ -1,0 +1,20 @@
+# Auctex
+*.aux
+*.elc
+*.log
+*.synctex.gz
+*~
+.auctex-auto/
+
+# Latex minted
+_minted*/
+
+# Sensitive information
+results/
+bibliography/
+
+# Code outputs (for consistency, use .bin for binaries)
+*.bin
+*.out
+*.o
+*.s
