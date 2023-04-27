@@ -1,0 +1,924 @@
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    NOTAS DE AULA - 08 MODULARIZAÇÃO
+
+                           Luigi D. C. Soares
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Programação Modular
+═══════════════════
+
+  • O que é?
+
+    "software design technique that emphasizes separating the
+    functionality of a program into *independent*, interchangeable
+    modules, such that each contains everything necessary to execute
+    only one aspect of the desired functionality"
+
+    (<https://en.wikipedia.org/wiki/Modular_programming>)
+
+  • Quando/por quê utilizar?
+
+  Queremos agrupar elementos que dizem respeito a uma mesma
+  funcionalidade. Onde já vimos isso?
+  • Classes: agrupamento local (campos)
+
+  Ainda assim, classes representam algo bem específico (lembram do
+  princípio de responsabilidade única? SRP), o que não é suficiente a
+  medida que o sistema cresce e se torna mais complexo.
+
+  Classes possuem diversas relações entre si (voltaremos nisso). Algumas
+  classes estão muito "próximas", outras mais distantes. Como
+  organizá-las? Qual o próximo passo?
+
+  Módulos!
+  • Compilado separadamente, independentes (na medida do possível…
+    dependências restritas as interfaces de outros módulos)
+  • Reutilizável e modificável
+  • SRP ainda se aplica
+  • Coesão: grau de dependência entre os elementos do módulo (queremos
+    *alta coesão*)
+  • Acoplamento: grau de dependência entre diferentes módulos (queremos
+    *baixo acoplamento*)
+
+  E como representar módulos em C++?
+
+
+Namespaces
+══════════
+
+  Onde já vimos isso? `std::'
+
+  E como podemos criar nossos próprios namespaces? Imagine que queremos
+  criar um módulo de containers
+
+  seq.hpp (containers sequenciais)
+
+  ┌────
+  │ #ifndef CONTAINER_SEQ_H
+  │ #define CONTAINER_SEQ_H
+  │ 
+  │ namespace container {
+  │ template <typename T>
+  │ class Vector {
+  │ public:
+  │   Vector();
+  │   ~Vector();
+  │ 
+  │   void push_back(T e);
+  │   T at(std::size_t i) const;
+  │ 
+  │ private:
+  │   std::size_t _size;
+  │   std::size_t _capacity;
+  │   T *_vector;
+  │ };
+  │ 
+  │ template <typename T>
+  │ class LinkedList {
+  │   // ...
+  │ };
+  │ };
+  │ 
+  │ #include "vector.tpp"
+  │ #endif
+  └────
+
+  vector.tpp (implementando o vector)
+
+  ┌────
+  │ namespace container {
+  │ template <typename T> Vector<T>::Vector() {
+  │   _size = 0;
+  │   _capacity = 8;
+  │   _vector = new T[_capacity];
+  │ }
+  │ 
+  │ template <typename T> Vector<T>::~Vector() {
+  │   delete[] _vector;
+  │ }
+  │ 
+  │ template <typename T> void Vector<T>::push_back(T e) {
+  │   if (_size == _capacity) {
+  │     _capacity *= 2;
+  │     T *_new_vector = new T[_capacity];
+  │ 
+  │     for (std::size_t i = 0; i < _size; i++) {
+  │       _new_vector[i] = _vector[i];
+  │     }
+  │ 
+  │     delete[] _vector;
+  │     _vector = _new_vector;
+  │   }
+  │ 
+  │   _vector[_size] = e;
+  │   _size++;
+  │ }
+  │ 
+  │ template <typename T> T Vector<T>::at(std::size_t i) const {
+  │   return _vector[i];
+  │ }
+  │ }
+  └────
+
+  E agora vamos testar:
+
+  main.cpp
+
+  ┌────
+  │ #include <iostream>
+  │ #include "seq.hpp"
+  │ 
+  │ int main() {
+  │   container::Vector<int> xs;
+  │ 
+  │   for (unsigned i = 0; i < 10; i++) {
+  │     xs.push_back(i);
+  │   }
+  │ 
+  │   std::cout << xs.at(8) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  Podemos ter o mesmo namespace separado em múltiplos arquivos
+
+  assoc.hpp (containers associativos)
+
+  ┌────
+  │ #ifndef CONTAINER_ASSOC_H
+  │ #define CONTAINER_ASSOC_H
+  │ 
+  │ namespace container {
+  │ template <typename T>
+  │ class Set {
+  │   // ...
+  │ };
+  │ 
+  │ template <typename K, T>
+  │ class Map {
+  │   // ...
+  │ };
+  │ }
+  │ 
+  │ #endif
+  └────
+
+
+Organização do Projeto
+══════════════════════
+
+  A forma como estruturamos nosso projeto também é importante!
+
+  Nosso próximo mini-projeto: um sistema de gerenciamento.
+
+  Vamos seguir (não muito a risca, apenas para ilustrar) um padrão de
+  projeto chamado DAO (Data Access Object), que consiste (bem por alto)
+  em separar models (as entidades, que representam dados) da lógica de
+  persistência dos dados (em um banco de dados, no nosso caso um arquivo
+  CSV).
+
+  A estrutura do projeto:
+
+  ┌────
+  │ book_management/
+  │ |__ include/
+  │     |__ database/
+  │         |__ csv.hpp
+  │     |__ dao/
+  │         |__ book.hpp
+  │     |__ model/
+  │         |__ book.hpp
+  │ |__ src/
+  │     |__ database/
+  │         |__ csv.cpp
+  │     |__ dao/
+  │         |__ book.cpp
+  │     |__ main.cpp
+  │ |__ Makefile
+  └────
+
+
+  Começando do model Book:
+
+  include/model/book.hpp
+
+  ┌────
+  │ #ifndef MODEL_BOOK_H
+  │ #define MODEL_BOOK_H
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace model {
+  │ struct Book {
+  │   std::string name;
+  │   std::string isbn;
+  │ };
+  │ }
+  │ #endif
+  └────
+
+  A parte de armazenamento no CSV:
+
+  include/database/csv.hpp
+
+  ┌────
+  │ #ifndef DATABASE_CSV_H
+  │ #define DATABASE_CSV_H
+  │ 
+  │ #include <fstream>
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace database {
+  │ class CSV {
+  │ public:
+  │   using Line = std::vector<std::string>;
+  │ 
+  │   CSV(std::string file_path);
+  │   ~CSV();
+  │ 
+  │   std::vector<Line> get_lines();
+  │   void write(const std::vector<Line> &lines);
+  │ 
+  │ private:
+  │   std::ifstream _db_read;
+  │   std::ofstream _db_write;
+  │ };
+  │ }
+  │ 
+  │ #endif 
+  └────
+
+  E a implementação do CSV:
+
+  src/database/csv.cpp
+
+  ┌────
+  │ #include "database/csv.hpp"
+  │ #include <sstream>
+  │ 
+  │ namespace database {
+  │ CSV::CSV(std::string file_path)
+  │   : _db_read(file_path),
+  │     _db_write(file_path, std::ios::app) { }
+  │ 
+  │ CSV::~CSV() {
+  │   _db_read.close();
+  │   _db_write.close();
+  │ }
+  │ 
+  │ std::vector<CSV::Line> CSV::get_lines() {
+  │   std::vector<Line> lines;
+  │   std::string csv_line;
+  │ 
+  │   while (std::getline(_db_read, csv_line)) {
+  │     std::istringstream stream_line(csv_line);
+  │     std::string field;
+  │     Line line;
+  │ 
+  │     while (std::getline(stream_line, field, ',')) {
+  │       line.push_back(field);
+  │     }
+  │ 
+  │     lines.push_back(line);
+  │   }
+  │ 
+  │   _db_read.clear();
+  │   _db_read.seekg(0);
+  │ 
+  │   return lines;
+  │ }
+  │ 
+  │ void CSV::write(const std::vector<Line> &lines) {
+  │   for (Line line : lines) {
+  │     for (std::size_t i = 0; i < line.size(); i++) {
+  │       std::string field = line[i];
+  │       _db_write << field;
+  │       if (i < line.size() - 1) _db_write << ',';
+  │     }
+  │ 
+  │     _db_write << std::endl;
+  │   }
+  │ }
+  │ }
+  └────
+
+  E conectando o modelo com a persistência dos dados:
+  • no método save, qual o efeito de retornar o próprio objeto Book?
+
+  include/dao/book.hpp
+
+  ┌────
+  │ #ifndef DAO_BOOK_H
+  │ #define DAO_BOOK_H
+  │ 
+  │ #include "database/csv.hpp"
+  │ #include "model/book.hpp"
+  │ #include <vector>
+  │ 
+  │ namespace dao {
+  │ class Book {
+  │ public:
+  │   Book();
+  │   ~Book();
+  │ 
+  │   Book &save(model::Book book); 
+  │   std::vector<model::Book> get_all() const;
+  │ 
+  │ private:
+  │   std::size_t _new_begin;
+  │   std::vector<model::Book> _books;
+  │   database::CSV _db;
+  │ 
+  │   void _fetch_all();
+  │   void _persist();
+  │ };
+  │ }
+  │ 
+  │ #endif
+  └────
+
+  src/dao/book.cpp
+
+  ┌────
+  │ #include "dao/book.hpp"
+  │ 
+  │ namespace dao {
+  │ Book::Book() : _db("/tmp/books.csv") { 
+  │   _fetch_all();
+  │   _new_begin = _books.size();
+  │ }
+  │ 
+  │ void Book::_fetch_all() {
+  │   std::vector<database::CSV::Line> lines = _db.get_lines();
+  │   for (database::CSV::Line line : lines) {
+  │     model::Book book;
+  │     book.name = line[0];
+  │     book.isbn = line[1];
+  │     _books.push_back(book);
+  │   }
+  │ }
+  │ 
+  │ Book::~Book() {
+  │   _persist();
+  │ }
+  │ 
+  │ void Book::_persist()  {
+  │   std::vector<database::CSV::Line> lines;
+  │   for (std::size_t i = _new_begin; i < _books.size(); i++) {
+  │     model::Book book = _books[i];
+  │     database::CSV::Line line;
+  │     line.push_back(book.name);
+  │     line.push_back(book.isbn);
+  │     lines.push_back(line);
+  │   }
+  │   _db.write(lines);
+  │ }
+  │ 
+  │ Book &Book::save(model::Book book) {
+  │   _books.push_back(book);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<model::Book> Book::get_all() const {
+  │   return _books;
+  │ }
+  │ }
+  └────
+
+  E a nossa aplicação de fato (main):
+
+  main.cpp
+
+  ┌────
+  │ #include "dao/book.hpp"
+  │ #include "model/book.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   dao::Book dao;
+  │   dao.save({"Harry Potter e a Pedra Filosofal", "978-8532523051"})
+  │      .save({"O Senhor dos Anéis: A Sociedade do Anel", "978-8533613379"});
+  │ 
+  │   for (model::Book book : dao.get_all()) {
+  │     std::cout << book.name << " (" << book.isbn << ")" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+
+Compilação
+══════════
+
+  O processo de compilação é dividido em algumas etapas
+  • Pré-processamento
+  • Compilação de cada unidade de tradução para um arquivo objeto, ainda
+    não executável (dependências não resolvidas)
+  • Ligação entre objetos para resolver dependência de bibliotecas
+
+  Quando fazemos `g++ -std=c++17 src/main.cpp src/database/csv.cpp
+  src/dao/book.cpp -o main', estamos contemplando todas estas etapas
+
+  Mas, note que seguindo este método qualquer alteração em qualquer
+  arquivo requer a recompilação de *todos* os .cpp. Eu um projeto muito
+  grande, isto pode ser muito ineficiente. Como resolver? Como
+  recompilar apenas o que é necessário?
+
+  Ferramenta `make' + arquivo Makefile:
+  • Podemos definir variáveis
+  • O arquivo Makefile é composto de targets (alvo)
+  • O primeiro target é o padrão do make (se não for explícito)
+
+  O arquivo Makefile é composto de vários targets, na forma
+
+  ┌────
+  │ target: dependencia1 dependencia2 ... dependencia n
+  │         comando1
+  │         comando2
+  │         ...
+  │         comandok
+  └────
+
+  Por exemplo, podemos ter um target sem nenhuma dependência, que
+  imprime uma mensagem na tela:
+
+  ┌────
+  │ run: 
+  │         echo "🚀 Executing ..."
+  └────
+
+  Para executar, basta fazer `make run' e o resultado é
+
+  ┌────
+  │ echo "🚀 Executing ..."
+  │ 🚀 Executing ...
+  └────
+
+  Note que, além da mensagem que gostaríamos que fosse mostrada, também
+  foi exibido o próprio comando que foi executado. Podemos suprimir essa
+  informação adicional com um "@":
+
+  ┌────
+  │ run: 
+  │         @echo "🚀 Executing ..."
+  └────
+
+  E o resultado, com `make run':
+
+  ┌────
+  │ 🚀 Executing ...
+  └────
+
+  Caso executássemos apenas `make', sem nenhum target, o target padrão é
+  o primeiro do arquivo (de cima para baixo). Como, neste primeiro
+  momento, temos apenas um target, o efeito seria o mesmo.
+
+  Até então, ainda não fizemos nada de compilação. Vamos tentar compilar
+  o nosso projeto inteiro. O resultado será um arquivo executável "main"
+  (poderia ser qualquer outro nome, talvez book_management) armazenado
+  na pasta "bin/". Por conveniência, vamos definir o nome do target
+  exatamente como o arquivo de saída: bin/main
+
+  ┌────
+  │ bin/main:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p bin/
+  │         g++ -std=c++17 -I include/ src/main.cpp src/database/csv.cpp src/dao/book.cpp -o bin/main
+  │ 
+  │ run: 
+  │         @echo "🚀 Executing ..."
+  └────
+
+  Note que agora o target padrão é o `bin/main', ou seja, `make' agora é
+  equivalente a `make bin/main'. E o resultado:
+
+  ┌────
+  │ 🏛️️ Building ...
+  │ g++ -std=c++17 -I include/ src/main.cpp src/database/csv.cpp src/dao/book.cpp -o bin/main
+  └────
+
+  Note que, se executar `make bin/main' novamente, a ferramenta make
+  detecta que não houveram alterações, então não há necessidade de
+  recompilar o projeto novamente. E o resultado é
+
+  ┌────
+  │ make: 'bin/main' is up to date.
+  └────
+
+  Se estamos criando uma pasta, faz sentido querermos apagá-la também:
+
+  ┌────
+  │ bin/main:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p bin/
+  │         g++ -std=c++17 -I include/ src/main.cpp src/database/csv.cpp src/dao/book.cpp -o bin/main
+  │ 
+  │ run: 
+  │         @echo "🚀 Executing ..."
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf bin/
+  └────
+
+  Agora, basta executar `make clean' e a pasta bin/ será deletada.
+
+  E para executar nosso programa?
+
+  ┌────
+  │ bin/main:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p bin/
+  │         g++ -std=c++17 -I include/ src/main.cpp src/database/csv.cpp src/dao/book.cpp -o bin/main
+  │ 
+  │ run: 
+  │         @echo "🚀 Executing ..."
+  │         @bin/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf bin/
+  └────
+
+  E o resultado de `make run':
+
+  ┌────
+  │ 🚀 Executing ...
+  │ Harry Potter e a Pedra Filosofal (978-8532523051)
+  │ O Senhor dos Anéis: A Sociedade do Anel (978-8533613379)
+  └────
+
+  Note que estamos nos referindo a pasta "bin/" em mais de um lugar. E
+  se quiséssemos alterar esta para uma outra pasta? Precisaríamos
+  alterar várias partes do Makefile. Ao invés disso, podemos definir uma
+  variável (e aí bastaria alterar a variável):
+
+  ┌────
+  │ BIN := bin
+  │ 
+  │ ${BIN}/main:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p ${BIN}/
+  │         g++ -std=c++17 -I include/ src/main.cpp src/database/csv.cpp src/dao/book.cpp -o ${BIN}/main
+  │ 
+  │ run: 
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/
+  └────
+
+  Vamos fazer o mesmo para as outras pastas, para o compilador (e se
+  quisséssemos futuramente usar outro compilador, talvez o clang++?), as
+  flags que passamos para o compilador, etc:
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE}/ ${SRC}/main.cpp ${SRC}/database/csv.cpp ${SRC}/dao/book.cpp -o ${BIN}/${EXEC}
+  │ 
+  │ run: 
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/
+  └────
+
+  E se tentássemos rodar `make run' sem antes compilar o projeto? Ou,
+  basicamente, `make clean' seguido por `make run'? O resultado
+
+  ┌────
+  │ 🚀 Executing ...
+  │ make: bin/main: No such file or directory
+  │ make: *** [Makefile:16: run] Error 127
+  └────
+
+  O arquivo bin/main não existe… Como garantir que, ao tentar executar o
+  programa, ele estará compilado? Adicionamos uma dependência ao target
+  run:
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE}/ ${SRC}/main.cpp ${SRC}/database/csv.cpp ${SRC}/dao/book.cpp -o ${BIN}/${EXEC}
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/
+  └────
+
+  Já temos um Makefile funcional, mas ainda temos aquele problema de se
+  atualizarmos algum dos arquivos, temos que recompilar o projeto
+  inteiro. Vamos separar o processo de compilação em várias
+  etapas. Primeiro, vamos construir o arquivo objeto do
+  database/csv.cpp. Vamos armazenar esses arquivos objetos em uma pasta
+  "build":
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ BUILD := build
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE}/ ${SRC}/main.cpp ${SRC}/database/csv.cpp ${SRC}/dao/book.cpp -o ${BIN}/${EXEC}
+  │ 
+  │ ${BUILD}/db_csv.o: ${SRC}/database/csv.cpp ${INCLUDE}/database/csv.hpp
+  │         @echo "🏛️ ️ Building db_csv.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/database/csv.cpp -o ${BUILD}/db_csv.o
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/ ${BUILD}/
+  └────
+
+  E agora para o dao/book.cpp. Note que este cara depende, também, do
+  model/book.hpp e database/csv.hpp (das interfaces):
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ BUILD := build
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE}/ ${SRC}/main.cpp ${SRC}/database/csv.cpp ${SRC}/dao/book.cpp -o ${BIN}/${EXEC}
+  │ 
+  │ ${BUILD}/db_csv.o: ${SRC}/database/csv.cpp ${INCLUDE}/database/csv.hpp
+  │         @echo "🏛️ ️ Building db_csv.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/database/csv.cpp -o ${BUILD}/db_csv.o
+  │ 
+  │ ${BUILD}/dao_book.o: ${SRC}/dao/book.cpp ${INCLUDE}/dao/book.hpp ${INCLUDE}/database/csv.hpp ${INCLUDE}/model/book.hpp
+  │         @echo "🏛️  Building dao_book.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/dao/book.cpp -o ${BUILD}/dao_book.o
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/ ${BUILD}/
+  └────
+
+  Por fim, o último objeto referente ao src/main.cpp:
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ BUILD := build
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}:
+  │         @echo "🏛️ ️ Building ..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE}/ ${SRC}/main.cpp ${SRC}/database/csv.cpp ${SRC}/dao/book.cpp -o ${BIN}/${EXEC}
+  │ 
+  │ ${BUILD}/db_csv.o: ${SRC}/database/csv.cpp ${INCLUDE}/database/csv.hpp
+  │         @echo "🏛️ ️ Building db_csv.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/database/csv.cpp -o ${BUILD}/db_csv.o
+  │ 
+  │ ${BUILD}/dao_book.o: ${SRC}/dao/book.cpp ${INCLUDE}/dao/book.hpp ${INCLUDE}/database/csv.hpp ${INCLUDE}/model/book.hpp
+  │         @echo "🏛️  Building dao_book.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/dao/book.cpp -o ${BUILD}/dao_book.o
+  │ 
+  │ ${BUILD}/main.o: ${SRC}/main.cpp ${INCLUDE}/model/book.hpp ${INCLUDE}/dao/book.hpp
+  │         @echo "🏛️  Building main.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/main.cpp -o ${BUILD}/main.o
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/ ${BUILD}/
+  └────
+
+  Agora, precisamos ligar todos estes objetos. Vamos alterar o primeiro
+  target. Quais as dependências? Os objetos!
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ BUILD := build
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}: ${BUILD}/db_csv.o ${BUILD}/dao_book.o ${BUILD}/main.o
+  │         @echo "️🔧 ️Installing ${EXEC}..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} ${BUILD}/db_csv.o ${BUILD}/dao_book.o ${BUILD}/main.o -o ${BIN}/${EXEC}
+  │ 
+  │ ${BUILD}/db_csv.o: ${SRC}/database/csv.cpp ${INCLUDE}/database/csv.hpp
+  │         @echo "🏛️ ️ Building db_csv.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/database/csv.cpp -o ${BUILD}/db_csv.o
+  │ 
+  │ ${BUILD}/dao_book.o: ${SRC}/dao/book.cpp ${INCLUDE}/dao/book.hpp ${INCLUDE}/database/csv.hpp ${INCLUDE}/model/book.hpp
+  │         @echo "🏛️  Building dao_book.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/dao/book.cpp -o ${BUILD}/dao_book.o
+  │ 
+  │ ${BUILD}/main.o: ${SRC}/main.cpp ${INCLUDE}/model/book.hpp ${INCLUDE}/dao/book.hpp
+  │         @echo "🏛️  Building main.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/main.cpp -o ${BUILD}/main.o
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/ ${BUILD}/
+  └────
+
+  Estamos repetindo várias coisas. Por exemplo, o nome dos targets e os
+  arquivos de saída. Podemos simplificar.
+  • $@ equivale ao target
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ BUILD := build
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}: ${BUILD}/db_csv.o ${BUILD}/dao_book.o ${BUILD}/main.o
+  │         @echo "️🔧 ️Installing ${EXEC}..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} ${BUILD}/db_csv.o ${BUILD}/dao_book.o ${BUILD}/main.o -o $@
+  │ 
+  │ ${BUILD}/db_csv.o: ${SRC}/database/csv.cpp ${INCLUDE}/database/csv.hpp
+  │         @echo "🏛️ ️ Building db_csv.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/database/csv.cpp -o $@
+  │ 
+  │ ${BUILD}/dao_book.o: ${SRC}/dao/book.cpp ${INCLUDE}/dao/book.hpp ${INCLUDE}/database/csv.hpp ${INCLUDE}/model/book.hpp
+  │         @echo "🏛️  Building dao_book.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/dao/book.cpp -o $@
+  │ 
+  │ ${BUILD}/main.o: ${SRC}/main.cpp ${INCLUDE}/model/book.hpp ${INCLUDE}/dao/book.hpp
+  │         @echo "🏛️  Building main.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c ${SRC}/main.cpp -o $@
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/ ${BUILD}/
+  └────
+
+  • $< equivale a primeira dependência da lista, que em muitos casos é o
+    arquivo .cpp que irá virar um objeto:
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ BUILD := build
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}: ${BUILD}/db_csv.o ${BUILD}/dao_book.o ${BUILD}/main.o
+  │         @echo "️🔧 ️Installing ${EXEC}..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} ${BUILD}/db_csv.o ${BUILD}/dao_book.o ${BUILD}/main.o -o $@
+  │ 
+  │ ${BUILD}/db_csv.o: ${SRC}/database/csv.cpp ${INCLUDE}/database/csv.hpp
+  │         @echo "🏛️ ️ Building db_csv.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c $< -o $@
+  │ 
+  │ ${BUILD}/dao_book.o: ${SRC}/dao/book.cpp ${INCLUDE}/dao/book.hpp ${INCLUDE}/database/csv.hpp ${INCLUDE}/model/book.hpp
+  │         @echo "🏛️  Building dao_book.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c $< -o $@
+  │ 
+  │ ${BUILD}/main.o: ${SRC}/main.cpp ${INCLUDE}/model/book.hpp ${INCLUDE}/dao/book.hpp
+  │         @echo "🏛️  Building main.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c $< -o $@
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/ ${BUILD}/
+  └────
+
+  • $^ equivale as dependências, que estamos repetindo na etapa de
+    ligação dos objetos
+
+  ┌────
+  │ CXX := g++
+  │ CXXFLAGS := -std=c++17
+  │ 
+  │ INCLUDE := include
+  │ SRC := src
+  │ BIN := bin
+  │ BUILD := build
+  │ EXEC := main
+  │ 
+  │ ${BIN}/${EXEC}: ${BUILD}/db_csv.o ${BUILD}/dao_book.o ${BUILD}/main.o
+  │         @echo "️🔧 ️Installing ${EXEC}..."
+  │         @mkdir -p ${BIN}/
+  │         ${CXX} ${CXXFLAGS} $^ -o $@
+  │ 
+  │ ${BUILD}/db_csv.o: ${SRC}/database/csv.cpp ${INCLUDE}/database/csv.hpp
+  │         @echo "🏛️ ️ Building db_csv.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c $< -o $@
+  │ 
+  │ ${BUILD}/dao_book.o: ${SRC}/dao/book.cpp ${INCLUDE}/dao/book.hpp ${INCLUDE}/database/csv.hpp ${INCLUDE}/model/book.hpp
+  │         @echo "🏛️  Building dao_book.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c $< -o $@
+  │ 
+  │ ${BUILD}/main.o: ${SRC}/main.cpp ${INCLUDE}/model/book.hpp ${INCLUDE}/dao/book.hpp
+  │         @echo "🏛️  Building main.o ..."
+  │         @mkdir -p ${BUILD}
+  │         ${CXX} ${CXXFLAGS} -I ${INCLUDE} -c $< -o $@
+  │ 
+  │ run: ${BIN}/${EXEC}
+  │         @echo "🚀 Executing ..."
+  │         @${BIN}/main
+  │ 
+  │ clean:
+  │         @echo "🧹 Cleaning ..."
+  │         @rm -rf ${BIN}/ ${BUILD}/
+  └────
+
+  E tem mais… é possível automatizar as dependências, simplificar outras
+  coisas (vai ficando mais complexo). Mas, com o "básico" vocês já
+  conseguem automatizar muita coisa do processo de compilação.

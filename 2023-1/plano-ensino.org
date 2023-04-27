@@ -1,0 +1,53 @@
+#+author: Prof. Luigi D. C. Soares
+#+title: Plano de Ensino
+
+#+startup: entitiespretty
+#+options: toc:nil title:nil
+
+#+language: pt
+#+latex_class: article
+#+latex_class_options: [11pt]
+#+latex_header: \input{header.tex}
+
+\begin{center}
+    \Large\bfseries\thetitle{}
+\end{center}
+
+* Informações Gerais
+
+#+attr_latex: :options [noitemsep]
+- Contato: :: [[mailto://luigi.domenico@dcc.ufmg.br][luigi.domenico@dcc.ufmg.br]]
+  (adicionar [PDS 2] no assunto)
+- Dia/Horário: :: Terça e Quinta, 07:30--09:10
+- Sala: :: Auditório 1 - ICEx
+
+* Ementa
+
+Metodologias e boas práticas de desenvolvimento de
+software. Introdução à orientação a objetos.  Compreensão,
+corretude e depuração de programas. Resolução de problemas
+de forma modular e eficiente.
+
+* Objetivos
+
+O objetivo da disciplina é apresentar técnicas básicas de
+desenvolvimento, teste e análise de programas de computador,
+para a resolução de problemas de forma eficaz. É esperado
+que nesta disciplina os alunos desenvolvam seus primeiros
+programas de tamanho moderado, motivando a necessidade de
+uso de boas práticas de desenvolvimento, fixando os
+conteúdos abordados através de atividades
+práticas. Concluindo o curso, os alunos deverão dominar as
+técnicas mais básicas utilizadas no processo de
+desenvolvimento de software.
+
+* Avaliação
+
+- Provas teóricas (2 x 25 pontos): 50 pontos
+- Ativadades práticas: 20 pontos
+- Projeto final: 30 pontos
+
+* Bibliografia
+
+\nocite{*}
+\printbibliography[heading=none]

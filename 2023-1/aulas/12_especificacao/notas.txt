@@ -1,0 +1,170 @@
+             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              NOTAS DE AULA - 12 ESPECIFICAÇÃO DE SOFTWARE
+
+                           Luigi D. C. Soares
+             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Introdução
+══════════
+
+  Na aula anterior vimos
+  • O que é um objeto
+  • Como criar
+  • Específico da implementação (varia de linguagem para linguagem)
+
+  Hoje
+  • Requisitos, análise, modelagem
+  • Quais objetos devem ser criados, o que eles devem possuir?
+  • Mais geral, independente da linguagem
+
+  Análise: necessidades do cliente –> requisitos
+
+  Modelagem: requisitos –> software (anterior a implementação)
+
+  Analogia: construção de um prédio, primeiro vem a planta!
+
+
+Específicação de Requisitos
+═══════════════════════════
+
+  Requisito: funcionalidade/restrição que o usuário espera
+  • Funcionais: *o que* o sistema deve fazer
+
+    Exemplo: enviar um email para o cliente quando pagamento for
+    confirmado
+
+  • Não funcionais: *como* o sistema deve fazer (diz respeito a
+    usabilidade, desempenho, qualidade, restrições)
+
+    Exemplo: o pagamento deve ser processado em menos de 2000 ms
+
+    Exemplo: email deve ser enviado em no máximo 12 horas
+
+  Identificação e especificação de software é complexo! Existe uma área
+  de estudo voltada para isso: Engenharia de Software
+
+  Vamos ver conceitos básicos! Vamos focar mais em implementação
+
+  Se esta etapa de especificação é tão importante, como realizá-la?
+
+
+Histórias de Usuário (User Stories)
+───────────────────────────────────
+
+  • Comumente usadas em metodologias ágeis
+  • Descrição informal (em linguagem natural) de recursos
+    desejados/necessários para um sistema
+  • Conta uma histórica acerca de como *alguém* irá utilizar o produto
+    para alcançar um *objetivo*
+  • Histórias de usuário levam a requisitos
+  • Um determinado objetivo pode ser representado em diferentes
+    histórias
+  • Objetivos diferentes podem compartilhar uma mesma história
+
+  A geração de histórias envolvem três etapas:
+  • Cartão: descrição da história
+  • Conversação: discutir a história gerada, resolver dúvidas, encontrar
+    erros
+  • Confirmação: definição de critérios a serem usados para verificar se
+    a história foi concluída
+
+  Exemplo 1: "Como um cliente da operadora de saúde, quero ser capaz de
+  procurar um médico pelo nome, para obter o endereço do seu
+  consultário"
+
+  • Quem? Cliente da operadora
+  • O quê? Procurar o médico pelo nome
+  • Por quê? Obter endereço do consultório
+
+  Exemplo 2: "Como administrador de banco de dados, quero ser capaz de
+  ler uma sequência de campos e armazená-los, para que estes campos
+  possam ser recuperados quantas vezes for necessário no futuro"
+
+  Critérios de aceitação:
+  • Detalhes do que deve ser implementado
+  • Apresentam a *interção*, não a solução
+  • Mínimo necessário para ser útil para o cliente
+  • Em média, 3 a 5 por história
+
+  Exemplo 3: "Como um operador de marcação de consultas, eu quero ser
+  capaz de visualizar a agenda de consultas dos médicos, para saber
+  quais horários estão disponíveis para novas marcações"
+
+  Aceitação:
+  • Visualizar a agenda por dia, semana e mês
+  • Visualizar a agenda de consultas do mês atual e do mês posterior
+  • Cada consulta agendada deve mostrar o nome e o convênio do paciente
+
+  Exemplo 4: "Como especialista na Lei Geral de Proteção de Dados
+  (LGPD), quero ser capaz de especificar um conjunto de campos a serem
+  mascarados nas consultadas realizadas por usuários externos, para que
+  dados sensíveis não se tornem públicos"
+
+  Aceitação:
+  • Especificar que um campo deve ser otimido completamente da consulta,
+    seguindo o formato "campo: omit"
+  • Especificar intervalos a serem substituídos por asteriscos, seguindo
+    o formato "campo: [inicio_1, fim_1], …, [inicio_n, fim_n]
+  • Especificar que um campo numérico deve ser arredondado: "campo:
+    round"
+
+
+Modelagem CRC (Class-Responsibility-Collaboration)
+══════════════════════════════════════════════════
+
+  Ferramenta para modelagem das entidades, responsabilidades e suas
+  colaborações
+
+  Responsabilidade:
+  • Conhecimento: fornecer informações (atributos)
+  • Realização: fazer alguma coisa, comportamento (operações)
+
+  Colaboração:
+  • Como os diferentes objetos interagem entre si
+  • Como se fosse uma relação cliente/servidor (objeto provê serviço
+    para outro)
+
+  Exemplo 1:
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Classe: CarrinhoDeCompras               
+   Responsabilidade           Colaborações 
+  ─────────────────────────────────────────
+   Lista de produtos          Produto      
+   Adicionar produto                       
+   Remover produto                         
+   Mostrar produtos                        
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Exemplo 2:
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Classe: Pedido                  
+   Responsabilidade   Colaborações 
+  ─────────────────────────────────
+   Lista de produtos  Produto      
+   Data de criação    Cliente      
+   Calcular total                  
+   Detalhar pedido                 
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  *IMPORTANTE*: apesar do mesmo termo estar sendo utilizado,
+   Responsabilidade aqui é ligeiramente diferente do termo
+   Responsabilidade que aparece no princício de responsabilidade única
+   (SRP, Single Responsibility Principle) que vimos.
+
+  • Aqui, responsabilidade diz respeito ao que a classe conhece ou faz.
+  • No SRP, a granularidade é outra: o uso do termo responsabilidade
+    pelo Uncle Bob diz respeito não a comportamentos específicos da
+    classe, mas a classe como um todo, ao motivo da classe existir, e o
+    que deve ser a única razão para que esta venha a ser modificada.
+  • O objetivo do SRP é que a classe seja coesa: para isso, os
+    comportamentos devem estar bastante relacionados.
+  • Por exemplo, o motivo da classe "CarrinhoDeCompras" existir é o
+    gerenciamento da lista de produtos; todas as operações que listamos,
+    "adicionar produto", "remover produto", "mostrar produtos", estão
+    atreladas a lista de produtos; qualquer alteração na lista de
+    produtos possivelmente implica em alterações nestas operações. Por
+    outro lado, "processar pagamento" nada tem a ver com um carrinho de
+    compras.

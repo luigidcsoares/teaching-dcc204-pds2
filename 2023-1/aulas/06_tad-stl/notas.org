@@ -1,0 +1,402 @@
+#+title: Notas de Aula - 06 Biblioteca Padrão
+#+author: Luigi D. C. Soares
+#
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#
+* Problema 1
+
+- TAD Aluno: nome e matrícula
+- Ler da entrada padrão
+- Dica: ~std::istringstream~ transforma uma string em stream
+  (fluxo) de entrada, nos permitindo ler partes da string
+  separadamente
+
+Entrada
+
+#+begin_src nil :tangle in1.txt
+Flávio 512345
+Flávio 134679
+Ana 123456
+sair
+#+end_src
+
+aluno.hpp
+
+#+begin_src C++ :main no :tangle aluno.hpp
+#ifndef ALUNO_H
+#define ALUNO_H
+
+#include <string>
+
+class Aluno {
+public:
+  Aluno(std::string nome, unsigned matricula);
+  std::string nome() const;
+  unsigned matricula() const;
+
+private:
+  std::string _nome;
+  unsigned _matricula;
+};
+
+#endif
+#+end_src
+
+aluno.cpp
+
+#+begin_src C++ :flags -std=c++17 :main no :tangle aluno.cpp
+#include "aluno.hpp"
+
+Aluno::Aluno(std::string nome, unsigned matricula) {
+  _nome = nome;
+  _matricula = matricula;
+}
+
+std::string Aluno::nome() const { return _nome; }
+unsigned Aluno::matricula() const { return _matricula; }
+#+end_src
+
+main.cpp
+
+#+begin_src C++ :flags aluno.cpp -std=c++17 -I. :cmdline < in1.txt
+#include <iostream>
+#include <sstream>
+#include <string>
+
+#include "aluno.hpp"
+
+int main () {
+  std::string linha;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    unsigned matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome >> matricula
+    // stream >> matricula;
+
+    Aluno aluno(nome, matricula);
+    
+    // Apenas para testar:
+    std::cout
+      << aluno.nome()
+      << " "
+      << aluno.matricula()
+      << std::endl;
+  }
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| Flávio | 512345 |
+| Flávio | 134679 |
+| Ana    | 123456 |
+
+Desejamos recuperar os nomes *únicos* dos alunos. Qual a estrutura mais adequada? Por quê?
+- vector
+- list
+- set
+- map
+- outra?
+
+#+begin_src C++ :flags aluno.cpp -std=c++17 -I. :cmdline < in1.txt
+#include <iostream>
+#include <set>
+#include <sstream>
+#include <string>
+
+#include "aluno.hpp"
+
+int main () {
+  std::string linha;
+  std::set<std::string> nomes;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    unsigned matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome >> matricula
+    // stream >> matricula;
+
+    Aluno aluno(nome, matricula);
+    nomes.insert(aluno.nome());
+  }
+
+  for (std::string nome : nomes) {
+    std::cout << nome << std::endl;
+  }
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| Ana    |
+| Flávio |
+
+Agora, desejamos organizar alunos através de suas matrículas.
+- números são comparados por ordem natural (<, >)
+- string são comparada por odem lexicográfica
+- como comparar outras classes? Aluno?
+
+O jeito "antigo": classe Comparator
+- Chamamos isso de "Functor", um objeto que age como uma função
+
+#+begin_src C++ :flags aluno.cpp -std=c++17 -I. :cmdline < in1.txt
+#include <iostream>
+#include <set>
+#include <sstream>
+#include <string>
+
+#include "aluno.hpp"
+
+class AlunoComparador {
+public:
+  bool operator()(const Aluno &a1, const Aluno &a2) const {
+    return a1.matricula() < a2.matricula();
+  }
+};
+
+int main () {
+  std::string linha;
+  std::set<Aluno, AlunoComparador> alunos;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    unsigned matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome >> matricula
+    // stream >> matricula;
+
+    Aluno aluno(nome, matricula);
+    alunos.insert(aluno);
+  }
+  
+  for (Aluno a : alunos) {
+    std::cout << a.nome() << ": " << a.matricula() << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| Ana:    | 123456 |
+| Flávio: | 134679 |
+| Flávio: | 512345 |
+
+E o jeito "novo": funções anônimas + ~decltype~
+
+#+begin_src C++ :flags aluno.cpp -std=c++17 -I. :cmdline < in1.txt
+#include <iostream>
+#include <set>
+#include <sstream>
+#include <string>
+
+#include "aluno.hpp"
+
+int main () {
+  auto aluno_comp = [](const Aluno &a1, const Aluno &a2) {
+    return a1.matricula() < a2.matricula();
+  };
+    
+  std::string linha;
+  std::set<Aluno, decltype(aluno_comp)> alunos(aluno_comp);
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    unsigned matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome >> matricula
+    // stream >> matricula;
+
+    Aluno aluno(nome, matricula);
+    alunos.insert(aluno);
+  }
+
+  for (Aluno a : alunos) {
+    std::cout << a.nome() << ": " << a.matricula() << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| Ana:    | 123456 |
+| Flávio: | 134679 |
+| Flávio: | 512345 |
+
+* Problema 2
+
+- Arquivo grande de texto
+- Queremos contar quantas vezes cada palavra aparece
+- A ordem dos elementos não importa
+- Qual a melhor estrutura?
+
+Entrada
+
+#+begin_src nil :tangle in2.txt
+tudo bem oi tudo bem
+sair
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :cmdline < in2.txt
+#include <iostream>
+#include <unordered_map>
+#include <string>
+
+int main () {
+  std::string termo;
+  std::unordered_map<std::string, unsigned> cont;
+
+  while (std::cin >> termo) {
+    if (termo == "sair") break;
+
+    cont.insert({termo, 0}); // Insere somente se não existe
+    cont[termo]++;
+    
+    // Equivalente:
+    // if (!cont.count(termo)) {
+    //   cont[termo] = 0;
+    // }
+
+    // cont[termo]++;
+  }
+
+  for (auto [termo, c] : cont) {
+    std::cout << termo << ": " << c << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| oi:   | 1 |
+| bem:  | 2 |
+| tudo: | 2 |
+
+E se precisássemos das chaves ordenadas?
+
+#+begin_src C++ :flags -std=c++17 :cmdline < in2.txt
+#include <iostream>
+#include <map>
+#include <string>
+
+int main () {
+  std::string termo;
+  std::map<std::string, unsigned> cont;
+
+  while (std::cin >> termo) {
+    if (termo == "sair") break;
+
+    cont.insert({termo, 0}); // Insere somente se não existe
+    cont[termo]++;
+    
+    // Equivalente:
+    // if (!cont.count(termo)) {
+    //   cont[termo] = 0;
+    // }
+
+    // cont[termo]++;
+  }
+
+  for (auto [termo, c] : cont) {
+    std::cout << termo << ": " << c << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| bem:  | 2 |
+| oi:   | 1 |
+| tudo: | 2 |
+
+* Extra: manipulando arquivos
+
+Até então, estamos apenas lendo do teclado. Como ler de arquivos?
+
+#+begin_src C++ :flags -std=c++17
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
+
+int main () {
+  std::map<std::string, unsigned> cont;
+
+  std::string termo;
+  std::ifstream arquivo("in2.txt"); // Abre arquivo como entrada
+  
+  while (arquivo >> termo) { // Igual ao std::cin
+    cont.insert({termo, 0}); // Insere somente se não existe
+    cont[termo]++;
+    
+    // Equivalente:
+    // if (!cont.count(termo)) {
+    //   cont[termo] = 0;
+    // }
+
+    // cont[termo]++;
+  }
+
+  arquivo.close(); // Lembrar de fechar!!!!
+
+  for (auto [termo, c] : cont) {
+    std::cout << termo << ": " << c << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| bem:  | 2 |
+| oi:   | 1 |
+| tudo: | 2 |
+
+* Problema 3 (para pensar!)
+
+Dado um arquivo grande de texto, como criar um índice das linhas em que cada termo aparece?
+
+Entrada
+
+#+begin_example
+o rato roeu a roupa do rei de roma
+roma é uma cidade
+bh é uma cidade
+#+end_example
+
+Mapa
+
+#+begin_example
+rato -> {1}
+roma -> {1, 2}
+cidade-> {2, 3}
+#+end_example

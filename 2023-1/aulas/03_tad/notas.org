@@ -1,0 +1,413 @@
+#+title: Notas de Aula - 03 TADs
+#+author: Luigi D. C. Soares
+#
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#
+* Abstração
+
+- O que significa /abstração/? *Esconder* detalhes
+- Exemplo: navegador
+
+  Quando você digita no navegador =ufmg.br= e aperta a tecla =enter=, existem várias etapas para que a página da UFMG possa ser carregada:
+  
+  1. O navegador faz uma requisição a um servidor DNS (possivelmente por intermédio do sistema operacional), que traduz o endereço =ufmg.br= para o endereço IP =150.164.76.8=. Essa comunicação é feita por meio de um protocolo chamado UDP.
+  2. O navegador, então, abre uma conexão TCP com o servidor que hospeda o site da UFMG e envia, por meio dessa conexão, uma requisição HTTP.
+  3. O servidor retorna a página solicitada (da UFMG)
+     
+  Na prática, existem ainda mais detalhes neste processo, esta é só uma visão simplificada. Vários protocolos estão envolvidos, várias camadas diferentes de =abstração=.
+
+  Nenhum destes detalhes importam para o usuário final, apenas a *operação* importa: abrir a página da UFMG. Todos os detalhes de implementação estão escondidos do usuário. Isto é abstrair! E é um conceito extremamente importante!
+
+* Tipos Abstratos de Dados
+
+** O que é um tipo?
+
+Uma representação de um conjunto de dados e as operações possíveis de serem realizadas
+
+  | Tipo    | Conjunto                         | Operações     |
+  |---------+----------------------------------+---------------|
+  | Inteiro | Números sem componente fracional | \plus, \minus, \times       |
+  | Bool    | =verdadeiro= ou  =falso=             | \equal, \neq, \neg, \land, \lor |
+
+  Os tipos acima são chamados de tipos /primitivos/. A partir destes, podemos definir nossos próprios tipos.
+  
+**  O que é um tipo abstrato de dados (TAD)?
+
+  - Encapsula um conjunto de *operações* sobre determinados valores
+  - Detalhes a *implementação* são *escondidos* do usuário
+  - É um conceito de programação, não parte de uma linguagem
+
+  O importante (para o usuário) é *o que* o TAD faz, não *como*!
+
+  Quais as vantagens de se esconder a implementação?
+  - A implementação pode ser alterada sem que isto afete o usuário final, já que as operações permanecem as mesmas
+
+** Exemplo 1: Conjunto de inteiros (vector)
+
+ Quais operações um conjunto deve oferecer?
+ - Inserção
+ - Remoção
+ - Busca
+ - Outros: percorrer o conjunto, união, interseção, tamanho, ...
+
+ Lembre-se que a ideia de um TAD é separar a implementação da interface. Por isso, vamos definir nosso TAD em um arquivo de cabeçalho (convenção: extensão .hpp para cabeçalhos de C++):
+
+ #+begin_src C++ :main no :tangle int_set.hpp
+ #ifndef INT_SET_H
+ #define INT_SET_H
+
+ #include <vector>
+ 
+ class IntSet {
+ public:
+   /// @brief Try to insert an integer into the set.
+   /// @param  x Integer to be inserted
+   /// @return true if the element was inserted,
+   ///         false if it is in the set already.
+   bool insert(int x);
+
+   /// @brief Try to remove an integer from the set.
+   /// @param  x Integer to be removed
+   /// @return true if the element was removed,
+   ///         false if it was not found.
+   bool remove(int x);
+
+   /// @brief Check if an element exists.
+   /// @param  x Integer to be searched
+   /// @return true if the element was found, false otherwise.
+   bool contains(int x);
+
+ private:
+   std::vector<int> _set;
+ };
+
+ #endif
+ #+end_src
+
+~class~ e ~struct~ representam a mesma coisa, com uma única diferença: a visibilidade padrão.
+
+O que é visibilidade?
+- private: o usuário não tem acesso (lembra que queremos esconder detalhes?)
+- public: o usuário tem acesso
+
+A visibilidade padrão em uma struct é public, enquanto que em uma class é private.
+
+Quando usar class ou struct? Convenção! Defina a sua e siga de forma *consistente*.
+- Você pode usar sempre class
+- Você pode usar sempre struct
+- Você pode usar struct apenas para agrupamentos de dados (como em C), sem operações (é a convenção que irei seguir)
+
+Mais convenções: nomenclatura. Você pode definir a sua ou seguir alguma já existente (exemplo: [[https://google.github.io/styleguide/cppguide.html][Google]]). O estilo que irei utilizar é:
+- Variáveis: nome\under{}variavel (chamada de snake\under{}case)
+- Campos privados de uma classe: _nome\under{}campo (com o prefixo \under{})
+- Constantes: NOME\under{}CONSTANTE
+- Funções/métodos: nome\under{}funcao
+- Tipos (classes, structs): NomeTipo (chamada de PascalCase)
+Existe também a variação camelCase (a primeira letra minúscula)
+
+Voltando ao nosso exemplo, vamos implementar nosso ~IntSet~ (convenção: extensão .cpp para arquivos de implementação de C++):
+
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle int_set.cpp
+#include "int_set.hpp"
+
+bool IntSet::insert(int x) {
+  for (int e : _set) {
+    if (x == e) return false;
+  }
+
+  _set.push_back(x);
+  return true;
+}
+
+bool IntSet::remove(int x) {
+  std::size_t i = 0;
+  for (; i < _set.size() && _set[i] != x; i++);
+
+  if (i == _set.size()) return false;
+  
+  _set.erase(_set.begin() + i);
+  return true;
+}
+
+bool IntSet::contains(int x) {
+  for (int e : _set) {
+    if (x == e) return true;
+  }
+  return false;
+}
+#+end_src
+
+E agora vamos utilizar o tipo que criamos:
+
+#+begin_src C++ :flags int_set.cpp -std=c++17 -I. -Wall
+#include <iostream>
+#include "int_set.hpp"
+
+int main() {
+  IntSet set;
+  std::cout << set.insert(1) << std::endl;
+  std::cout << set.insert(1) << std::endl;
+  std::cout << set.insert(2) << std::endl;
+  std::cout << set.contains(2) << std::endl;
+  std::cout << set.remove(2) << std::endl;
+  std::cout << set.remove(2) << std::endl;
+  std::cout << set.contains(2) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| 1 |
+| 0 |
+| 1 |
+| 1 |
+| 1 |
+| 0 |
+| 0 |
+
+** Exemplo 2: Conjunto de inteiros (hash)
+
+Uma TAD é definida pelas operações fornecidas. Assim, podemos alterar a implementação sem que isto afete a utilização do tipo.
+
+No exemplo anterior, para inserir, remover e procurar por um elemento foi preciso percorrer o vetor até encontrar (ou não) o valor em questão. No pior caso, seria preciso percorrer o vetor inteiro! Vamos tentar melhorar isso?
+
+Ideia: e se tentarmos mapear uma posição para cada inteiro no vetor?
+
+Como? Talvez criar um vetor de tamanho 2n? Posições 0..n-1 para números negativos, n..2n-1 para positivos:
+
+        -1 na posição 0, -2 na posição 1, ...
+        
+        0 na posição n, 1 na posição n + 1
+
+Exemplo: n = 2
+
+set.insert(0) \\
+set.insert(1) \\
+set.insert(-1) \\
+set.insert(-2) \\
+
+[-1, -2, 0, 1]
+
+Qual o problema? E se tivéssemos inserido apenas números positivos?
+
+set.insert(0) \\
+set.insert(1)
+
+[?, ?, 0, 1]
+
+*Espaço*! Gastamos o dobro do que o necessário! Precisamos ser mais inteligentes.
+
+E se definíssemos uma única posição para o positivo e o negativo de um número?
+
+Exemplo:
+
+set.insert(0) \\
+set.insert(-1) \\
+set.insert(-2) \\
+set.insert(1)
+
+Índice 0 --> [0] \\
+Índice 1 --> [-1, 1] \\
+Índice 2 --> [-2]
+
+Neste caso, não gastamos espaço desnecessário com o que seria a posição do 2, por exemplo. Mas ainda temos problema...
+
+set.insert(0) \\
+set.insert(9) 
+
+Índice 0 --> [0] \\
+Índice 1 --> [] \\
+Índice 2 --> [] \\
+Índice 3 --> [] \\
+Índice 4 --> [] \\
+Índice 5 --> [] \\
+Índice 6 --> [] \\
+Índice 7 --> [] \\
+Índice 8 --> [] \\
+Índice 9 --> [9]
+
+Que tal definir um tamanho inicial e usar o operador % (resto)? E se houver uma colisão? Uma possível solução é procurar pelo próximo índice disponível (e aumentar o tamanho, se não existir):
+
+Suponha que o tamanho inicial n seja 4:
+
+set.insert(0): 0 % 4 = 0 \\
+set.insert(1): 1 % 4 = 1 \\
+set.insert(-1): -1 % 4 = -1, mas se pegarmos o valor absoluto então é 1, conflito! \\
+
+Índice 0 --> 0 \\
+índice 1 --> 1 \\
+Índice 2 --> -1
+
+set.insert(9): 9 % 4 = 1, novo conflito no índice
+
+Índice 0 --> 0 \\
+índice 1 --> 1 \\
+Índice 2 --> -1 \\
+Índice 3 --> 9
+
+Vamos tentar esta implementação. Note que a interface (operações) é a mesma (insert, remove, contains)!!!
+
+#+begin_src C++ :main no :tangle int_hashset.hpp
+#ifndef INT_HASHSET_H
+#define INT_HASHSET_H
+
+#include <utility>
+#include <vector>
+
+class IntSet {
+public:
+  /// @brief Default constructor
+  IntSet();
+
+  /// @brief Try to insert an integer into the set.
+  /// @param  x Integer to be inserted
+  /// @return true if the element was inserted,
+  ///         false if it is in the set already.
+  bool insert(int x);
+
+  /// @brief Try to remove an integer from the set.
+  /// @param  x Integer to be removed
+  /// @return true if the element was removed,
+  ///         false if it was not found.
+  bool remove(int x);
+
+  /// @brief Check if an element exists.
+  /// @param  x Integer to be searched
+  /// @return true if the element was found, false otherwise.
+  bool contains(int x);
+
+private:
+  /// Second element is true if the slot is in use
+  std::vector<std::pair<int, bool>> _set;
+
+  /// @brief Hash function to get the index of an element.
+  ///
+  /// The first position to try is abs(x % _set.size()).
+  /// If not available, look for the next index in a
+  /// circular fashion. Assumes that there is enough space.
+  ///
+  /// @param  x Element to calculate the position
+  /// @return   The index that the element is mapped to
+  unsigned _hash(int x);
+
+  /// @brief Double the size of the set and rehash elements.
+  void _rehash();
+};
+
+#endif
+#+end_src
+
+ #+RESULTS:
+
+ #+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle int_hashset.cpp
+ #include <iostream>
+ #include "int_hashset.hpp"
+
+ IntSet::IntSet() {
+   _set.reserve(8);
+ }
+
+ bool IntSet::insert(int x) {
+   if (_set.size() == _set.capacity()) _rehash();
+   unsigned i = _hash(x);
+
+   // If the slot is in use already, then it has to be x
+   if (_set[i].second) return false;
+
+   _set.insert(_set.begin() + i, {x, true});
+   return true;
+ }
+
+ bool IntSet::remove(int x) {
+   if (!contains(x)) return false;
+
+   unsigned i = _hash(x);
+   _set[i].second = false;
+   // Search for other elements that collided with x
+   // to make sure they can be found in following lookups.
+   // What could happen, had we skipped this step?
+   unsigned j = (i + 1) % _set.capacity();
+   while (_set[j].second) {
+     int y = _set[j].first;
+     if (_hash(y) == i) {
+       _set[j].second = false;
+       insert(y);
+     }
+     j = (j + 1) % _set.capacity();
+   }
+
+   return true;
+ }
+
+ bool IntSet::contains(int x) {
+   unsigned i = _hash(x);
+   return _set[i].second && _set[i].first == x;
+ }
+
+ unsigned IntSet::_hash(int x) {
+   int i = x % _set.capacity();
+   if (i < 0) i = -i;
+
+   int j = i;
+   do {
+     if (!_set[j].second || _set[j].first == x) break;
+     j = (j + 1) % _set.capacity();
+   } while (j != i);
+
+   return j;
+ }
+
+ void IntSet::_rehash() {
+   std::vector<std::pair<int, bool>> new_set;
+   new_set.reserve(_set.capacity() * 2);
+
+   for (auto [x, in_use] : _set) {
+     if (in_use) {
+       unsigned i = _hash(x);
+       new_set.insert(new_set.begin() + i, {x, true});
+     }
+   }
+
+   _set = new_set;
+ }
+ #+end_src
+
+ #+RESULTS:
+
+ Note que a utilização do tipo continua exatamente o mesmo (a interface não mudou):
+
+ #+begin_src C++ :flags int_hashset.cpp -std=c++17 -I. -Wall
+ #include <iostream>
+ #include "int_hashset.hpp"
+
+ int main() {
+   IntSet set;
+   std::cout << set.insert(2) << std::endl;
+   std::cout << set.insert(10) << std::endl;
+   std::cout << set.remove(2) << std::endl;
+   std::cout << set.contains(10) << std::endl;
+   std::cout << set.insert(1) << std::endl;
+   std::cout << set.insert(1) << std::endl;
+   std::cout << set.insert(2) << std::endl;
+   std::cout << set.contains(2) << std::endl;
+   std::cout << set.remove(2) << std::endl;
+   std::cout << set.remove(2) << std::endl;
+   std::cout << set.contains(2) << std::endl;
+
+  return 0;
+ }
+ #+end_src
+
+ #+RESULTS:
+ | 1 |
+ | 1 |
+ | 1 |
+ | 1 |
+ | 1 |
+ | 0 |
+ | 1 |
+ | 1 |
+ | 1 |
+ | 0 |
+ | 0 |

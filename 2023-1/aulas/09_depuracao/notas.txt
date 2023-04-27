@@ -1,0 +1,349 @@
+                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      NOTAS DE AULA - 09 DEPURAÇÃO
+
+                           Luigi D. C. Soares
+                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Introdução
+══════════
+
+  Boas práticas de programação reduzem a chance de erros, mas eles ainda
+  vão existir!
+
+  Medidas proativas (veremos mais a frente)
+  • Programação defensiva
+  • Testes de unidade
+
+  Medidas reativas: *depuração*
+
+  revisão vs depuração vs testes
+  • Revisão: verificação e validação (verificar se problemas existem)
+  • Testes: o que fazer para "quebrar" o programa? Como reproduzir
+    "bugs"?
+  • Depuração: Como *localizar* a raíz do problema? O que fazer para
+    *consertar*?
+
+
+Tipos de Erro
+═════════════
+
+Sintático (em tempo de compilação)
+──────────────────────────────────
+
+  Qual o problema?
+
+  ┌────
+  │ int main() {
+  │   int x = (3 + 5; // error: expected ')' before ';' token
+  │   return 0;
+  │ }
+  └────
+
+
+Semântico (em tempo de compilação)
+──────────────────────────────────
+
+  Qual o erro?
+
+  ┌────
+  │ int main() {
+  │   int a = "hello"; // error: invalid conversion from 'const char*' to 'int'
+  │   return 0;
+  │ }
+  └────
+
+  E agora? Tem algum problema?
+
+  ┌────
+  │ int main() {
+  │   int i;
+  │   i++; // warning: 'i' is used uninitialized
+  │   return 0;
+  │ }
+  └────
+
+  Podemos pedir que o compilador emita mais warnings, com a opção -Wall:
+  `g++ -std=c++17 -Wall main.cpp -o main'
+
+  Existem outras opções para que ainda mais warnings sejam emitidos:
+  -Wextra, -pedantic
+
+
+Lógicos (durante execução)
+──────────────────────────
+
+  O programa a seguir compila, mas o que pode acontecer?
+
+  ┌────
+  │ #include <iostream>
+  │ int main() {
+  │   int a = 10;
+  │   int b;
+  │ 
+  │   std::cin >> b;
+  │   std::cout << a / b << std::endl; // Durante execução: floating point exception
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  Erros observados durante execução:
+  • Resultado incorreto
+  • Loops infinitos
+  • Segmentation fault
+  • …
+
+
+Estratégias de Depuração
+════════════════════════
+
+  1. *Reproduzir* o problema (determinar condições para execução)
+     • Pode ser necessário reproduzir de várias maneiras distintas
+  2. *Identificar* o local e provável causa (dados -> hipótese ->
+      experimentos -> repete)
+  3. Alterar o código para correção
+  4. Avaliar a solução e procurar por outros problemas
+
+
+O que *NÃO* fazer
+─────────────────
+
+  • Tentar encontrar defeitos advinhando
+  • Fazer alterações aleatórias até funcionar
+  • Não manter um histórico das alterações feitas (e se uma alteração
+    introduzir um novo problema?)
+
+
+Estratégia raíz (mais básica)
+─────────────────────────────
+
+  Acompanhar a execução do programa em diversos momentos:
+  • std::cout/printf
+  • Contras:
+    • Vários comandos de impressão implica em redução da legibilidade
+    • Várias compilações
+    • Técnica passiva: não é possível modificar variáveis durante a
+      execução
+
+
+Ferramentas de Depuração
+────────────────────────
+
+GDB (C/C++)
+╌╌╌╌╌╌╌╌╌╌╌
+
+  • Adicionar breakpoints
+  • Verificar/alterar valores de variáveis
+  • Necessária a opção -g durante a compilação
+  • Online: <https://www.onlinegdb.com/online_c++_compiler>
+
+  Alguns comandos:
+  • *Breakpoint*:
+    • Ponto de interrupção em uma linha do código (`break linha'; lista:
+      `info break')
+    • Condicional: `break 16 if x < min'
+  • *Step*: continuar a execução
+    • step-into: próxima instrução, acessando subrotinas (`step')
+    • step-over: próxima instrução, sem entrar em subrotinas (`next')
+    • step-out: executar até o final da subrotina (`finish')
+    • continue: continuar execução até o próximo breakpoint
+  • *Display*: exibir a informação de uma variável
+  • *Variáveis*:
+    • set var i = end
+    • print i
+
+  Exemplo: Encontrar o maior valor
+
+  O código a seguir está correto?
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, std::size_t begin, std::size_t end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (std::size_t i = begin; i < end; i++) {
+  │     int x = xs[i];
+  │     if (x > min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 6) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  Primeiro problema: deveria ser x < min
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, std::size_t begin, std::size_t end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (std::size_t i = begin; i < end; i++) {
+  │     int x = xs[i];
+  │     if (x < min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 6) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  Segundo problema: estamos passando do limite do vector
+  • Dica: usar o método `.at(i)' do vector; irá testar se está dentro
+    dos limites e parar o programa com erro explícito
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, std::size_t begin, std::size_t end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (std::size_t i = begin; i < end; i++) {
+  │     int x = xs.at(i);
+  │     if (x < min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 6) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  E consertando o limite superior:
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, std::size_t begin, std::size_t end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (std::size_t i = begin; i < end; i++) {
+  │     int x = xs.at(i);
+  │     if (x < min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 5) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+
+G++/clang Sanitizer
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+  Como detectar erros de memória? Vazamento, uso após delete, delete
+  após delete, etc
+
+  Já vimos anteriormente a opção `-fsanitize=address':
+  • `g++ -std=c++17 -Wall -g -fsanitize=address main.cpp -o main'
+  • `./main'
+
+  Exemplo: quais os problemas do código a seguir?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ struct TADExemplo {
+  │   int atributo;
+  │ };
+  │ 
+  │ int main() {
+  │   TADExemplo *e = new TADExemplo;
+  │   e->atributo = 10;
+  │   delete e;
+  │   std::cout << e->atributo << std::endl;
+  │   e->atributo = 0;
+  │   std::cout << e->atributo << std::endl;
+  │   delete e;
+  │   return 0;
+  │ }
+  └────
+
+  A princípio, esta ferramenta mostra apenas o primeiro erro e termina a
+  execução (talvez tenha uma forma de impedir que pare no primeiro erro,
+  vale a pesquisa!)
+
+
+Valgrind
+╌╌╌╌╌╌╌╌
+
+  Uma alternativa é a ferramenta Valgrind. Esta ferramenta vai muito
+  além de apenas detecção de erros de memória, existem (e é possível
+  desenvolver) plugins para o Valgrind.
+
+  • Exemplo: [CFGGrind] é uma plugin que reconstrói o fluxo de execução
+    de um programa. Além de visualizar o fluxo de execução com
+    informações adicionais, a ferramenta produz estatísticas como
+    quantidade de funções, quantidade de instruções executadas
+    (discriminando por cada tipo de instrução), etc
+
+
+  Vale pesquisar mais sobre! Vamos focar na parte de memória. Para o
+  mesmo exemplo acima, desta vez compilando sem o `-fsanitize':
+  • `g++ -std=c++17 -Wall -g -fsanitize=address main.cpp -o main'
+  • `valgrind --leak-check=full ./main'
+
+
+[CFGGrind] <https://github.com/rimsa/CFGgrind>

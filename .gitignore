@@ -1,20 +1,23 @@
-# Auctex
-*.aux
-*.elc
-*.log
-*.synctex.gz
-*~
-.auctex-auto/
+# Ignore everything
+*
 
-# Latex minted
-_minted*/
+# Except ...
+# Essential files
+!.gitignore
+!README.md
 
-# Sensitive information
-results/
-bibliography/
+# Subdirectories
+!*/
 
-# Code outputs (for consistency, use .bin for binaries)
-*.bin
-*.out
-*.o
-*.s
+# Class notes
+!notas*.org
+!notas*.txt
+
+# Schedule, syllabus
+!header.tex
+!cronograma.org
+!cronograma.tex
+!cronograma.pdf
+!plano-ensino.org
+!plano-ensino.tex
+!plano-ensino.pdf

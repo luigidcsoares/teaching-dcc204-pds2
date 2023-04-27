@@ -1,0 +1,58 @@
+#+author: Prof. Luigi D. C. Soares
+#+title: Cronograma (\color{red}\bfseries última atualização: \today\color{black})
+
+#+startup: entitiespretty
+#+options: toc:nil title:nil 
+
+#+language: pt
+#+latex_class: article
+#+latex_class_options: [11pt]
+#+latex_header: \input{header.tex}
+
+\begin{center}
+    \Large\bfseries\thetitle{}
+\end{center}
+
+\begin{center}
+    \fcolorbox{black}{green!30}{\rule{0pt}{6pt}\rule{6pt}{0pt}}\quad Não haverá aula \qquad
+    \fcolorbox{black}{yellow!50}{\rule{0pt}{6pt}\rule{6pt}{0pt}}\quad Prova
+\end{center}
+
+\rowcolors{2}{gray!10}{gray!25}
+#+attr_latex: :booktabs t :align >{\bfseries}ccl>{\bfseries}c
+|                    *Aula* | *Data*  | *Tópico*                                   | *Projeto Final*     |
+|-------------------------+-------+------------------------------------------+-------------------|
+|                      01 | 14/03 | Apresentação do Curso e Introdução a C++ |                   |
+|                      02 | 16/03 | Armazenamento de Dados em Memória        |                   |
+|                      03 | 21/03 | Tipos Abstratos de Dados (TADs)          | Divulgação        |
+|                      04 | 23/03 | TAD: Listas Encadeadas                   |                   |
+|                      05 | 28/03 | TAD: Biblioteca Padrão (STL)             |                   |
+|                      06 | 30/03 | TAD: Biblioteca Padrão (STL)             |                   |
+|                      07 | 04/04 | Boas Práticas                            |                   |
+|                      08 | 06/04 | Modularização                            |                   |
+|                      09 | 11/04 | Ferramentas de Depuração                 |                   |
+|                      10 | 13/04 | Versionamento e Revisão de Código        |                   |
+|                      11 | 18/04 | Introdução à Orientação a Objetos (POO)  | Definição de Tema |
+|     \rowcolor{green!40} | 20/04 | Aula Cancelada                           |                   |
+|                      12 | 25/04 | Especificação de Software                |                   |
+|                      13 | 27/04 | POO: Classes                             |                   |
+|                      14 | 02/05 | POO: Encapsulamento                      |                   |
+| \rowcolor{yellow!50} 15 | *04/05* | *Prova 01: Revisão*                        |                   |
+| \rowcolor{yellow!50} 16 | *09/05* | *Prova 01: Aplicação*                      |                   |
+|                      17 | 11/05 | Acompanhamento/Dúvidas Projeto           | Entrega Parcial   |
+|                      18 | 16/05 | POO: Herança e Composição                |                   |
+|                      19 | 18/05 | POO: Herança e Composição                |                   |
+|                      20 | 23/05 | POO: Polimorfismo                        |                   |
+|                      21 | 25/05 | POO: Polimorfismo                        |                   |
+|                      22 | 30/05 | POO: Gerenciamento de Memória            |                   |
+|                      23 | 01/06 | Programação Defensiva                    |                   |
+|                      24 | 06/06 | Tratamento de Exceções                   |                   |
+|                      25 | 08/06 | Introdução a Testes e TDD                |                   |
+|     \rowcolor{green!40} | 13/06 | Recesso: Corpus Christi                  |                   |
+| \rowcolor{yellow!50} 26 | *15/06* | *Prova 02: Revisão*                        |                   |
+| \rowcolor{yellow!50} 27 | *20/06* | *Prova 02: Aplicação*                      |                   |
+|                      28 | 22/06 | Acompanhamento/Dúvidas Projeto           |                   |
+|                      29 | 27/06 | Acompanhamento/Dúvidas Projeto           |                   |
+| \rowcolor{yellow!50} 30 | *29/06* | *Prova substitutiva*                       | Entrega Final     |
+|                         |       |                                          |                   |
+|    \rowcolor{yellow!50} |       | *Exame especial*                           |                   |

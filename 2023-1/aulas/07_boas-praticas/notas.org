@@ -1,0 +1,421 @@
+#+title: Notas de Aula - 07 Boas Práticas
+#+author: Luigi D. C. Soares
+#
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#
+* Introdução
+
+Características de um bom código:
+- *Compreensível* por quem escreveu e por quem irá utilizar
+- *Confiável*: funciona conforme o esperado
+- *Eficiente*:
+  - Utiliza os recursos disponíveis da melhor maneira possível
+  - Escolha das estruturas mais adequadas
+- *Extensível*: fácil de ser modificado no futuro
+
+O que dificulta a escrita de códigos limpos?
+- Prazos apertados = foco nas funcionalidades
+- Projetos longos: acúmulo de problemas (deixados para depois)
+
+Dicas:
+- Seja consistente com as convenções adotadas (nomes, formatação, organização, ...)
+- Modele antes de implementar (CRC, UML) --> iremos ver mais à frente
+
+- Definir tipos específicos para o problema (código mais legível)
+- Tratar situações excepcionais (tratamento de exceções, final do semestre)
+  - Robustez
+  - Tolerância a falhas
+
+* Ifs Aninhados
+
+  O que o código a seguir faz? (arq = arquivo, arq\under{}cam = caminho do arquivo)
+  
+  #+begin_src C++
+  bool exemplo(std::ifstream& arq, std::string arq_cam) {
+    std::string linha;
+    if (valido(arq_cam)) {
+      if (arq.is_open()) {
+        if (std::getline(arq, linha)) {
+          if (linha.find("importante")) {
+            return true;
+          } else {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  #+end_src
+
+  Para começar, nenhum dos elses é necessário:
+
+  #+begin_src C++
+  bool exemplo(std::ifstream& arq, std::string arq_cam) {
+    std::string linha;
+    
+    if (valido(arq_cam)) {
+      if (arq.is_open()) {
+        if (std::getline(arq, linha)) {
+          if (linha.find("importante")) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+  #+end_src
+  
+  Mas os ifs ainda estão aninhados. O que fazer?
+
+  #+begin_src C++
+  bool exemplo(std::ifstream& arq, std::string arq_cam) {
+    std::string linha;
+    if (!valido(arq_cam))
+      return false;
+
+    if(!arq.is_open())
+      return false;
+
+    bool encontrou = false;
+    if (std::getline(arq, linha)) {
+      if (linha.find("importante")) {
+        encontrou = true;
+      }
+    }
+
+    return encontrou;
+  }
+  #+end_src
+
+  Será que dá para melhorar?
+
+  #+begin_src C++
+  bool exemplo(std::ifstream& arq, std::string arq_cam) {
+    if (valido(arq_cam) && arq.is_open()) {
+      std::string linha;
+      return std::getline(arq, linha) && linha.find("importante");
+    }
+
+    return false;
+  }
+  #+end_src
+
+* Nomes
+
+- Structs/classes: substantivo singular
+- Atributos: substantivo singular ou plural se coleção
+- Métodos: primeira palavra = verbo no infinitivo
+  - Não precisa ser sempre, o importante é: *seja consistente*!
+  - No exemplo a seguir, não há necessidade de um verbo, embora alguns utilizem o prefixo "get"
+
+    #+begin_src C++
+    class Foo {
+    public:
+      int campo() const { return campo; }
+    private:
+      int _campo;
+    }
+    #+end_src
+
+- Utilize nomes significativos/pronunciáveis
+  - Auxilia na compreensão e até na busca pela variável/função!
+  - Ruim:
+    
+    #+begin_src C++
+    struct DtaRcrd {
+      time_t c;
+      time_t m;
+      int i = 102;
+    };
+    #+end_src
+
+  - Bom:
+    
+    #+begin_src C++
+    struct Cliente {
+      time_t data_hora_criacao;
+      time_t data_hora_modificacao;
+      int id_registro = 102;
+    };
+    #+end_src
+
+- Convenções:
+  - snake\under{}case (underline):
+    - int num\under{}clientes;
+    - std::vector<int> cliente\under{}ids;
+      
+  - camelCase:
+    - int numClientes;
+    - std::vector<int> clienteIds;
+    - ou mesmo std::vector<int> clienteIDs;
+      
+  - PascalCase = camelCase, iniciando com maiúsculo
+  - Você pode até misturar (eu uso snake para variáveis, Pascal para classes)
+  - Novamente, o importante é *escolha um padrão e atenha-se a ele!*
+    
+  - Utilize constantes quando necessário
+    - Evite escrever números/strings diretamente
+    - Devem ter nomes significativos (como qualquer outra variável/função/classe)
+    - Possíveis padrões: nomes em caps lock ou precedidos por k
+      - COR\under{}DA\under{}FONTE
+      - kCorDaFonte
+
+* Formatação
+
+Escolha um padrão e use
+- Tabs vs Espaço (guerra)
+- Indente com 2, 4 ou 8 espaços, ou até 3, mas seja *consistente*!
+- Tamanho máximo da linha de código: 80, 100, 120 caracteres, defina um padrão (nunca scroll para direita)
+  
+Código deve ser lido de cima para baixo
+- Funções/métodos mais gerais (nível alto de abstração) em cima, seguidos por outros métodos que implementem detalhes específicos
+
+* Funções/Métodos
+
+- Métodos pequenos (aproximadamente 20 linhas, quando possível)
+- Poucos argumentos (como reescrever? talvez agrupar argumentos em structs?)
+  
+- *Importante:* cada módulo/classe/método/função possui _uma única_ responsabilidade (single responsibility principle)
+  - Clean code, "uncle Bob": "The Single Responsibility Principle (SRP) states that a class or module should have one, and only one, reason to change"
+
+  Exemplo: imagine um pedido em uma compra (retirado daqui: https://www.youtube.com/watch?v=pTB30aXS77U)
+
+  Versão inicial:
+
+  #+begin_src C++ :flags -std=c++17
+  #include <iostream>
+  #include <map>
+  #include <vector>
+
+  struct Item {
+    unsigned code;
+    std::string name;
+    float price;
+  };
+
+  class Order {
+  public:
+    enum class Status { open, paid };
+    Status status = Status::open;
+
+    void add_item(Item item) {
+      _items_quantities.insert({item, 0});
+      _items_quantities[item]++;
+    }
+
+    float total_price() const {
+      float total = 0.0;
+      for (auto [item, quantity] : _items_quantities) {
+        total += item.price * quantity;
+      }
+      return total;
+    }
+
+    void pay(std::string payment_type) {
+      if (payment_type == "debit") {
+        std::cout << "Processing debit payment type" << std::endl;
+        // Outras coisas...
+        status = Status::paid;
+      } else if (payment_type == "credit") {
+        std::cout << "Processing credit payment type" << std::endl;
+        // Outras coisas...
+        status = Status::paid;
+      }
+    }
+
+  private:
+    class _ItemComparator {
+    public:
+       bool operator()(const Item &a, const Item &b) const {
+         return a.name < b.name;
+       }
+    };
+
+    std::map<Item, unsigned, _ItemComparator> _items_quantities;
+  };
+
+  int main() {
+    Order order;
+
+    order.add_item({0, "Notebook", 5000.50});
+    order.add_item({0, "TV 4K", 8764.50});
+
+    std::cout << order.total_price() << std::endl;
+    order.pay("credit");
+
+    return 0;
+  }
+  #+end_src
+  
+  #+RESULTS:
+  |      13765 |        |         |      |
+  | Processing | credit | payment | type |
+
+  - A pergunta é: o pedido (Order) deveria ser responsável pelo processamento do pagamento? Se vai ser com cartão de crédito ou débito?
+  - O que constitui um pedido? A coleção de itens!
+  - Imagine que vamos precisar alterar a classe Order: que motivo poderia nos levar a fazer uma alteração? Alteração na forma de inserção ou no cálculo do preço total. Forma de pagamento *não deveria ser um motivo para alterar a classe Order*
+
+  Versão que obedece o SRP:
+
+  #+begin_src C++ :flags -std=c++17
+  #include <iostream>
+  #include <map>
+  #include <vector>
+
+  struct Item {
+    unsigned code;
+    std::string name;
+    float price;
+  };
+
+  class Order {
+  public:
+    enum class Status { open, paid };
+    Status status = Status::open;
+
+    void add_item(Item item) {
+      _items_quantities.insert({item, 0});
+      _items_quantities[item]++;
+    }
+
+    float total_price() const {
+      float total = 0.0;
+      for (auto [item, quantity] : _items_quantities) {
+        total += item.price * quantity;
+      }
+      return total;
+    }
+
+  private:
+    class _ItemComparator {
+    public:
+       bool operator()(const Item &a, const Item &b) const {
+         return a.name < b.name;
+       }
+    };
+
+    std::map<Item, unsigned, _ItemComparator> _items_quantities;
+  };
+
+  class PaymentProcessor {
+  public:
+    void pay(std::string payment_type, Order &order) {
+      if (payment_type == "debit") {
+        std::cout << "Processing debit payment type" << std::endl;
+        // Outras coisas...
+        order.status = Order::Status::paid;
+      } else if (payment_type == "credit") {
+        std::cout << "Processing credit payment type" << std::endl;
+        // Outras coisas...
+        order.status = Order::Status::paid;
+      }
+    }
+  };
+
+  int main() {
+    Order order;
+
+    order.add_item({0, "Notebook", 5000.50});
+    order.add_item({0, "TV 4K", 8764.50});
+
+    std::cout << order.total_price() << std::endl;
+
+    PaymentProcessor processor;
+    processor.pay("credit", order);
+
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  |      13765 |        |         |      |
+  | Processing | credit | payment | type |
+  
+- SRP faz parte de um conjunto de cinco princípios: SOLID (vale pesquisar; o vídeo acima exemplifica os cinco)
+- Veremos alguns deles mais tarde
+
+- Já vimos que você deve pensar em qual estrutura é mais adequada para seu problema, mas você também deve se atentar ao seu custo
+
+  O que acontece na passagem do vector para uma função?
+
+  #+begin_src C++
+  void foo(std::vector<int> xs) {
+    // ...
+  }
+  #+end_src
+
+  A passagem é feita por valor! Ou seja, o vetor é *copiado*! E se o vetor for muito grande?
+
+  #+begin_src C++
+  void foo(const std::vector<int> &xs) {
+    // ...
+  }
+  #+end_src
+
+  - Use referências (&) sempre que possível, e ponteiros (*) somente quando necessário
+  - Use const para evitar que a variável referenciada seja modificada
+
+* Comentários/Documentação
+
+ Quando um comentário deve ser utilizado?
+ - Informar sobre o funcionamento
+ - Alertar sobre possíveis consequências
+
+ E quando não deve?
+ - Redundância, comentário inútil
+ - Dizer algo que *deveria* estar clar pelo próprio código (ex: extrair pedaço de código para uma função)
+
+ Documentação: existem ferramentas que, dado que comentários estão escritos num formato adequado, geram arquivos de documentação
+ - Exemplo: Doxygen
+ - Lembra do nosso arquivo de priority\under{}queue lá do VPL? Ele está comentado seguindo (um dos possíveis) formatos do Doxygen
+
+   #+begin_src C++
+   #ifndef PRIORITY_QUEUE_H
+   #define PRIORITY_QUEUE_H
+
+   template <typename T>
+   class PriorityQueue {
+   public:
+     /// @brief Adiciona um elemento a fila
+     ///
+     /// @param e        O elemento a ser adicionado
+     /// @param priority A prioridade do elemento
+     void enqueue(T e, unsigned priority);
+
+     /// @brief Remove o elemento de maior prioridade
+     ///
+     /// Remove o elemento de maior prioridade. Se a fila
+     /// estiver vazia, não tem nenhum efeito.
+     void dequeue();
+
+     /// @brief Recupera o elemento de maior prioridade.
+     ///
+     /// Recupera o elemento de maior prioridade. A fila
+     /// não é alterada de nenhuma forma. Assume que a
+     /// fila não está vazia (comportamento indefinido caso contrário).
+     ///
+     /// @return O elemento de maior priodidade,
+     T peek();
+
+     /// @brief Verifica se a lista está vazia.
+     /// @return true se vazia, false caso contrário
+     bool empty();
+  
+   private:
+     // Adicione aqui os campos/métodos privados da sua implementação
+   };
+
+   #include "priority_queue.tpp"
+   #endif
+   #+end_src
+
+   - Leitura adicional: https://opensource.com/article/22/5/document-source-code-doxygen-linux

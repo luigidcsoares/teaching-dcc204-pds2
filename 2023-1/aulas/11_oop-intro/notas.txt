@@ -1,0 +1,144 @@
+                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                  NOTAS DE AULA - 11 INTRODUÇÃO A POO
+
+                           Luigi D. C. Soares
+                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Paradigmas de Programação
+═════════════════════════
+
+  O que são paradigmas de programação?
+  • Modelos de computação
+  • Estilos de descrição de soluções de problemas
+
+  Os paradigmas são diversos. A seguir estão os principais:
+
+  ┌────
+  │      Imperativo                             Declarativo
+  │        /    \                                  /     \
+  │       /      \                                /       \
+  │ Procedural  Orientado a Objetos      Funcional   Lógico
+  └────
+
+  Exemplificando:
+  • Imperativo: descreve computação como ações que alteram o estado
+    • Orientado a Objetos:
+      • Dados e procedimentos encapsulados em objetos
+      • Diversos objetos
+      • Interação/comunicação entre objetos
+  • Funcional:
+    • Funções puras
+    • Dados imutáveis
+    • Composição de funções
+    • entrada –> função 1 –> função 2 –> … –> função n –> resultado
+
+  Dizer que uma linguagem é orientada a objetos, ou funcional, ou que
+  segue algum paradigma quer dizer que esta linguagem possui
+  funcionalidades/ferramentas que facilitam a construção de soluções
+  seguindos tais paradigmas.
+
+  • Java é 100% orientado a objetos (OO)
+  • C++ te permite a escrita de programas no paradigma OO, mas não te
+    obriga
+  • Haskell é uma linguagem puramente funcional, tudo é imutável,
+    funções são sempre puras, não possui loops
+  • Algumas linguages são "multi-paradigmas":
+    • Scala é OO mas te permite escrever código em um estilo funcional
+      (até certo nível)
+    • Python é multi-paradigma: OOP ou não, você escolhe, e um pouco de
+      funcional
+    • Racket te encoraja a escrever no estilo funcional, mas também te
+      permite usar OO
+
+  Apenas por curiosidade:
+
+  Fibonacci em Haskell
+
+  ┌────
+  │ fib :: Int -> Int
+  │ fib 0 = 0
+  │ fib 1 = 1
+  │ fib n = fib (n-1) + fib (n-2)
+  └────
+
+  E um exemplo de encadeamento de funções Em Elixir (note que funções
+  são passadas para funções)
+
+  ┌────
+  │ numbers = 1..100
+  │ |> Stream.map(fn(x) -> x * 2 end)
+  │ |> Stream.filter(fn(x) -> rem(x, 2) == 0 end)
+  │ |> Stream.take_every(3)
+  │ |> Enum.to_list
+  └────
+
+
+Programação Orientada a Objetos (POO)
+═════════════════════════════════════
+
+  • Classe:
+    • Conceito, ideia, abstração
+    • Descreve propriedades em comum
+    • Exemplo: Carro
+    Objeto:
+    • É uma *instância* de uma classe, existe em tempo de execução
+    • Possui um estado
+    • Exemplo: Uno (de firma, com escada), Ferrari
+
+    Mais exemplos: Esfera Obs.: Não confunda o conceito de classe com a
+    palavra-chave class em C++. Em C++, class e struct representam a
+    mesma coisa (mudando apenas visibilidade padrão)!
+
+    ┌────
+    │ #include <cmath>
+    │ #include <iostream>
+    │ #include <string>
+    │ 
+    │ class Esfera {
+    │ public:
+    │   int massa;
+    │   int raio;
+    │   std::string cor;
+    │ 
+    │   float calcular_volume() const {
+    │     const float k_pi = 3.1415;
+    │     return (4/3) * k_pi * std::pow(this->raio, 3);
+    │   }
+    │ };
+    │ 
+    │ int main() {
+    │   Esfera v = {100, 25, "Vermelha"};
+    │   Esfera a1 = {200, 10, "Azul"};
+    │   Esfera a2 = {200, 10, "Azul"}; // Não é o mesmo objeto que a1!!!!
+    │ 
+    │   std:: cout << a2.calcular_volume() << std::endl;
+    │   return 0;
+    │ }
+    └────
+
+  Princípios fundamentais de POO:
+  • Abstração:
+    • Elimine o irrelevante, enfatize o essencial
+    • Classes são abstrações de conceitos
+    • Podemos ter classes abstratas (i.e. que sequer especificam a
+      implementação)
+      • Não podem ser instanciadas
+      • Em C++, implementado com funções virtuais
+      • AbstractSet contém apenas o contrato, as operações
+      • OrderedSet implementa com ordem garantida (árvore)
+      • UnorderedSet implementa sem garantia de ordem (hash)
+
+  • Encapsulamento:
+    • Ocultar informação
+    • Esconda o desnecessário
+
+  • Herança:
+    • Modele a semelhança, mas permita a diferença
+    • Pessoa: tem nome, cpf
+    • Pessoa –> Estudante (específico: matrícula)
+    • Pessoa –> Professor (específico: departamento)
+
+  • Polimorfismo:
+    • Tratar tipos diferentes de forma homogênea
+    • Mesma contrato, comportamentos diferentes

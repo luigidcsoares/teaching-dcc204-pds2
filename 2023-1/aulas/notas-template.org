@@ -1,0 +1,442 @@
+#+title: Notas de Aula - Templates C++ (Extra)
+#+author: Luigi D. C. Soares
+#
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#
+* Programação Genérica
+
+Programação genérica é um estilo de programação no qual algoritmos são desenvolvidos de forma a funcionar com diferentes tipos, desde que estes tipos satisfaçam determinados requisitos. Nesse sentido, algoritmos são escritos em termos de tipos "a serem especificados futuramente". Linguagens de programação fornecem diferentes ferramentas voltadas para programação genérica. Em C++, isto é feito (pelo menos, até C++17) através de *templates*.
+
+* Templates em C++
+
+Templates, em C++, nos permitem desenvolver tanto funções quanto classes genéricas. Um template nada mais é que uma "planta", um "esqueleto" genérico que o compilador eventualmente utiliza para gerar funções ou classes especializadas.
+
+Vamos ver alguns exemplos.
+
+** Funções
+
+Suponha que desejamos implementar uma função ~max~, que retorna o maior entre dois valores:
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+int max(int x, int y) {
+  return x > y ? x : y;
+}
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| 2 |
+| 1 |
+
+Note que esta função lida apenas com números inteiros. Apesar da chamada com floats funcionar, o resultado é estranho.
+
+E se quiséssemos comparar floats? Precisaríamos criar uma outra função? Mas o código é o mesmo, a única coisa que muda é o tipo dos elementos a serem comparados.
+
+Podemos, então, tornar esta função genérica:
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+int main() {
+  std::cout << max<int>(1, 2) << std::endl;
+  std::cout << max<float>(1.5, 1.6) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+|   2 |
+| 1.6 |
+
+Agora funcionou! O que está acontecendo?
+
+O compilador está enxergando três coisas: primeiro, um template para uma função ~max~; segundo, especializações do template para os tipos ~int~ e ~float~. Por ter acesso ao esqueleto da função (ao código genérico), o compilador consegue produzir códigos especializados para a versão da função que lida com inteiros e para uma outra versão que lida com floats. Basicamente, escrevemos uma única função, mas o compilador gera código para duas funções (algo como um ~max_int~ e um ~max_float~).
+
+Note que (neste caso) o compilador é esperto o suficiente para identificar os tipos em cada chamada. Podemos omitir ~<int>~ e ~<float>~.
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+|   2 |
+| 1.6 |
+
+A definição de um template começa com a palavra chave "template". Logo depois, entre < > temos "nomes genéricos" para os tipos que só virão a ser conhecidos futuramente. Chamamos nosso tipo de "T", mas poderia ser qualquer coisa. Uma vez que o compilador identificou duas especializações, uma com o tipo "int" o outra "float", ele gerará códigos especializados, trocando o "T" por "int" e por "float".
+
+Acima vimos que a programação genérica lida com tipos que satisfazem determinadas restrições. Qual a restrição nesse caso?
+
+E se tentássemos comparar duas pessoas?
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <string>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+class Pessoa {public: std::string nome; };
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+
+  Pessoa luigi = { "Luigi" };
+  Pessoa mario = { "Mário" };
+
+  Pessoa maior = max(luigi, mario);
+  std::cout << maior.nome << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+
+O resultado é algo do tipo:
+
+#+begin_src example
+error: no match for ‘operator>’ (operand types are ‘Pessoa’ and ‘Pessoa’)
+    return x > y ? x : y;
+#+end_src
+
+C++ não sabe como comparar duas pessoas...Precisamos implementar a comparação. Fazemos isso definindo o operador ">".
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <string>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+class Pessoa {
+public:
+  std::string nome;
+
+  bool operator>(const Pessoa &other) const {
+    return this->nome > other.nome;
+  }
+};
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+
+  Pessoa luigi = { "Luigi" };
+  Pessoa mario = { "Mário" };
+
+  Pessoa maior = max(luigi, mario);
+  std::cout << maior.nome << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+|     2 |
+|   1.6 |
+| Mário |
+
+** Classes/Structs
+
+Além de funções, também podemos desenvolver classes genéricas.
+
+Imagine que desejamos implementar um par. Poderíamos ter um par de inteiros:
+
+#+begin_src C++ :flags -std=c++17 :results scalar
+#include <iostream>
+
+struct Par {
+  int x;
+  int y;
+};
+
+int main() {
+  Par ints = {1, 2};
+  std::cout << "(" << ints.x << ", " << ints.y << ")" << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+
+Mas, por quê não um par de inteiro e float? Ou um par de float e string?
+
+#+begin_src C++ :flags -std=c++17 :results scalar
+#include <iostream>
+#include <string>
+
+template <typename T, typename Q>
+struct Par {
+  T x;
+  Q y;
+};
+
+int main() {
+  Par<int, int> ints = {1, 2};
+  std::cout << "(" << ints.x << ", " << ints.y << ")" << std::endl;
+  
+  Par<int, float> int_fl = {1, 2.5};
+  std::cout << "(" << int_fl.x << ", " << int_fl.y << ")" << std::endl;
+  
+  Par<float, std::string> fl_str = {1.3, "Cruzeiro"};
+  std::cout << "(" << fl_str.x << ", " << fl_str.y << ")" << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+: (1, 2.5)
+: (1.3, Cruzeiro)
+
+Para este exemplo, agora temos dois tipos genéricos T e Q, que podem até ser diferentes.
+
+Note que, neste caso em específico, não existe nenhuma restrição sobre os tipos. Estamos apenas armazenando valores.
+
+** O Drama do .hpp vs .cpp vs .tpp
+
+Até então estamos fazendo tudo em um mesmo arquivo. Vamos tentar criar um header para nosso tipo Par?
+
+Além disso, vamos adicionar um construtor e uma operação ~show~ que mostra o conteúdo do par:
+
+par.hpp:
+
+#+begin_src C++ :tangle par.hpp :main no
+#ifndef PAR_H
+#define PAR_H
+
+template <typename T, typename Q>
+class Par {
+public:
+  T x;
+  Q y;
+
+  Par(T x, T y);
+  void show() const;
+};
+
+#endif
+#+end_src
+
+Normalmente, colocamos no header apenas as declarações, e deixamos as definições em um arquivo .cpp. Vamos criar este arquivo:
+
+par.cpp:
+
+#+begin_src C++ :tangle par.cpp :main no
+#include "par.hpp"
+#include <iostream>
+
+template <typename T, typename Q>
+Par<T, Q>::Par(T x, T y) : x(x), y(y) {}
+
+template <typename T, typename Q>
+void Par<T, Q>::show() const {
+  std::cout << "(" << x << ", " << y << ")" << std::endl;
+}
+#+end_src
+
+E vamos usar nosso par:
+
+main.cpp:
+
+#+begin_src C++ :flags -std=c++17 -I. par.cpp
+#include "par.hpp"
+
+int main() {
+  Par<int, int> p(1, 2);
+  p.show();
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+
+Tente compilar: g++ -std=c++17 main.cpp par.cpp
+
+O que aconteceu?
+
+#+begin_example
+undefined reference to `Par<int, int>::Par(int, int)'
+#+end_example
+
+Por quê? Lembra como funciona o processo de compilação?
+
+Cada arquivo de código (.cpp) é compilado separadamente, para só depois ocorrer a ligação dos objetos (.o). Isto é,
+
+1. Primeiro compila-se o arquivo main.cpp, junto dos headers iostream e par.hpp
+2. Nesse momento, o compilador está enxergando o template que está no par.hpp, e a especialização Par<int, int> no main.cpp, mas e o corpo dos métodos ~construtor~ e ~show~? O código está no par.cpp, que não faz parte desta etapa de compilação. Como o compilador poderia, então, gerar o código para a especialização Par<int, int>? Ele não consegue!
+
+É por isso que, no caso de templates, tanto a declaração quanto a definição (o corpo, a implementação) de funções genéricas e dos métodos que fazem parte de uma classe genérica precisam estar no header (.hpp), porque o compilador precisa enxergar a implementação.
+
+Então, para solucionar o erro acima, basta descartar o arquivo par.cpp e fazer a implementação no par.hpp:
+
+par.hpp (versão 2):
+
+#+begin_src C++ :tangle par_v2.hpp :main no
+#ifndef PAR_H
+#define PAR_H
+
+#include <iostream>
+
+template <typename T, typename Q>
+class Par {
+public:
+  T x;
+  Q y;
+
+  Par(T x, T y) : x(x), y(y) {}
+  
+  void show() const {
+    std::cout << "(" << x << ", " << y << ")" << std::endl;
+  }
+};
+
+#endif
+#+end_src
+
+Agora irá funcionar:
+
+#+begin_src C++ :flags -std=c++17 -I. :results scalar
+#include "par_v2.hpp"
+
+int main() {
+  Par<int, int> p(1, 2);
+  p.show();
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+
+Talvez você se incomode com o acúmulo de código na declaração da classe. Podemos separar isso:
+
+
+par.hpp (versão 3):
+
+#+begin_src C++ :tangle par_v3.hpp :main no
+#ifndef PAR_H
+#define PAR_H
+
+#include <iostream>
+
+template <typename T, typename Q>
+class Par {
+public:
+  T x;
+  Q y;
+
+  Par(T x, T y);
+  void show() const;
+};
+
+template <typename T, typename Q>
+Par<T, Q>::Par(T x, T y) : x(x), y(y) {}
+
+template <typename T, typename Q>
+void Par<T, Q>::show() const {
+  std::cout << "(" << x << ", " << y << ")" << std::endl;
+}
+
+#endif
+#+end_src
+
+E funciona igual:
+
+#+begin_src C++ :flags -std=c++17 -I. :results scalar
+#include "par_v3.hpp"
+
+int main() {
+  Par<int, int> p(1, 2);
+  p.show();
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+
+Se desejarmos, apenas para fins de organização física, ainda é possível separar a implementação em um outro arquivo. Vamos utilizar uma outra extensão .tpp, para diferenciar dos arquivos de código .cpp (a escolha é pessoal, outros usam .ipp, por exemplo, e muitos mantém o código no próprio .hpp). Lembre-se que, de qualquer maneira, o código *precisa estar disponível no header*. Então, neste caso fazemos o processo "inverso": incluímos o .tpp no final do .hpp:
+
+par.tpp:
+
+#+begin_src C++ :tangle par.tpp :main no
+template <typename T, typename Q>
+Par<T, Q>::Par(T x, T y) : x(x), y(y) {}
+
+template <typename T, typename Q>
+void Par<T, Q>::show() const {
+  std::cout << "(" << x << ", " << y << ")" << std::endl;
+}
+#+end_src
+
+par.hpp (versão 4):
+
+#+begin_src C++ :tangle par_v4.hpp :main no
+#ifndef PAR_H
+#define PAR_H
+
+#include <iostream>
+
+template <typename T, typename Q>
+class Par {
+public:
+  T x;
+  Q y;
+
+  Par(T x, T y);
+  void show() const;
+};
+
+#include "par.tpp"
+
+#endif
+#+end_src
+
+main.cpp:
+
+#+begin_src C++ :flags -std=c++17 -I. :results scalar
+#include "par_v4.hpp"
+
+int main() {
+  Par<int, int> p(1, 2);
+  p.show();
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+
+Para fins práticos, esta última versão e a versão 3 são *iguais*! Muda apenas organização física dos arquivos.

@@ -1,0 +1,577 @@
+                  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   NOTAS DE AULA - 04 LISTA ENCADEADA
+
+                           Luigi D. C. Soares
+                  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+TADs (relembrando)
+══════════════════
+
+  • Conjunto de *operações* sobre um conjunto de valores
+  • Importante é o que o TAD faz, não como
+
+
+Coleção de Elementos
+════════════════════
+
+  Como guardar uma sequência de elementos?
+
+  • Arranjos:
+    • Tamanho fixo
+    • Acesso direto pelo índice
+    • Biblioteca padrão C++:
+
+      ┌────
+      │ #include <array>
+      │ std::array<int, 10> xs;
+      └────
+
+  • Arranjos dinâmicos:
+    • Tamanho fixo, novo arranjo criado após esgotar espaço
+    • Acesso direto pelo índice
+    • Biblioteca padrão C++:
+
+      ┌────
+      │ #include <vector>
+      │ 
+      │ std::vector<int> xs;
+      │ std::vector<int> ys(10); // Definindo tamanho inicial
+      └────
+
+  Qual o custo de inserir um elemento na primeira posição de um arranjo?
+
+  Exemplo: inserir o 10 na primeira posição, antes do 0
+
+  [0, 1, 2, 3, ?] → [10, 0, 1, 2, 3]
+
+  É preciso deslocar todos os elementos do arranjo para a direita! (n
+  deslocamentos, sendo n o tamanho pré inserção)
+
+  Se o arranjo não tiver espaço suficiente, é preciso criar um novo
+  arranjo e copiar todos os elementos, deslocando uma posição para a
+  direita. Uma possível implementação seria dobrar o tamanho:
+
+  [0, 1, 2, 3] → [10, 0, 1, 2, 3, ?, ?, ?]
+
+  E para remover o elemento da primeira posição? Novamente, é preciso
+  deslocar os outros para a esquerda:
+
+  [10, 0, 1, 2, 3] → [0, 1, 2, 3, ?]
+
+
+Lista Encadeada
+═══════════════
+
+  Cada nó da lista irá apontar para o próximo:
+
+  0 → 1 → 2 → 3
+
+  Para inserir um elemento no início, basta reorganizar os ponteiros:
+
+  0 → 10 → 1 → 2 → 3
+
+  Note que a lista é naturalmente dinâmica!
+
+  Para inserir no final, o processo é o mesmo, basta que o último
+  elemento aponte para o novo.
+
+  0 → 1 → 2 → 3 → 10
+
+  E para remover o primeiro elemento? Bom, precisamos de alguma nos
+  referir ao primeiro elemento:
+
+  front → 0 → 1 → 2 → 3
+
+  Agora, basta atualizar `front' e apagar o 0:
+
+  front → 1 → 2 → 3
+
+  E para nos referir ao último elemento? Vamos adicionar um ponteiro
+  para ele também:
+
+  front →  0 → 1 → 2 → 3 ← back
+
+  Note que, dado que eu tenha em mãos um nó da lista em qualquer
+  posição, para inserir um novo nó a sua frente ou para remover o nó que
+  está na sua frente é preciso apenas "uma" operação (não é preciso
+  deslocar ninguém).
+
+  Mas, a partir de um nó, como inserir um novo nó atrás? Como remover o
+  nó de trás?
+
+
+Lista Duplamente Encadeada
+══════════════════════════
+
+  Quais as operações?
+  • Criar a lista
+  • Inserir no início
+  • Inserir no fim
+  • Dado um nó, inserir após ele
+  • Dado um nó, inserir antes dele
+  • Remover do início, fim, antes e depois de um nó
+  • Recuperar o primeiro e o último nó
+  • Percorrer a lista (nas duas direções)
+  • Tamanho da lista
+  • …
+
+  ┌────
+  │ #ifndef LINKED_LIST_H
+  │ #define LINKED_LIST_H
+  │ 
+  │ template <typename T>
+  │ class LinkedList {
+  │ public:
+  │   class Node {
+  │     friend class LinkedList;
+  │   public:
+  │     T data;
+  │ 
+  │     /// @brief Get the next node
+  │     /// @return Pointer to the next node
+  │     Node *next();
+  │ 
+  │     /// @brief Get the previous node
+  │     /// @return Pointer to the prev node
+  │     Node *prev();
+  │ 
+  │     /// @brief Replace the data stored
+  │     Node &operator=(const Node &rhs);
+  │ 
+  │   private:
+  │     Node *_prev;
+  │     Node *_next;
+  │   };
+  │ 
+  │   /// @brief Construct an empty list.
+  │   LinkedList();
+  │ 
+  │   /// @brief Return the first node in the list, or the end.
+  │   /// @return First node, if not empty; otherwise, end of the list
+  │   Node &front();
+  │ 
+  │   /// @brief Return the last node in the list, or the end.
+  │   /// @return Last node, if not empty; otherwise, end of the list
+  │   Node &back();
+  │ 
+  │   /// @brief The beginning of the list in forward order
+  │   ///
+  │   /// A pointer to the beginning of the list in forward order.
+  │   /// The beginning of the list is either the first element
+  │   /// or the end, if the list is empty.
+  │   ///
+  │   /// @return Pointer to the end of the list
+  │   Node *begin();
+  │ 
+  │   /// @brief The beginning of the list in reverse order
+  │   ///
+  │   /// A pointer to the beginning of the list in reverse order.
+  │   /// The beginning of the list is either the first element
+  │   /// or the end, if the list is empty.
+  │   ///
+  │   /// @return Pointer to the end of the list
+  │   Node *rbegin();
+  │ 
+  │   /// @brief The end of the list in forward order
+  │   ///
+  │   /// A pointer to the end of the list in forward order.
+  │   /// This pointer ca be compared against node addresses
+  │   /// to check whether one has reached the end of the list.
+  │   ///
+  │   /// @return Pointer to the end of the list
+  │   Node *end();
+  │ 
+  │   /// @brief The end of the list in forward order
+  │   ///
+  │   /// A pointer to the end of the list in reverse order.
+  │   /// This pointer can be compared against node addresses
+  │   /// to check whether one has reached the end of the list.
+  │   ///
+  │   /// @return Pointer to the end of the list in reverse order
+  │   Node *rend();
+  │ 
+  │   /// @brief Insert at the beginning of the list.
+  │   ///
+  │   /// @param  data Data to be stored in the first position
+  │   /// @return      The new node with @p data
+  │   Node &push_front(T data);
+  │ 
+  │   /// @brief Insert at the beginning of the list.
+  │   ///
+  │   /// @param  data Data to be stored in the last position
+  │   /// @return      The new node with @p data
+  │   Node &push_back(T data);
+  │ 
+  │   /// @brief Insert after a specific node
+  │   ///
+  │   /// @param  data  Data to be stored after node
+  │   /// @param  after Node that will point to the upcoming data
+  │   /// @return       The new node with @p data
+  │   Node &push_after(T data, Node &after);
+  │ 
+  │   /// @brief Insert before a specific node
+  │   ///
+  │   /// @param  data   Data to be stored before node
+  │   /// @param  before Node that will point to the upcoming data
+  │   /// @return        The new node with @p data
+  │   Node &push_before(T data, Node &before);
+  │ 
+  │   // ... 
+  │ 
+  │   /// @brief Free all nodes
+  │   ~LinkedList();
+  │ 
+  │ private:
+  │   Node _front;
+  │   Node _back;
+  │ };
+  │ 
+  │ #include "linked_list.tpp"
+  │ #endif
+  └────
+
+  Note que
+  • Definimos a lista como um tipo genérico, usando templates. Neste
+    caso, a implementação precisa ser feita no header. Para continuarmos
+    separando interface e implementação, vamos fazer a implementação em
+    um arquivo separado com extensão .tpp e incluí-lo no header
+  • Definimos o nó da lista dentro da lista. Assim, vamos nos referir a
+    ele como LinkedList::Node.
+  • Não queremos que o usuário altere as ligações de cada nó
+    diretamente, ele pode apenas acessar. Mas, queremos que a nossa
+    classe LinkedList possa acessar os membros privados, porque ela vai
+    controlar os nós. Para isso, definimos LinkedList como uma classe
+    "amiga" (friend class) de Node.
+  • Definimos o operador de atribuição de forma que ele copie apenas o
+    dado, não alterando os ponteiros.
+
+  ┌────
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::Node::next() {
+  │   return _next;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::Node::prev() {
+  │   return _prev;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::Node::operator=(const Node &rhs) {
+  │   this->data = rhs.data;
+  │   return *this; // This aponta para o objeto atual
+  │ }
+  └────
+
+  Primeiro, vamos construir a lista inicialmente vazia. Vamos também
+  cuidar da desalocação:
+
+  ┌────
+  │ template <typename T>
+  │ LinkedList<T>::LinkedList() {
+  │   _front._prev = nullptr;
+  │   _front._next = &_back;
+  │   _back._prev = &_front;
+  │   _back._next = nullptr;
+  │ }
+  │ 
+  │ template <typename T>
+  │ LinkedList<T>::~LinkedList() {
+  │   while (_front._next != &_back) {
+  │     Node *n = _front._next;
+  │     _front._next = n->_next;
+  │     delete n;
+  │   }
+  │ }
+  └────
+
+  E para inserir no início?
+
+  Exemplo: push_front(1)
+
+  O nó 1 agora é tanto o primeiro quanto o último
+
+  null ← front ↔ 1 ↔ back → null
+
+  E se a lista não estivesse vazia? O processo é o mesmo!
+
+  push_front(0)
+
+  null ← front ↔ 0 ↔ 1 ↔ back → null
+
+  ┌────
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_front(T data) {
+  │   Node node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = &_front;
+  │   node->_next = _front._next;
+  │ 
+  │   _front._next = node;
+  │   node->_next->_prev = node;
+  │ 
+  │   return *node;
+  │ }
+  └────
+
+  Como Node está dentro de LinkedList, nos referimos a ele como
+  LinkedList<T>::Node. Como Node é um tipo que depende de outro tipo (a
+  definição de Node dependen do que o tipo T, parâmetro do template da
+  LinkedList, é), precisamos do typename no início.
+
+  E para inserir após um nó específico? O mesmo processo!
+
+  ┌────
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_after(T data, Node &after) {
+  │   Node *node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = &after;
+  │   node->_next = after._next;
+  │ 
+  │   after._next = node;
+  │   node->_next->_prev = node;
+  │ 
+  │   return *node;
+  │ }
+  └────
+
+  Note que podemos na verdade utilizar o próprio push_after para definir
+  push_front:
+
+  ┌────
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_front(T data) {
+  │   return push_after(data, _front);
+  │ }
+  └────
+
+  A inserção antes de um nó e a inserção na última posição seguem a
+  mesma ideia:
+
+  ┌────
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_before(T data, Node &before) {
+  │   Node *node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = before._prev;
+  │   node->_next = &before;
+  │ 
+  │   before._prev = node;
+  │   node->_prev->_next = node;
+  │ 
+  │   return *node;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_back(T data) {
+  │   return push_before(data, _back);
+  │ }
+  └────
+
+  Recuperando o primeiro e último nó:
+
+  ┌────
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::front() {
+  │   return *_front._next;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::back() {
+  │   if (_back._prev == &_front) return _back;
+  │   return *_back._prev;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::begin() {
+  │   return _front._next;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::rbegin() {
+  │   return _back._prev;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::end() {
+  │   return &_back;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::rend() {
+  │   return &_front;
+  │ }
+  └────
+
+  A implementação completa:
+
+  ┌────
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::Node::next() {
+  │   return _next;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::Node::prev() {
+  │   return _prev;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::Node::operator=(const Node &rhs) {
+  │   this->data = rhs.data;
+  │   return *this; // This aponta para o objeto atual
+  │ }
+  │ 
+  │ template <typename T>
+  │ LinkedList<T>::LinkedList() {
+  │   _front._prev = nullptr;
+  │   _front._next = &_back;
+  │   _back._prev = &_front;
+  │   _back._next = nullptr;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::front() {
+  │   return *_front._next;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::back() {
+  │   if (_back._prev == &_front) return _back;
+  │   return *_back._prev;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::begin() {
+  │   return _front._next;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::rbegin() {
+  │   return _back._prev;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::end() {
+  │   return &_back;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node *LinkedList<T>::rend() {
+  │   return &_front;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_front(T data) {
+  │   return push_after(data, _front);
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_back(T data) {
+  │   return push_before(data, _back);
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_after(T data, Node &after) {
+  │   Node *node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = &after;
+  │   node->_next = after._next;
+  │ 
+  │   after._next = node;
+  │   node->_next->_prev = node;
+  │ 
+  │   return *node;
+  │ }
+  │ 
+  │ template <typename T>
+  │ typename LinkedList<T>::Node &LinkedList<T>::push_before(T data, Node &before) {
+  │   Node *node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = before._prev;
+  │   node->_next = &before;
+  │ 
+  │   before._prev = node;
+  │   node->_prev->_next = node;
+  │ 
+  │   return *node;
+  │ }
+  │ 
+  │ template <typename T>
+  │ LinkedList<T>::~LinkedList() {
+  │   while (_front._next != &_back) {
+  │     Node *n = _front._next;
+  │     _front._next = n->_next;
+  │     delete n;
+  │   }
+  │ }
+  └────
+
+  Agora vamos usar nossa lista encadeada:
+
+  ┌────
+  │ #include <iostream>
+  │ #include "linked_list.hpp"
+  │ 
+  │ int main() {
+  │   LinkedList<int> list;
+  │ 
+  │   list.push_front(1);
+  │   LinkedList<int>::Node &w = list.push_front(2);
+  │   LinkedList<int>::Node &x = list.push_after(3, w);
+  │   LinkedList<int>::Node &y = list.push_back(10);
+  │   LinkedList<int>::Node &z = list.push_before(8, y);
+  │ 
+  │   LinkedList<int>::Node *n = list.begin();
+  │   while (n != list.end()) {
+  │     std::cout << n->data << std::endl;
+  │     n = n->next();
+  │   }
+  │ 
+  │   std::cout << std::endl;
+  │ 
+  │   n = list.rbegin();
+  │   while (n != list.rend()) {
+  │     std::cout << n->data << std::endl;
+  │     n = n->prev();
+  │   }
+  │ 
+  │   std::cout << std::endl;
+  │   z = y;
+  │ 
+  │   n = list.rbegin();
+  │   while (n != list.rend()) {
+  │     std::cout << n->data << std::endl;
+  │     n = n->prev();
+  │   }
+  │ 
+  │   // O que acontece se fizermos isso? Por quê?
+  │   // list.push_after(11, *list.end());
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  O que aconteceria se não tivéssemos definido o operador de atribuição?
+
+  E a busca por um valor na lista, como implementar?
+
+  E as operações de remoção? Dado um nó, como removê-lo?
+
+  null ← front ↔ 0 ↔ 1 ↔ 2 ↔ 3 ↔ back → null
+
+  Exemplo: remover o 2
+
+  Basta rearranjar os links entre o nó anterior e o posterior e liberar
+  o nó que será removido:
+
+  null ← front ↔ 0 ↔ 1 ↔ 3 ↔ back → null
+
+  Tente implementar!

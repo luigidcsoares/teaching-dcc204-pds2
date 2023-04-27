@@ -1,0 +1,168 @@
+#+title: Notas de Aula - 10 Git e Revisão
+#+author: Luigi D. C. Soares
+#
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#
+* Controle de Versão
+
+- Como manter múltiplas versões de um projeto?
+- E se em algum momento fizemos uma alteração no projeto que gostaríamos de reverter?
+  - Criar várias cópias?
+  - projeto\under{}v1.zip
+  - projeto\under{}v2.zip
+  - projeto\under{}final.zip
+  - projeto\under{}final\under{}agora\under{}vai.zip
+  - ...
+
+- Como ver as diferenças entre duas ou mais versões do projeto?
+- Se estamos trabalhando em grupo, como compartilhar o código?
+- Se duas pessoas alteram o mesmo arquivo, o que acontece?
+
+Ferramentas de control de versão:
+- Git, Mercurial, SVN
+
+* Git + Github
+
+** Configurando
+
+Após instalar o git e criar uma conta no Github, você precisará configurar algumas coisas:
+- git config --global user.name "Seu Nome"
+- git config --global user.email "Seu Email"
+
+Um repositório no Github possui dois links diferentes: HTTPS e SSH. Para clonar e utilizar o repositório a partir do link SSH, você precisará configurar um par de chaves pública/privada na sua máquina e configurar sua chave pública na sua conta do Github. Se preferir esta opção, a própria página do Github fornece um tutorial.
+
+Para utilizar o link HTTPS, antigamente era possível fazer a conexão através de seu usário e senha do Github. Por questões de segurança, esta opção foi removida. Você precisará criar um "Personal Access Token".
+- Na sua página do github, clique na sua imagem no canto superior direito --> Settings
+- Desça até encontrar "Developer Settings"
+- Personal Acess Tokens --> Tokens (Classic)
+- Clique em Generate new token e escolha a opção (classic)
+- Em "Note", coloque algo indicando que aquele token é para acesso a repositórios, exemplo "General access to repositories"
+- Em "Expiration", configure como "No expiration"
+- Marque a opção "repo" (pelo menos); as outras opções você pode pesquisar mais a respeito posteriormente
+- Clique em "Generate Token"
+- Copie o token que aparecerá na sua tela (você não terá mais acesso a ele futuramente!!!)
+
+Nas operações que veremos a seguir, que necessitam de conexão com o repositório remoto, será solicitado que você entre com seu usuário do Github e senha. A senha aqui, na verdade, será o token que você copiou
+- Obs.: No Visual Studio Code, pode ser que ele peça para abrir uma página de autenticação. Clique em cancelar (ou tente configurar o vscode como preferir)
+
+Para não precisarmos manter esse token copiado, vamos configurar o git para salvá-lo após a primeira inserção:
+- git config --global credential.helper store
+
+ATENÇÃO: Esta talvez não seja a opção mais adequada, pois o token será salvo em um arquivo de texto comum, podendo ser acessado facilmente. Você pode pesquisar formas melhores de armazenar o token, possivelmente criptografando-o. Ou você pode simplesmente assumir que mais ninguém terá acesso ao seu computador e o token está seguro. No pior dos casos, caso o token caia em mãos erradas, basta deletar o token na sua página do Github.
+
+Com o store configurado, após a primeira solicitação do token você não precisará mais informá-lo em nenhuma operação futura.
+
+** Criar/Configurar um Repositório
+
+Criando um novo repositório local
+- git init
+
+Obtendo uma cópia de um repositório local
+- git clone /caminho/para/repositório
+  
+Obtendo uma cópia de um repositório remoto
+- git clone usuário@servidor:/caminho/para/repositório
+
+** Fluxo de Trabalho
+
+- Diretório de trabalho: os arquivos reais, que estamos alterando
+- Índice: área temporária, contendo alterações a serem confirmadas
+- HEAD: ponteiro para o último /commit/ feito pelo usuário
+
+** Adicionando e Confirmando Mudanças
+
+Podemos verificar o estado do nosso repositório a qualquer momento com
+- git status
+
+Para adicionarmos uma alteração ao índice:
+- git add <arquivo>
+- git add * (adiciona tudo)
+
+Para confirmar estas alterações:
+- git commit -m "mensagem sobre as alterações"
+
+Após o commit, o arquivo é enviado para o HEAD, ainda apenas no repositório local
+
+** Enviando Mudanças para Remoto
+
+Se você clonou (git clone) o repositório remoto, o próximo passo não é necessário. Caso você tenha apenas criado o repositório local, você precisará associar um repositório remoto ao seu repositório local:
+- git remote add origin <servidor>
+- origin é o nome que normalmente se usa para o link remoto "principal", mas você pode escolher
+
+Agora, basta rodar o comando
+- git push origin main
+- main é o nome da "branch" principal, poderia ser outra branch, isto é
+- git push origin <branch>
+- O que é branch?
+
+** Ramificações (branches)
+
+Ramificações são utilizadas para desenvolver funcionalidades isoladas umas das outras. O branch "main" ("master", em casos mais antigos) é o branch padrão quando você cria um repositório. Para criar uma branch:
+- git branch <branch>
+- ou git branch <branch> <branch-base/commit>, para especificar uma branch ou um commit específico como base (omitindo, a base é a branch main)
+
+Movendo para uma branch diferente:
+- git switch <branch>
+
+Criando e movendo para uma branch em um único passo
+- git switch -c <branch>
+
+Criando/atualizando uma branch remota (procedimento igual na branch main):
+- git push origin <branch>
+
+** Atualizando Repositório/Branches
+
+Para recuperar atualizações do repositório remoto:
+- git pull
+
+Isso é o mesmo que /obter/ (fetch) e /mesclar/ (merge) alterações:
+- git fetch, seguido de git merge
+
+Podemos, ainda, mesclar uma outra branch à branch ativa. Por exemplo, criamos uma branch "funcionalidade", finalizamos o que queríamos e agora desejamos mesclar as alterações na branch "main":
+- git switch main
+- git merge funcionalidade
+
+O merge nem sempre é possível, podem acontecer conflitos (lembra? quando duas ou mais pessoas trabalham no mesmo arquivo). Quando isto acontece, você deve resolver os conflitos (que serão exibidos pelo git). Após resolver os conflitos, você deve fazer o commit
+- git add <arquivo>
+- git commit -m "mensagem do merge"
+
+Você também pode visualizar as diferenças entre branches:
+- git diff <branch origem> <branch destino>
+
+** Revertendo Alterações
+
+Para reverter um arquivo, desfazendo quaisquer alterações ainda não commitadas:
+- git restore <arquivo>
+
+Podemos, ainda, reverter nosso repositório para um commit anterior. Primeiro, vamos listar os commits:
+- git log
+
+Note que cada commit possui um identificador (exemplo: 4f3712d859a69465bf043690e0b5dd4e68d43b48).
+
+Se os commits ainda não foram publicados (push), para descartar quaisquer alterações locais e voltar para este commit em específico:
+- git reset --hard 4f3712d859a69465bf043690e0b5dd4e68d43b48
+
+Você pode desejar salvar as alterações locais antes de qualquer reversão:
+- git stash
+- git reset --hard 4f3712d859a69465bf043690e0b5dd4e68d43b48
+- git pop
+
+Se o commit já foi publicado (exemplo: já está no github), use o comando git revert:
+- git revert 4f3712d859a69465bf043690e0b5dd4e68d43b48
+
+O git revert irá desfazer as alterações introduzidas pelo commit, criando um novo commit.
+
+** O Arquivo .gitignore
+
+As vezes, desejamos que alguns arquivos nunca façam parte do nosso repositório. Tecnicamente, basta nunca adicioná-los (com o git add). Mas, podemos garantir que o git nunca irá enxergá-los. Para isto, basta criar um arquivo ".gitignore", listando os arquivos ou pastas que se deseja ignorar.
+
+* Revisão e Refatoração (Github: Pull Request)
+
+Quando estamos trabalhando em grupo, ao subir uma alteração para o repositório remoto é recomendado que não o faça na branch principal. Ao invés disso, crie uma nova branch para a tarefa que está implementando. Ao fazer isso, e publicar esta branch no servidor remoto, você pode criar um "Pull Request", solicitando que a sua branch seja mesclada com a principal (ou qualquer outra). O Github criará um pull request, no qual você descreverá suas alterações, e outros colaboradores poderão revisar o código e sugerir mudanças antes que estas sejam mescladas com a versão principal do projeto.
+
+Esta é uma etapa fundamental do processo de desenvolvimento de um software: revisão e refatoração
+
+Exemplo: Lembram daquele exemplo do Single Responsibility Principle (SRP)? Uma revisão feita por um outro desenvolvedor poderia detectar que a nossa implementação não estava obedecendo ao SRP. Este outro colaborador comentaria no pull request, e eu, o responsável por aquele pull request, reescreveria o código de modo que este passe a satisfazer o princípio.
+
+Esta etapa de reescrita do código é chamada de *refatoração*.
