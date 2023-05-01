@@ -1,0 +1,762 @@
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                 NOTAS DE AULA - 14 POO: ENCAPSULAMENTO
+
+                           Luigi D. C. Soares
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+O que é Encapsulamento?
+═══════════════════════
+
+  • Encapsulamento é uma estratégia de abstração
+  • Se refere ao agrupamento de dados e operações em uma única entidade
+  • Consiste em abstrair detalhes de implementação relacionados ao
+    estado do objeto
+
+  Uma ferramenta comumente utilizada (mas não presente em todas as
+  linguagens, ex: Python) são os modificadores de acesso.
+
+
+Modificadores de Acesso
+═══════════════════════
+
+  C++ provê três níveis de acesso (do mais permissivo ao mais restrito):
+  *public*, *protected* e *private*.
+
+
+O modificador de acesso public
+──────────────────────────────
+
+  • Quem pode acessar?
+    • Todo mundo!
+  • É o padrão (i.e. quando não explícito) para `struct'
+  • Deve ser usado com responsabilidade:
+    • Interface da classe deve ser pública (as operações disponíveis
+      para o usuário)
+    • Alguns atributos, analisando bastante caso a caso (vamos falar
+      disso mais adiante)
+
+  Exemplo: Conta Bancária
+
+  `conta.hpp'
+
+  ┌────
+  │ #ifndef CONTA_H
+  │ #define CONTA_H
+  │ 
+  │ #include <string>
+  │ 
+  │ class Conta {
+  │ public:
+  │   unsigned agencia;
+  │   unsigned numero;
+  │   double saldo;
+  │ 
+  │   Conta(unsigned agencia, unsigned numero);
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `conta.cpp'
+
+  ┌────
+  │ #include "conta_v1.hpp"
+  │ Conta::Conta(unsigned agencia, unsigned numero)
+  │   : agencia(agencia), numero(numero), saldo(0.0) {}
+  └────
+
+  • Note que conseguimos tanto acessar quanto modificar os campos
+    `agencia, ~numero' e `saldo'
+  • O construtor também faz parte da interface pública da classe
+
+  `main.cpp'
+
+  ┌────
+  │ #include "conta_v1.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   Conta c(1, 123456);
+  │   std::cout << c.agencia << " :: " << c.numero << " => " << c.saldo << std::endl;
+  │ 
+  │   c.saldo = 1000;
+  │   c.agencia = 3;
+  │   std::cout << c.agencia << " :: " << c.numero << " => " << c.saldo << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+
+O modificador de acesso protected
+─────────────────────────────────
+
+  • Quem pode acessar?
+    • A própria classe
+    • Classes que fazem parte da hierarquia (derivadas)
+    • Classes "amigas" (aquela palavra-chave `friend', bem específico de
+      C++)
+
+  Como ainda não falamos de herança (assunto de aulas futuras), vamos
+  ver apenas um exemplo:
+
+  • Não conseguimos acessar o campo `i' protegido na classe Base
+  • Mas a classe Derivada consegue acessar o campo, e devolver um valor
+    baseado no `i'
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class Base {
+  │ protected:
+  │   int i = 10;
+  │ };
+  │ 
+  │ class Derivada : public Base {
+  │ public:
+  │   int f() {
+  │     i++;
+  │     return i;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   Base b;
+  │ 
+  │   // error: 'int Base::i' is protected within this context
+  │   // std::cout << b.i << std::endl;
+  │ 
+  │   Derivada d;
+  │   std::cout << d.f() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  Note que na própria herança aparece um modificador
+  `public'. Voltaremos nisso mais a frente.
+
+
+O modificador de acesso private
+───────────────────────────────
+
+  • Quem pode acessar
+    • A própria classe!
+    • Classes amigas
+  • É o padrão (i.e. quando não explícito) para `class'
+  • Recomenda-se utilizar sempre que possível (e que faça sentido)
+    • Como sempre, há exceções! pense bem no problema que está
+      resolvendo
+  • Ao ocultar atributos, fornecemos métodos auxiliares para manipulação
+    dos campos
+  • Ocultamos métodos para esconder detalhes de implementação
+    desnecessários ao usuário
+
+  Vamos voltar ao nosso exemplo de Conta Bancária:
+  • Faz sentido permitir a modificação da agência e do número da conta?
+  • E a manipulação do saldo? Faz sentido permitir essa manipulação
+    direta?
+
+  Para a agência e o número, podemos escondê-los e fornecer um método
+  apenas para leitura dos dados
+  • Este método é comumente nomeado como "get_campo" (ou "getCampo",
+    dependendo do seu estilo)
+  • Opinião pessoal: muitas vezes o prefixo não me agrada, prefiro
+    definir o nome do método como o próprio nome do campo
+
+  Versão mais comum:
+
+  ┌────
+  │ class Conta {
+  │ public:
+  │   Conta(unsigned agencia, unsigned numero);
+  │ 
+  │   unsigned get_agencia() const;
+  │   unsigned get_numero() const;
+  │ 
+  │ private:
+  │   unsigned _agencia;
+  │   unsigned _numero;
+  │   double _saldo;
+  │ };
+  └────
+
+  Minha preferência (de novo, apenas gosto pessoal, use o que já estiver
+  definido pela equipe, caso exista uma conveção):
+
+  ┌────
+  │ class Conta {
+  │ public:
+  │   Conta(unsigned agencia, unsigned numero);
+  │ 
+  │   unsigned agencia() const;
+  │   unsigned numero() const;
+  │ 
+  │ private:
+  │   unsigned _agencia;
+  │   unsigned _numero;
+  │   double _saldo;
+  │ };
+  └────
+
+  Para a manipulação do saldo, além da leitura faz sentido permitir a
+  modificação, mas como?
+  • A conveção para o nome deste tipo de método é "set_campo"
+  • Nem sempre faz sentido, opte pelas operações mais descritivas
+    possíveis
+  • Por exemplo, considere as duas versões a seguir:
+
+  Com set_campo:
+
+  ┌────
+  │ class Conta {
+  │ public:
+  │   Conta(unsigned agencia, unsigned numero);
+  │ 
+  │   unsigned agencia() const;
+  │   unsigned numero() const;
+  │   double saldo() const;
+  │   void set_saldo(double saldo);
+  │ 
+  │ private:
+  │   unsigned _agencia;
+  │   unsigned _numero;
+  │   double _saldo;
+  │ };
+  └────
+
+  Separando em operações "reais":
+
+  ┌────
+  │ class Conta {
+  │ public:
+  │   Conta(unsigned agencia, unsigned numero);
+  │ 
+  │   unsigned agencia() const;
+  │   unsigned numero() const;
+  │   double saldo() const;
+  │   void depositar(double valor);
+  │   void sacar(double valor);
+  │ 
+  │ private:
+  │   unsigned _agencia;
+  │   unsigned _numero;
+  │   double _saldo;
+  │ };
+  └────
+
+  E como implementar?
+
+  ┌────
+  │ Conta::Conta(unsigned agencia, unsigned numero)
+  │   : agencia(agencia), numero(numero), saldo(0.0) {}
+  │ 
+  │ unsigned Conta::agencia() const {
+  │   return _agencia;
+  │ }
+  │ 
+  │ unsigned Conta::numero() const {
+  │   return _numero;
+  │ }
+  │ 
+  │ double Conta::saldo() const {
+  │   return _saldo;
+  │ }
+  │ 
+  │ void Conta::depositar(double valor) const {
+  │   _valor += valor;
+  │ }
+  │ 
+  │ void Conta::sacar(double valor) const {
+  │   _valor -= valor;
+  │ }
+  └────
+
+  A implementação acima ainda apresenta um erro em potencial. Qual?
+
+  Faz sentido possibilitar o saque de um valor acima do disponível?
+  (desconsidere casos como cheque especial)
+
+  `conta.hpp' (versão 2):
+
+  ┌────
+  │ #ifndef CONTA_H
+  │ #define CONTA_H
+  │ 
+  │ #include <string>
+  │ 
+  │ class Conta {
+  │ public:
+  │   Conta(unsigned agencia, unsigned numero);
+  │ 
+  │   unsigned agencia() const;
+  │   unsigned numero() const;
+  │   double saldo() const;
+  │   void depositar(double valor);
+  │   bool sacar(double valor);
+  │ 
+  │ private:
+  │   unsigned _agencia;
+  │   unsigned _numero;
+  │   double _saldo;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `conta.cpp'
+
+  ┌────
+  │ #include "conta_v2.hpp"
+  │ Conta::Conta(unsigned agencia, unsigned numero)
+  │   : _agencia(agencia), _numero(numero), _saldo(0.0) {}
+  │ 
+  │ unsigned Conta::agencia() const {
+  │   return _agencia;
+  │ }
+  │ 
+  │ unsigned Conta::numero() const {
+  │   return _numero;
+  │ }
+  │ 
+  │ double Conta::saldo() const {
+  │   return _saldo;
+  │ }
+  │ 
+  │ void Conta::depositar(double valor) {
+  │   _saldo += valor;
+  │ }
+  │ 
+  │ bool Conta::sacar(double valor) {
+  │   if (valor > _saldo) return false;
+  │ 
+  │   _saldo -= valor;
+  │   return true;
+  │ }
+  └────
+
+  Note que agora o encapsulamento "se pagou"! Daqui para frente podemos
+  alterar a validação do saque como quisermos, para o usuário da classe
+  nada irá mudar (lembre-se: usuário, aqui, se refere ao programador que
+  irá utilizar a classe)
+
+  `main.cpp'
+
+  ┌────
+  │ #include "conta_v2.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   Conta c(1, 123456);
+  │   std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │ 
+  │   // Não funciona! error: 'double Conta::_saldo' is private within this context
+  │   // c._saldo = 1000;
+  │ 
+  │   c.depositar(1000);
+  │   std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │ 
+  │   bool ok = c.sacar(500);
+  │   if (ok) {
+  │     std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │   } else {
+  │     std::cout << "Saldo insuficiente!" << std::endl;
+  │   }
+  │ 
+  │   ok = c.sacar(1000);
+  │   if (ok) {
+  │     std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │   } else {
+  │     std::cout << "Saldo insuficiente!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  Suponha que as regras de negócio do banco mudaram, e o banco passará a
+  cobrar uma tarifa de 25 centavos por transação (tanto depósito como
+  saque). Como melhorar a implementação a seguir?
+
+  ┌────
+  │ void Conta::depositar(double valor) {
+  │   _saldo += valor;
+  │   _saldo -= 0.25;
+  │ }
+  │ 
+  │ bool Conta::sacar(double valor) {
+  │   if (valor > _saldo + 0.25) return false;
+  │ 
+  │   _saldo -= valor;
+  │   _saldo -= 0.25;
+  │   return true;
+  │ }
+  └────
+
+  Estamos repetindo a mesma operação em dois lugares. Podemos extrair
+  para um método (estamos *refatorando* o código):
+
+  ┌────
+  │ void Conta::descontar_tarifa() {
+  │   _saldo -= 0.25;
+  │ }
+  │ 
+  │ void Conta::depositar(double valor) {
+  │   _saldo += valor;
+  │   descontar_tarifa();
+  │ }
+  │ 
+  │ bool Conta::sacar(double valor) {
+  │   if (valor > _saldo + 0.25) return false;
+  │ 
+  │   _saldo -= valor;
+  │   descontar_tarifa();
+  │   return true;
+  │ }
+  └────
+
+  O método `descontar\under{}tarifa' deve ser público ou privado?
+  Privado! Vamos renomear para "_descontar_tarifa".
+
+  O que mais podemos melhorar?
+  • A tarifa é repetida em vários lugares, se quiséssemos alterar
+    teríamos que modificar várias partes do código. Podemos transformar
+    em uma constante
+  • Pense: esta constante deve ser um membro de instância ou de classe?
+    Faz sentido cada objeto ter um valor diferente? Não!
+  • Dica: `constexpr' é uma forma de indicar que o valor deve estar
+    disponível em tempo de compilação (implica `inline', disponível a
+    partir do C++11)
+
+  `conta.hpp' (versão 3)
+
+  ┌────
+  │ #ifndef CONTA_H
+  │ #define CONTA_H
+  │ 
+  │ #include <string>
+  │ 
+  │ class Conta {
+  │ public:
+  │   Conta(unsigned agencia, unsigned numero);
+  │ 
+  │   unsigned agencia() const;
+  │   unsigned numero() const;
+  │   double saldo() const;
+  │   void depositar(double valor);
+  │   bool sacar(double valor);
+  │ 
+  │ private:
+  │   static constexpr double _k_tarifa = 0.25;
+  │ 
+  │   unsigned _agencia;
+  │   unsigned _numero;
+  │   double _saldo;
+  │ 
+  │   void _descontar_tarifa();
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `conta.cpp' (versão 3):
+
+  ┌────
+  │ #include "conta_v3.hpp"
+  │ #include <iostream>
+  │ 
+  │ Conta::Conta(unsigned agencia, unsigned numero)
+  │   : _agencia(agencia), _numero(numero), _saldo(0.0) {}
+  │ 
+  │ unsigned Conta::agencia() const {
+  │   return _agencia;
+  │ }
+  │ 
+  │ unsigned Conta::numero() const {
+  │   return _numero;
+  │ }
+  │ 
+  │ double Conta::saldo() const {
+  │   return _saldo;
+  │ }
+  │ 
+  │ void Conta::_descontar_tarifa() {
+  │   _saldo -= _k_tarifa;
+  │ }
+  │ 
+  │ void Conta::depositar(double valor) {
+  │   _saldo += valor;
+  │   _descontar_tarifa();
+  │ }
+  │ 
+  │ bool Conta::sacar(double valor) {
+  │   if (valor > _saldo + _k_tarifa) return false;
+  │ 
+  │   _saldo -= valor;
+  │   _descontar_tarifa();
+  │   return true;
+  │ }
+  └────
+
+  Note que nada foi alterado em relação a utilização da classe:
+
+  `main.cpp'
+
+  ┌────
+  │ #include "conta_v3.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   Conta c(1, 123456);
+  │   std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │ 
+  │   // Não funciona! error: 'double Conta::_saldo' is private within this context
+  │   // c._saldo = 1000;
+  │ 
+  │   c.depositar(1000);
+  │   std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │ 
+  │   bool ok = c.sacar(500);
+  │   if (ok) {
+  │     std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │   } else {
+  │     std::cout << "Saldo insuficiente!" << std::endl;
+  │   }
+  │ 
+  │   ok = c.sacar(1000);
+  │   if (ok) {
+  │     std::cout << c.agencia() << " :: " << c.numero() << " => " << c.saldo() << std::endl;
+  │   } else {
+  │     std::cout << "Saldo insuficiente!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+
+Discussão sobre Getters e Setters
+─────────────────────────────────
+
+  Utilizamos getters e setters como mecanismos de manipulação de dados
+  que, por algum motivo, decidimos esconder do mundo externo. Na grande
+  maioria dos casos, esta será a opção desejada, mas precisa haver um
+  motivo para esta decisão!
+
+  Isto é algo discutido, inclusive, no guia de boas práticas de C++:
+  [Avoid trivial getters and setters]
+
+  "Um getter/setter é trivial quando não adiciona nenhum valor
+  semântico"
+
+  Nestes casos, o efeito é exatamente o mesmo que tornar os campos
+  públicos, que deve ser a preferência. Faça uma análise de cada campo e
+  se pergunte: este campo irá precisar de algum tipo de validação,
+  restrição ou qualquer operação semântica que não deva ficar a cargo do
+  usuário? Muitas vezes a resposa será "sim" (vide exemplo da operação
+  de saque da conta bancária), mas em alguns será "não". Nestes casos
+  excepcionais, opte por manter o campo público!
+
+
+[Avoid trivial getters and setters]
+<https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c131-avoid-trivial-getters-and-setters>
+
+
+Curiosidade: Getters e Setters em Python
+────────────────────────────────────────
+
+  Apenas como curiosidade, para mostrar que nem todas as linguagens
+  fornecem as mesmas ferramentas, observe como é feito a definição de
+  getters e setters em Python:
+
+  ┌────
+  │ class Conta:
+  │     def __init__(self, agencia, numero):
+  │         self.agencia = agencia
+  │         self.numero = numero
+  │         self._saldo = 0.0
+  │ 
+  │     @property
+  │     def agencia(self):
+  │         return self._agencia
+  │ 
+  │     @agencia.setter
+  │     def agencia(self, agencia):
+  │         self._agencia = agencia
+  │ 
+  │     @property
+  │     def numero(self):
+  │         return self._numero
+  │ 
+  │     @numero.setter
+  │     def numero(self, numero):
+  │         self._numero = numero
+  │ 
+  │     @property
+  │     def saldo(self):
+  │         return self._saldo
+  │ 
+  │     def depositar(self, valor):
+  │         self._saldo += valor
+  │ 
+  │     def sacar(self, valor):
+  │         if valor > self._saldo:
+  │             return False
+  │ 
+  │         self._saldo -= valor
+  │         return True
+  │ 
+  │ conta = Conta(1, 123456)
+  │ print(f"{conta.agencia} :: {conta.numero} => {conta.saldo}")
+  │ 
+  │ conta.depositar(1000)
+  │ print(f"{conta.agencia} :: {conta.numero} => {conta.saldo}")
+  │ 
+  │ ok = conta.sacar(1500)
+  │ if ok:
+  │     print(f"{conta.agencia} :: {conta.numero} => {conta.saldo}")
+  │ else:
+  │     print("Saldo insuficiente!")
+  └────
+
+  Ao invés de métodos "get_campo" e "set_campo", Python nos permite
+  transformar atributos em propriedades, que possuem uma implementação
+  interna. Assim, utilizamos as propriedades como se fossem atributos
+  comuns, mas por trás das operaçãos de leitura escrita existem detalhes
+  de implementação sendo executados.
+
+  Uma outra observação interessante é que Python não possui
+  modificadores de acesso. Nada nos impede de acessar os campos
+  `_saldo', `_agencia' e `_numero'. Python deixa a cargo do programador
+  a responsabilidade de utilizar a classe como ela deve ser
+  utilizada. Uma prática muito comum é nomear campos "privados" com o
+  prefixo "_", mas isto não impede o uso dos campos, é apenas uma
+  conveção para indicar que aqueles campos não deveriam ser utilizados
+  diretamente.
+
+
+Exemplo: Validação de Pessoa
+════════════════════════════
+
+  • Suponha que desejamos construir uma classe Pessoa
+  • Pessoa possui um nome (único campo, apenas para exemplo)
+  • Esta classe fará parte do sistema de um cartório
+  • Os nomes precisam de uma certa validação. Para nosso exemplo, a
+    validação será: um nome não pode conter números
+
+  Para fazer isso, vamos juntar alguns conceitos que vimos hoje e na
+  aula anterior (encapsulamento + métodos estáticos)
+
+  Passo a passo:
+  • Vamos tornar o nome privado (aqui entra o encapsulamento), para
+    impedir manipulações indesejadas.
+  • Vamos *deletar* o construtor padrão, e criar um construtor privado
+    (impedir o uso do construtor)
+  • Ao invés de um construtor, vamos definir um método estático que
+    retornará ou uma Pessoa ou um Error. Para isso, vamos utilizar um
+    tipo que foi introduzido na biblioteca do C++ 17, o
+    std::variant. Basicamente, é um union mais seguro.
+  • Uma alternativa ao std::variant seria simplesmente retornar um
+    ponteiro nulo caso algo falhasse (mas perderíamos o código e a
+    mensagem de erro!)
+
+  `error.hpp'
+
+  ┌────
+  │ #ifndef ERROR_H
+  │ #define ERROR_H
+  │ 
+  │ #include <string>
+  │ 
+  │ struct Error {
+  │   int code;
+  │   std::string message;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `person.hpp'
+
+  ┌────
+  │ #ifndef PERSON_H
+  │ #define PERSON_H
+  │ 
+  │ #include "error.hpp"
+  │ #include <string>
+  │ #include <variant>
+  │ 
+  │ class Person {
+  │ public:
+  │   Person() = delete; // Deletando o construtor padrão!!!
+  │ 
+  │   std::string name() const;
+  │   static std::variant<Person, Error> make(std::string name);
+  │ 
+  │ private:
+  │   std::string _name;
+  │   Person(std::string name); // Construtor privado!
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `person.cpp'
+
+  ┌────
+  │ #include "person.hpp"
+  │ 
+  │ Person::Person(std::string name) : _name(name) {}
+  │ std::string Person::name() const { return _name; }
+  │ 
+  │ std::variant<Person, Error> Person::make(std::string name) {
+  │   for (char c : name) {
+  │     if (std::isdigit(c)) {
+  │       Error err = {100, "Nome inválido: contém números!"};
+  │       return err;
+  │     }
+  │   }
+  │ 
+  │   return Person(name);
+  │ }
+  └────
+
+  `main.cpp'
+
+  ┌────
+  │ #include "error.hpp"
+  │ #include "person.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   auto chico = Person::make("Chico Lírio");
+  │   if (std::holds_alternative<Error>(chico)) {
+  │     Error err = std::get<Error>(chico);
+  │     std::cout
+  │       << "Erro: " << err.message
+  │       << " (código " << err.code << ")"
+  │       << std::endl;
+  │   } else {
+  │     Person p = std::get<Person>(chico);
+  │     std::cout << "Yey, uma pessoa: " << p.name() << std::endl;
+  │   }
+  │ 
+  │   auto oliveira = Person::make("1 2 3 de Oliveira 4");
+  │   if (std::holds_alternative<Error>(oliveira)) {
+  │     Error err = std::get<Error>(oliveira);
+  │     std::cout
+  │       << "Erro: " << err.message
+  │       << " (código " << err.code << ")"
+  │       << std::endl;
+  │   } else {
+  │     Person p = std::get<Person>(oliveira);
+  │     std::cout << "Yey, uma pessoa: " << p.name() << std::endl;
+  │   }
+  │ 
+  │   // Note que não conseguimos usar construtores:
+  │   // Person p1; // Construtor padrão não existe
+  │   // Person p2("teste"); // Construtor privado
+  │ 
+  │   return 0;
+  │ }
+  └────
