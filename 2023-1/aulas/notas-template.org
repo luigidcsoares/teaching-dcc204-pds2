@@ -1,9 +1,7 @@
 #+title: Notas de Aula - Templates C++ (Extra)
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Programação Genérica
 
 Programação genérica é um estilo de programação no qual algoritmos são desenvolvidos de forma a funcionar com diferentes tipos, desde que estes tipos satisfaçam determinados requisitos. Nesse sentido, algoritmos são escritos em termos de tipos "a serem especificados futuramente". Linguagens de programação fornecem diferentes ferramentas voltadas para programação genérica. Em C++, isto é feito (pelo menos, até C++17) através de *templates*.

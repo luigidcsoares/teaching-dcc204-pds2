@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 05 Biblioteca Padrão
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Recapitulando
 
 Nas aulas passadas, vimos formas diferentes de armazenar coleções de valores. Em particular, implementamos conjunto e lista (duplamente) encadeada. Vocês lembram da cara da nossa lista?

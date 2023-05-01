@@ -150,7 +150,7 @@ Manipulando a Memória
   • Como verificar?
 
     ┌────
-    │ g++ -S -std=c++17 -g -fsanitize=address leak.cpp
+    │ g++ -std=c++17 -g -fsanitize=address leak.cpp
     │ ./a.out
     └────
 

@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 12 Especificação de Software
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Introdução
 
 Na aula anterior vimos

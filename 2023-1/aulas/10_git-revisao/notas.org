@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 10 Git e Revisão
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Controle de Versão
 
 - Como manter múltiplas versões de um projeto?

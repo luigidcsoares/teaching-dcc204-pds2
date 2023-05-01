@@ -250,6 +250,7 @@ Lista Duplamente Encadeada
   │ template <typename T>
   │ typename LinkedList<T>::Node *LinkedList<T>::Node::next() {
   │   return _next;
+  │ 
   │ }
   │ 
   │ template <typename T>

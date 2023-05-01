@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 07 Boas Práticas
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Introdução
 
 Características de um bom código:

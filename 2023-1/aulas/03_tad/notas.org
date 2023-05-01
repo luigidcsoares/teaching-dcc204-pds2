@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 03 TADs
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Abstração
 
 - O que significa /abstração/? *Esconder* detalhes

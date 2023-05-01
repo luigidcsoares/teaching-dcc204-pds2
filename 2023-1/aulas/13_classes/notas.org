@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 13 POO: Classes
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Recapitulando...
 
 - Classes são abstrações de conceitos

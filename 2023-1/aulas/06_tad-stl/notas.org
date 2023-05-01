@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 06 Biblioteca Padrão
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Problema 1
 
 - TAD Aluno: nome e matrícula

@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 02 Memória
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Regiões de Memória
 
 - Onde ficam armazenados os valores que um programa manipula?

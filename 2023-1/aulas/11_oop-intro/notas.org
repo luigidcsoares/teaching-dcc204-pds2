@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 11 Introdução a POO
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Paradigmas de Programação
 
 O que são paradigmas de programação?

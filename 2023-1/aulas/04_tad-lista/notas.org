@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 04 Lista Encadeada
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * TADs (relembrando)
 
 - Conjunto de *operações* sobre um conjunto de valores

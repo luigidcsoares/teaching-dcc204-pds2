@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 09 Depuração
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Introdução
 
 Boas práticas de programação reduzem a chance de erros, mas eles ainda vão existir!

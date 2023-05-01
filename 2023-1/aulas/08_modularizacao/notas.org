@@ -1,9 +1,7 @@
 #+title: Notas de Aula - 08 Modularização
 #+author: Luigi D. C. Soares
-#
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 * Programação Modular
 
 - O que é?
