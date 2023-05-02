@@ -415,8 +415,8 @@ O modificador de acesso private
   │ }
   └────
 
-  O método `descontar\under{}tarifa' deve ser público ou privado?
-  Privado! Vamos renomear para "_descontar_tarifa".
+  O método `descontar_tarifa' deve ser público ou privado? Privado!
+  Vamos renomear para `_descontar_tarifa'.
 
   O que mais podemos melhorar?
   • A tarifa é repetida em vários lugares, se quiséssemos alterar
@@ -572,28 +572,23 @@ Curiosidade: Getters e Setters em Python
   ┌────
   │ class Conta:
   │     def __init__(self, agencia, numero):
-  │         self.agencia = agencia
-  │         self.numero = numero
+  │         self._agencia = agencia
+  │         self._numero = numero
   │         self._saldo = 0.0
   │ 
   │     @property
   │     def agencia(self):
+  │         """Transforma em um getter, mas usa como se fosse um atributo"""
   │         return self._agencia
-  │ 
-  │     @agencia.setter
-  │     def agencia(self, agencia):
-  │         self._agencia = agencia
   │ 
   │     @property
   │     def numero(self):
+  │         """Transforma em um getter, mas usa como se fosse um atributo"""
   │         return self._numero
-  │ 
-  │     @numero.setter
-  │     def numero(self, numero):
-  │         self._numero = numero
   │ 
   │     @property
   │     def saldo(self):
+  │         """Transforma em um getter, mas usa como se fosse um atributo"""
   │         return self._saldo
   │ 
   │     def depositar(self, valor):
@@ -617,6 +612,38 @@ Curiosidade: Getters e Setters em Python
   │     print(f"{conta.agencia} :: {conta.numero} => {conta.saldo}")
   │ else:
   │     print("Saldo insuficiente!")
+  │ 
+  │ # Não definimos um "setter", a instrução a seguir não funciona!
+  │ # conta.saldo = 20000
+  │ 
+  │ # Mas a instrução a seguir funciona, já que Python não possui
+  │ # modificadores de acesso. O prefixo "_" é apenas uma convenção!
+  │ # conta._saldo = 2000
+  └────
+
+  Exemplo simples com um "setter":
+
+  ┌────
+  │ class T:
+  │     def __init__(self, x):
+  │         self._x = x
+  │ 
+  │     @property
+  │     def x(self):
+  │         print("Obtendo x por meio de um 'getter'")
+  │         return self._x
+  │ 
+  │     @x.setter
+  │     def x(self, y):
+  │         print("Alterando x por meio de um 'setter'")
+  │         if y < 0:
+  │             print("Erro ao alterar x: valor negativo!")
+  │             return
+  │         self._x = y
+  │ 
+  │ t = T(10)
+  │ t.x = 11
+  │ print(t.x)
   └────
 
   Ao invés de métodos "get_campo" e "set_campo", Python nos permite

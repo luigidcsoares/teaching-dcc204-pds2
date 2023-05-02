@@ -527,28 +527,23 @@ Apenas como curiosidade, para mostrar que nem todas as linguagens fornecem as me
 #+begin_src python :results output
 class Conta:
     def __init__(self, agencia, numero):
-        self.agencia = agencia
-        self.numero = numero
+        self._agencia = agencia
+        self._numero = numero
         self._saldo = 0.0
 
     @property
     def agencia(self):
+        """Transforma em um getter, mas usa como se fosse um atributo"""
         return self._agencia
-
-    @agencia.setter
-    def agencia(self, agencia):
-        self._agencia = agencia
 
     @property
     def numero(self):
+        """Transforma em um getter, mas usa como se fosse um atributo"""
         return self._numero
-
-    @numero.setter
-    def numero(self, numero):
-        self._numero = numero
 
     @property
     def saldo(self):
+        """Transforma em um getter, mas usa como se fosse um atributo"""
         return self._saldo
         
     def depositar(self, valor):
@@ -572,12 +567,49 @@ if ok:
     print(f"{conta.agencia} :: {conta.numero} => {conta.saldo}")
 else:
     print("Saldo insuficiente!")
+
+# Não definimos um "setter", a instrução a seguir não funciona!
+# conta.saldo = 20000
+
+# Mas a instrução a seguir funciona, já que Python não possui
+# modificadores de acesso. O prefixo "_" é apenas uma convenção!
+# conta._saldo = 2000
 #+end_src
 
 #+RESULTS:
 : 1 :: 123456 => 0.0
 : 1 :: 123456 => 1000.0
 : Saldo insuficiente!
+
+Exemplo simples com um "setter":
+
+#+begin_src python :results output
+class T:
+    def __init__(self, x):
+        self._x = x
+
+    @property
+    def x(self):
+        print("Obtendo x por meio de um 'getter'")
+        return self._x
+
+    @x.setter
+    def x(self, y):
+        print("Alterando x por meio de um 'setter'")
+        if y < 0:
+            print("Erro ao alterar x: valor negativo!")
+            return
+        self._x = y
+
+t = T(10)
+t.x = 11
+print(t.x)
+#+end_src
+
+#+RESULTS:
+: Alterando x por meio de um 'setter'
+: Obtendo x por meio de um 'getter'
+: 11
 
 Ao invés de métodos "get\under{}campo" e "set\under{}campo", Python nos permite transformar atributos em propriedades, que possuem uma implementação interna. Assim, utilizamos as propriedades como se fossem atributos comuns, mas por trás das operaçãos de leitura escrita existem detalhes de implementação sendo executados.
 
