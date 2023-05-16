@@ -1,0 +1,655 @@
+             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              NOTAS DE AULA - 15 POO: HERANÇA E COMPOSIÇÃO
+
+                           Luigi D. C. Soares
+             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+• *Reutilizar* características de uma classe na definição de outra
+   classe
+• *Hierarquia* de classes
+• Facilita a extensibilidade do sistema
+• Classe mais genérica: superclasse (pai)
+• Classe especializada: subclasse (filha)
+
+Quando usamos herança?
+
+
+Herança Simples
+═══════════════
+
+  Considere duas classes Estudante e Professor:
+  • Estudante *é uma* (is-a) Pessoa: possui nome, idade, cpf, …
+  • Professor também *é uma* Pessoa
+  • Estudante possui matrícula, Professor está associado a um
+    departamento
+  • Estudante e Professor são *especialização* de Pessoa
+
+  `pessoa.hpp'
+
+  ┌────
+  │ #ifndef PESSOA_H
+  │ #define PESSOA_H
+  │ 
+  │ #include <string>
+  │ 
+  │ class Pessoa {
+  │ public:
+  │   Pessoa(std::string cpf, std::string nome, unsigned idade);
+  │ 
+  │   std::string cpf() const;
+  │   std::string nome() const;
+  │   unsigned idade() const;
+  │ 
+  │   virtual std::string to_string() const;
+  │ 
+  │ private:
+  │   const std::string _cpf;
+  │   std::string _nome;
+  │   unsigned _idade;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `pessoa.cpp'
+
+  ┌────
+  │ #include "pessoa.hpp"
+  │ #include <string>
+  │ 
+  │ Pessoa::Pessoa(std::string cpf, std::string nome, unsigned idade)
+  │   : _cpf(cpf), _nome(nome), _idade(idade) {}
+  │ 
+  │ std::string Pessoa::cpf() const {
+  │   return _cpf;
+  │ }
+  │ 
+  │ std::string Pessoa::nome() const {
+  │   return _nome;
+  │ }
+  │ 
+  │ unsigned Pessoa::idade() const {
+  │   return _idade;
+  │ }
+  │ 
+  │ std::string Pessoa::to_string() const {
+  │   return _nome + " (" + _cpf + "), " + std::to_string(_idade) + " anos";
+  │ }
+  └────
+
+  `estudante.hpp'
+
+  ┌────
+  │ #ifndef ESTUDANTE_H
+  │ #define ESTUDANTE_H
+  │ 
+  │ #include "pessoa.hpp"
+  │ #include <string>
+  │ 
+  │ class Estudante : public Pessoa {
+  │ public:
+  │   Estudante(std::string nome, std::string cpf,
+  │             unsigned idade, std::string matricula);
+  │   std::string matricula() const;
+  │   std::string to_string() const override;
+  │ 
+  │ private:
+  │   const std::string _matricula;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `estudante.cpp'
+
+  ┌────
+  │ #include "estudante.hpp"
+  │ #include "pessoa.hpp"
+  │ #include <string>
+  │ 
+  │ Estudante::Estudante(std::string cpf, std::string nome,
+  │                      unsigned idade, std::string matricula)
+  │   : Pessoa(cpf, nome, idade), _matricula(matricula) {}
+  │ 
+  │ std::string Estudante::matricula() const {
+  │   return _matricula;
+  │ }
+  │ 
+  │ std::string Estudante::to_string() const {
+  │   return Pessoa::to_string() + ", matrícula = " + _matricula;
+  │ }
+  └────
+
+  `professor.hpp'
+
+  ┌────
+  │ #ifndef PROFESSOR_H
+  │ #define PROFESSOR_H
+  │ 
+  │ #include "pessoa.hpp"
+  │ #include <string>
+  │ 
+  │ class Professor : public Pessoa {
+  │ public:
+  │   Professor(std::string nome, std::string cpf,
+  │             unsigned idade, std::string departamento);
+  │   std::string departamento() const;
+  │   std::string to_string() const override;
+  │ 
+  │ private:
+  │   std::string _departamento;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `professor.cpp'
+
+  ┌────
+  │ #include "professor.hpp"
+  │ #include "pessoa.hpp"
+  │ #include <string>
+  │ 
+  │ Professor::Professor(std::string cpf, std::string nome,
+  │                      unsigned idade, std::string departamento)
+  │   : Pessoa(cpf, nome, idade), _departamento(departamento) {}
+  │ 
+  │ std::string Professor::departamento() const {
+  │   return _departamento;
+  │ }
+  │ 
+  │ std::string Professor::to_string() const {
+  │   return Pessoa::to_string() + ", departamento = " + _departamento;
+  │ }
+  └────
+
+  `main.cpp'
+
+  ┌────
+  │ #include "pessoa.hpp"
+  │ #include "estudante.hpp"
+  │ #include "professor.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   Pessoa p("168.214.151-96", "Alexa", 23);
+  │   std::cout << p.to_string() << std::endl;
+  │ 
+  │   Estudante e("168.214.151-96", "Alexa", 23, "123456");
+  │   std::cout << e.to_string() << std::endl;
+  │ 
+  │   Professor pf("758.954.278-47", "Gleison", 43, "DCC");
+  │   std::cout << pf.to_string() << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  Você entende o que fizemos acima? Por quê temos métodos com o mesmo
+  nome (`to_string') nas três classes? O que é aquela palvra-chave
+  `virtual'? E a palavra-chave `override'? Estamos sobrescrevendo
+  métodos nas classes especializadas. E o construtor? Fez sentido
+  chamarmos o construtor de Pessoa no construtor das classes filhas?
+
+  • Existe uma ordem em que os construtores são chamados: o construtor
+    da classe base será sempre o primeiro a ser chamado, seguido de cada
+    classe filha na hierarquia
+  • Existe uma ordem para o destrutor também: o contrário do construtor!
+    Começa pela classe mais especializada e vai subindo até a classe
+    base.
+
+    ┌────
+    │ #include <iostream>
+    │ 
+    │ class A {
+    │ public:
+    │   A() { std::cout << "A()" << std::endl; }
+    │   ~A() { std::cout << "~A()" << std::endl; }
+    │ };
+    │ 
+    │ class B : public A {
+    │ public:
+    │   B() { std::cout << "B()" << std::endl; }
+    │   ~B() { std::cout << "~B()" << std::endl; }
+    │ };
+    │ 
+    │ class C : public B {
+    │ public:
+    │   C() { std::cout << "C()" << std::endl; }
+    │   ~C() { std::cout << "~C()" << std::endl; }
+    │ };
+    │ 
+    │ int main() {
+    │   std::cout << "Construindo..." << std::endl;
+    │   C c;
+    │   std::cout << "Destruindo..." << std::endl;
+    │   return 0;
+    │ }
+    └────
+
+  Voltando ao nosso exemplo, poderíamos ainda ter um estudante de
+  pós-graduação, que diferentemente de um estudante de graduação, possui
+  um orientador:
+
+  `estpos.hpp'
+
+  ┌────
+  │ #ifndef ESTPOS_H
+  │ #define ESTPOS_H
+  │ 
+  │ #include "estudante.hpp"
+  │ #include "professor.hpp"
+  │ #include <string>
+  │ 
+  │ class EstPos : public Estudante {
+  │ public:
+  │   EstPos(std::string nome, std::string cpf,
+  │          unsigned idade, std::string matricula,
+  │          const Professor *orientador);
+  │   const Professor *orientador() const;
+  │   std::string to_string() const override;
+  │ 
+  │ private:
+  │   const Professor *_orientador;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `estpos.cpp'
+
+  ┌────
+  │ #include "estpos.hpp"
+  │ #include "estudante.hpp"
+  │ #include "professor.hpp"
+  │ #include <string>
+  │ 
+  │ EstPos::EstPos(std::string cpf, std::string nome,
+  │                unsigned idade, std::string matricula,
+  │                const Professor *orientador)
+  │   : Estudante(cpf, nome, idade, matricula), _orientador(orientador) {}
+  │ 
+  │ const Professor *EstPos::orientador() const {
+  │   return _orientador;
+  │ }
+  │ 
+  │ std::string EstPos::to_string() const {
+  │   return Pessoa::to_string() + ", matrícula = " +
+  │     Estudante::matricula() + " :: orientador = " +
+  │     _orientador->to_string();
+  │ }
+  └────
+
+  `main.cpp'
+
+  ┌────
+  │ #include "pessoa.hpp"
+  │ #include "estudante.hpp"
+  │ #include "professor.hpp"
+  │ #include "estpos.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   Pessoa p("168.214.151-96", "Alexa", 23);
+  │   std::cout << p.to_string() << std::endl;
+  │ 
+  │   Estudante e("168.214.151-96", "Alexa", 23, "123456");
+  │   std::cout << e.to_string() << std::endl;
+  │ 
+  │   Professor pf("758.954.278-47", "Gleison", 43, "DCC");
+  │   std::cout << pf.to_string() << std::endl;
+  │ 
+  │   EstPos ep("123.456.789-10", "Yago", 25, "654321", &pf);
+  │   std::cout << ep.to_string() << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+
+Sobrescrita de Métodos
+══════════════════════
+
+  Vimos no exemplo do `to_string' que podemos sobrescrever um método em
+  uma classe especializada. Alguns pontos sobre sobrescrita de métodos:
+
+  • O método deve ter a mesma assinatura: mesmos parâmetros e tipo de
+    retorno!
+  • O modificado de acesso deve ser o mesmo na classe base e na classe
+    filha
+  • Métodos privates não podem ser sobrescritos (afinal, sequer são
+    visíveis)
+  • Para sobrescrever métodos, precisamos da palavra-chave `virtual'
+  • A palavra-chave `override' serve para o compilador checar se estamos
+    de fato sobrescrevendo um método
+
+  O que aconteceria sem o `virtual'? Qual a importância dele? O que vai
+  imprimir no código a seguir?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class Base {
+  │ public:
+  │   void foo() const {
+  │     std::cout << "Base::foo()" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ class Derivada : public Base {
+  │ public:
+  │   void foo() const {
+  │     std::cout << "Derivada::foo()" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   Base *b = new Derivada();
+  │   b->foo();
+  │   return 0;
+  │ }
+  └────
+
+  Apesar de estarmo alocando um objeto da classe Derivada, como o
+  ponteiro é para Base, o método chamado foi o da classe Base. Esta
+  definição de qual método chamar foi feita em tempo de *compilação*
+  (mais sobre isso na aula de polimorfismo!).
+
+  E com o `virtual'?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class Base {
+  │ public:
+  │   virtual void foo() const {
+  │     std::cout << "Base::foo()" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ class Derivada : public Base {
+  │ public:
+  │   void foo() const override {
+  │     std::cout << "Derivada::foo()" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   Base *b = new Derivada();
+  │   b->foo();
+  │ 
+  │   delete b;
+  │   return 0;
+  │ }
+  └────
+
+  Agora sim estamos sobrescrevendo algo: temos um ponteiro para Base,
+  mas o método que foi chamado é da classe Derivada!
+
+  Alguns pontos a mais:
+
+  • Atributos não são redefiníveis. Se criar um atributo de mesmo nome
+    na subclasse, a definição na superclasse é *ocultada*
+  • O mesmo vale para membros estáticos
+
+
+Herança e Encapsulamento
+════════════════════════
+
+  Você deve ter reparado no modificador de acesso `public' que vem
+  aparecendo sempre na herança. O mais comum é o modificador de acesso
+  ser public, mas é possível declarar a superclasse também como
+  `protected' ou `private'.
+
+  O modificador de acesso na declaração da superclasse determina o nível
+  e acesso aos seus membros pela subclasse:
+
+  • public: mantém os níveis de acesso. Isto é, o que era public na
+    superclasse continua public e o que era protected continua protected
+  • protected: o que era public vira protected, i.e. public e protected
+    => protected
+  • private: public e protected viram private
+
+
+Herança vs Composição
+═════════════════════
+
+  Pesquisando na internet, você vai encontrar muitas recomendações
+  contra o uso de herança e composição (veremos mais a frente).
+
+  Herança por si só não é uma ferramenta ruim, mas, assim como qualquer
+  outra ferramenta, se usada de forma incorreta (ou, se abusarmos de
+  herança) pode levar a um código de difícil manutenção.
+
+  Um ponto importante é que herança, apesar de permitir, *não deve ser
+  utilizada somente para reutilização de código*. Vamos ver um
+  exemplo. Considere, novamente, os tipos Estudante e Professor (vamos
+  esquecer Pessoa por enquanto). Tanto estudante quanto professor estão
+  associados a um curso. O código a seguir faria sentido?
+
+  ┌────
+  │ class Curso {
+  │ public:
+  │   Curso(std::string id, nome) : _id(id), _nome(nome) {}
+  │   std::string id() const { return _id; }
+  │   std::string nome() const { return _nome; }
+  │ 
+  │ private:
+  │   const std::string _id;
+  │   std::string _nome;
+  │ };
+  │ 
+  │ class Estudante : Curso {
+  │   // ...
+  │ };
+  │ 
+  │ class Professor : Curso {
+  │   // ...
+  │ }
+  └────
+
+  Absolutamente não!!! Um Estudante/Professor *não é* um Curso, mas sim
+  *possui* um curso associado. Isto indica que devemos usar
+  *Composição*, e não Herança.
+
+  • Herança modela uma relação do tipo *é um* (is-a)
+  • Composição modela uma relação do tipo *tem um* (has-a)
+  • Estudante *é uma* Pessoa, Estudante *tem um* Curso
+
+  Um outro ponto a ser observado é que herança claramente aumenta o
+  nível de acoplamento do projeto. Afinal de contas, qualquer alteração
+  na superclasse impactará nas subclasses!
+
+
+Herança Múltipla
+────────────────
+
+  Voltando ao nosso exemplo da hieraquia Pessoa –> Estudante, Professor,
+  um Professor é um Funcionário da universidade. Um Funcionário possui
+  salário, possui um código SIAPE (considerando servidor público).
+
+  Note que, reforçando a definição acima, um Professor *é um*
+  Funcionário. Logo, podemos utilizar herança. Mas, Professor já está
+  herdando de Pessoa… C++ permite herança múltipla!
+
+  `funcionario.hpp'
+
+  ┌────
+  │ #ifndef FUNCIONARIO_H
+  │ #define FUNCIONARIO_H
+  │ 
+  │ #include <string>
+  │ 
+  │ class Funcionario {
+  │ public:
+  │   Funcionario(std::string siape, double salario);
+  │   std::string siape() const;
+  │   double salario() const;
+  │ 
+  │ private:
+  │   const std::string _siape;
+  │   double _salario;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `funcionario.cpp'
+
+  ┌────
+  │ #include "funcionario.hpp"
+  │ 
+  │ Funcionario::Funcionario(std::string siape, double salario)
+  │   : _siape(siape), _salario(salario) {}
+  │ 
+  │ std::string Funcionario::siape() const {
+  │   return _siape;
+  │ }
+  │ 
+  │ double Funcionario::salario() const {
+  │   return _salario;
+  │ }
+  └────
+
+  `professor_v2.hpp'
+
+  ┌────
+  │ #ifndef PROFESSOR_H
+  │ #define PROFESSOR_H
+  │ 
+  │ #include "pessoa.hpp"
+  │ #include "funcionario.hpp"
+  │ #include <string>
+  │ 
+  │ class Professor : public Pessoa, public Funcionario {
+  │ public:
+  │   Professor(std::string nome, std::string cpf,
+  │             unsigned idade, std::string siape,
+  │             double salario, std::string departamento);
+  │   std::string departamento() const;
+  │   std::string to_string() const override;
+  │ 
+  │ private:
+  │   std::string _departamento;
+  │ };
+  │ 
+  │ #endif
+  └────
+
+  `professor_v2.cpp'
+
+  ┌────
+  │ #include "professor_v2.hpp"
+  │ #include "pessoa.hpp"
+  │ #include <string>
+  │ 
+  │ Professor::Professor(std::string cpf, std::string nome,
+  │                      unsigned idade, std::string siape,
+  │                      double salario, std::string departamento)
+  │   : Pessoa(cpf, nome, idade), Funcionario(siape, salario), _departamento(departamento) {}
+  │ 
+  │ std::string Professor::departamento() const {
+  │   return _departamento;
+  │ }
+  │ 
+  │ std::string Professor::to_string() const {
+  │   return Pessoa::to_string() + ", departamento = " + _departamento
+  │     + ", siape = " + Funcionario::siape();
+  │ }
+  └────
+
+  `main.cpp'
+
+  ┌────
+  │ #include "professor_v2.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   Professor pf("758.954.278-47", "Gleison", 43, "1234", 5000, "DCC");
+  │   std::cout << pf.to_string() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  Críticas: se herança simples já é alvo de críticas, herança múltipla é
+  quase que "banida". Novamente, o problema não está na ferramenta, mas
+  no seu uso. Em raras exceções, você pode desejar utilizar herança
+  múltipla, mas geralmente há uma alternativa mais interessante. Muitas
+  linguagens sequer permitem herança múltipla.
+
+  Você consegue identificar algum problema que poderia surgir de herança
+  múltipla?
+
+  "The Diamond Problem"
+
+  ┌────
+  │   A
+  │  / \
+  │ B   C
+  │  \ /
+  │   D
+  └────
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class A {
+  │ public:
+  │   int a = 1;
+  │ };
+  │ 
+  │ class B : public A {
+  │ public:
+  │   int b = 2;
+  │ };
+  │ 
+  │ class C : public A {
+  │ public:
+  │   int c = 3;
+  │ };
+  │ 
+  │ class D : public B, public C {
+  │ public:
+  │   int d = 4;
+  │ };
+  │ 
+  │ int main() {
+  │   D d;
+  │   std::cout << d.a << std::endl; // Ambíguo!!! Qual "a"?
+  │   return 0;
+  │ }
+  └────
+
+  Há uma forma de resolver em C++ (herança virtual), mas começa a ficar
+  bem complicado…
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class A {
+  │ public:
+  │   int a = 1;
+  │ };
+  │ 
+  │ class B : virtual public A {
+  │ public:
+  │   int b = 2;
+  │ };
+  │ 
+  │ class C : virtual public A {
+  │ public:
+  │   int c = 3;
+  │ };
+  │ 
+  │ class D : public B, public C {
+  │ public:
+  │   int d = 4;
+  │ };
+  │ 
+  │ int main() {
+  │   D d;
+  │   std::cout << d.a << std::endl; // Ambíguo!!! Qual "a"?
+  │   return 0;
+  │ }
+  └────
