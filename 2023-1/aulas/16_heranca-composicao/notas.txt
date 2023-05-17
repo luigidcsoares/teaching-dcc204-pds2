@@ -1,0 +1,413 @@
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              NOTAS DE AULA - 15 POO: HERANÇA E COMPOSIÇÃO
+                               (PARTE 1)
+
+                           Luigi D. C. Soares
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+
+
+Herança vs Composição (Recapitulando)
+═════════════════════════════════════
+
+  • Herança modela uma relação do tipo *é um* (is-a)
+  • Composição modela uma relação do tipo *tem um* (has-a)
+
+  Como escolher entre herança e composição?
+
+  • O tipo B vai manter todo o contrato do A, e poderá ser usado onde A
+    é esperado (Princípio da Substituição de Liskov)? Se sim, *herança*
+  • O tipo B deseja apenas utilizar *parte* do comportamento exposto
+    pelo tipo A? Então, *composição*
+
+  Algumas recomendações para o uso de herança:
+
+  • Mova interfaces, dados e comportamentos comuns o mais alto possível
+    na hierarquia
+  • Suspeite e classes base com apenas uma classe derivada
+  • Evite hierarquia muito profundas (aumenta acoplamento)
+  • Atenção ao encapsulamento: para cada membro da classe base, ele será
+    visível na classe derivada?
+
+
+Classes e Métodos Abstratos
+═══════════════════════════
+
+  • Uma classe abstrata *não pode ser instanciada*, ela apenas
+    representa um conceito abstrato
+
+    Exemplo: uma classe Numero abstrai o conceito de números. Números
+    podem ser do tipo Inteiro ou Real, que são subclasses. Nós
+    instanciamos um Inteiro/Real, não um Numero genérico.
+
+  • Um *método* abstrato normalmente é um método que não possui
+    implementação, apenas um *contrato*. Em C++, isso vai ser um pouco
+    mais "fraco": um método será abstrato se exigir que classes
+    derivadas o implementem.
+  • Classes que possuem pelo menos um método abstrato são classes
+    abstratas
+  • Subclasses de uma classe abstrata devem implementar os métodos
+    abstratos que a superclasse define (ou se tornarão abstratas também)
+
+  Algumas linguagens, como Java, possuem uma palavra-chave para classes
+  e métodos abstratos. Em C++, vamos usar a palavra-chave `virtual'.
+
+  Uma classe abstrata, em C++, é uma classe que possui pelo menos um
+  método *virtual puro*:
+
+  ┌────
+  │ #include <iostream>
+  │ #include <string>
+  │ 
+  │ class Animal {
+  │ public:
+  │   Animal(std::string name) : name_(name) {}
+  │   void eat() {
+  │     std::cout << name_ << " is eating." << std::endl;
+  │   }
+  │   virtual void say() = 0;
+  │   virtual ~Animal() {}
+  │ 
+  │ protected:
+  │   std::string name_;
+  │ };
+  │ 
+  │ class Dog : public Animal {
+  │ public:
+  │   Dog(std::string name) : Animal(name) {}
+  │   void say() {
+  │     std::cout << name_ << " says woof!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ class Cat : public Animal {
+  │ public:
+  │   Cat(std::string name) : Animal(name) {}
+  │   void say() {
+  │     std::cout << name_ << " says meow!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   // error: cannot declare variable ‘a’ to be of abstract type ‘Animal’
+  │   // Animal a("dog");
+  │ 
+  │   Animal *dog = new Dog("dog");
+  │   Animal *cat = new Cat("cat");
+  │ 
+  │   dog->eat();
+  │   dog->say();
+  │ 
+  │   std::cout << std::endl;
+  │ 
+  │   cat->eat();
+  │   cat->say();
+  │ 
+  │   delete dog;
+  │   delete cat;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  Uma classe abstrata não necessariamente precisa ter algum método
+  abstrato. Em outras linguagens isso é mais claro, em C++ uma classe
+  abstrata precisa ter pelo menos um método virtual puro. Porém, em C++
+  métodos virtuais puros podem ter um corpo (note que, ainda assim, é
+  necessário que classes derivadas o implementem! Não estamos quebrando
+  a definição vista acima).
+
+  Para definir uma classe abstrata "sem" métodos abstratos em C++,
+  podemos declarar o destrutor como virtual puro. Ainda que você não
+  implemente o destrutor nas classes derivadas, o compilador vai gerar
+  um destrutor padrão, então vai funcionar!
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class A {
+  │ public:
+  │   void foo() {
+  │     std::cout << "Foo" << std::endl;
+  │   }
+  │   virtual ~A() = 0; // pure virtual destructor, "abstract"
+  │ };
+  │ 
+  │ A::~A() {}
+  │ 
+  │ class B : public A {};
+  │ 
+  │ int main() {
+  │   // error: cannot declare variable ‘a’ to be of abstract type ‘A’
+  │   // A a;
+  │   B b;
+  │   b.foo();
+  │   return 0;
+  │ }
+  └────
+
+  *Importante:* é uma boa prática sempre declarar o destrutor como
+   virtual quando existe algum outro método virtual (mesmo que não puro)
+  • Por quê?
+  • Lembra do que acontece quando chamamos um método não-virtual usando
+    um ponteiro para a classe Base?
+
+    ┌────
+    │ #include <iostream>
+    │ 
+    │ class Base {
+    │ public:
+    │   ~Base() {
+    │     std::cout << "~Base()" << std::endl;
+    │   }
+    │ };
+    │ 
+    │ class Derivada : public Base {
+    │ public:
+    │   ~Derivada() {
+    │     std::cout << "~Derivada()" << std::endl;
+    │   }
+    │ };
+    │ 
+    │ int main() {
+    │   Base *b = new Derivada();
+    │   delete b;
+    │   return 0;
+    │ }
+    └────
+
+  O destrutor chamado foi apenas o da Base!!! Ou seja, objetos que
+  precisariam ser destruídos na classe Derivada não serão!
+
+  Com destrutor virtual:
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class Base {
+  │ public:
+  │   virtual ~Base() {
+  │     std::cout << "~Base()" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ class Derivada : public Base {
+  │ public:
+  │   ~Derivada() {
+  │     std::cout << "~Derivada()" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   Base *b = new Derivada();
+  │   delete b;
+  │   return 0;
+  │ }
+  └────
+
+
+Interfaces
+══════════
+
+  • Possuem unicamente o papel de um *contrato*
+  • Uma interface "I" descreve tudo que um objeto precisa implementar
+    para ser considerado um "I"
+  • Uma interface possui apenas a declaração *operações públicas* (sem
+    dados, sem modificadores protected e private)
+  • Algumas linguagens (e.g. Java) possuem uma palavra-chave para a
+    definição de interfaces. Não é o caso de C++. Em C++, não existe uma
+    distinção sintática entre classe abstrata e interface, apenas
+    distinção semântica: uma interface é uma classe que contém *apenas*
+    métodos puramente virtuais.
+
+  Exemplo: Um MusicPlayer e um VideoPlayer possuem alguns comportamentos
+  em comum. Quais?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ // Interface
+  │ class Playable {
+  │ public:
+  │   virtual void play() = 0;
+  │   virtual void pause() = 0;
+  │ 
+  │   // Toda interface deve implementar um destrutor virtual!
+  │   virtual ~Playable() {} 
+  │ };
+  │ 
+  │ // MusicPlayer *é* Playable
+  │ class MusicPlayer : public Playable {
+  │ public:
+  │   void play() {
+  │     std::cout << "Music is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() {
+  │     std::cout << "Music playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ // VideoPlayer *é* Playable
+  │ class VideoPlayer : public Playable {
+  │ public:
+  │   void play() {
+  │     std::cout << "Video is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() {
+  │     std::cout << "Video playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   MusicPlayer mp;
+  │   mp.play();
+  │   mp.pause();
+  │ 
+  │   VideoPlayer vp;
+  │   vp.play();
+  │   vp.pause();
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  MusicPlayer e VideoPlayer poderiam, também, ter uma função de gravar.
+  • Faz sentido colocar esta operação em `Playable'?
+  • Podemos ter uma classe implementado duas interfaces? Herança
+    múltipla (um caso que faz sentido!)
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ // Interface
+  │ class Playable {
+  │ public:
+  │   virtual void play() = 0;
+  │   virtual void pause() = 0;
+  │ 
+  │   // Toda interface deve implementar um destrutor virtual!
+  │   virtual ~Playable() {} 
+  │ };
+  │ 
+  │ // Outra interface
+  │ class Recordable {
+  │ public:
+  │   virtual void record() = 0;
+  │   virtual ~Recordable() {}
+  │ };
+  │ 
+  │ // MusicPlayer *é* Playable
+  │ class MusicPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() {
+  │     std::cout << "Music is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() {
+  │     std::cout << "Music playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ // VideoPlayer *é* Playable
+  │ class VideoPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() {
+  │     std::cout << "Video is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() {
+  │     std::cout << "Video playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   MusicPlayer mp;
+  │   mp.play();
+  │   mp.pause();
+  │ 
+  │   VideoPlayer vp;
+  │   vp.play();
+  │   vp.pause();
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ error: cannot declare variable ‘mp’ to be of abstract type ‘MusicPlayer’
+  │ error: cannot declare variable ‘vp’ to be of abstract type ‘VideoPlayer’
+  └────
+
+  Hmm, o que deu errado? Volte ao código para identificar o que
+  esquecemos.
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ // Interface
+  │ class Playable {
+  │ public:
+  │   virtual void play() = 0;
+  │   virtual void pause() = 0;
+  │ 
+  │   // Toda interface deve implementar um destrutor virtual!
+  │   virtual ~Playable() {} 
+  │ };
+  │ 
+  │ // Outra interface
+  │ class Recordable {
+  │ public:
+  │   virtual void record() = 0;
+  │   virtual ~Recordable() {}
+  │ };
+  │ 
+  │ // MusicPlayer *é* Playable
+  │ class MusicPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() {
+  │     std::cout << "Music is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() {
+  │     std::cout << "Music playback paused." << std::endl;
+  │   }
+  │ 
+  │   void record() {
+  │     std::cout << "Recording music." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ // VideoPlayer *é* Playable
+  │ class VideoPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() {
+  │     std::cout << "Video is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() {
+  │     std::cout << "Video playback paused." << std::endl;
+  │   }
+  │ 
+  │   void record() {
+  │     std::cout << "Recording video." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   MusicPlayer mp;
+  │   mp.play();
+  │   mp.record();
+  │   mp.pause();
+  │ 
+  │   VideoPlayer vp;
+  │   vp.play();
+  │   vp.record();
+  │   vp.pause();
+  │ 
+  │   return 0;
+  │ }
+  └────

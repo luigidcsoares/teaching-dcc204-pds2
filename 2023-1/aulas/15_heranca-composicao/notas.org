@@ -1,4 +1,4 @@
-#+title: Notas de Aula - 15 POO: Herança e Composição
+#+title: Notas de Aula - 15 POO: Herança e Composição (parte 1)
 #+author: Luigi D. C. Soares
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
@@ -36,6 +36,7 @@ public:
   unsigned idade() const;
 
   virtual std::string to_string() const;
+  virtual ~Pessoa() {}
 
 private:
   const std::string _cpf;
@@ -45,6 +46,8 @@ private:
 
 #endif
 #+end_src
+
+#+RESULTS:
 
 =pessoa.cpp=
 
@@ -363,6 +366,8 @@ public:
   virtual void foo() const {
     std::cout << "Base::foo()" << std::endl;
   }
+
+  virtual ~Base() {}
 };
 
 class Derivada : public Base {
@@ -435,10 +440,10 @@ Absolutamente não!!! Um Estudante/Professor *não é* um Curso, mas sim *possui
 - Herança modela uma relação do tipo *é um* (is-a)
 - Composição modela uma relação do tipo *tem um* (has-a)
 - Estudante *é uma* Pessoa, Estudante *tem um* Curso
-  
-Um outro ponto a ser observado é que herança claramente aumenta o nível de acoplamento do projeto. Afinal de contas, qualquer alteração na superclasse impactará nas subclasses!
 
-** Herança Múltipla
+Um outro ponto a ser observado é que herança claramente aumenta o nível de acoplamento do projeto. Afinal de contas, qualquer alteração na superclasse impactará nas subclasses!
+  
+* Herança Múltipla
 
 Voltando ao nosso exemplo da hieraquia Pessoa --> Estudante, Professor, um Professor é um Funcionário da universidade. Um Funcionário possui salário, possui um código SIAPE (considerando servidor público).
 
@@ -617,11 +622,10 @@ public:
 
 int main() {
   D d;
-  std::cout << d.a << std::endl; // Ambíguo!!! Qual "a"?
+  std::cout << d.a << std::endl; // Não há mais ambiguidade!
   return 0;
 }
 #+end_src
 
 #+RESULTS:
 : 1
-
