@@ -1,6 +1,6 @@
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-              NOTAS DE AULA - 15 POO: HERANÇA E COMPOSIÇÃO
-                               (PARTE 1)
+              NOTAS DE AULA - 16 POO: HERANÇA E COMPOSIÇÃO
+                               (PARTE 2)
 
                            Luigi D. C. Soares
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
