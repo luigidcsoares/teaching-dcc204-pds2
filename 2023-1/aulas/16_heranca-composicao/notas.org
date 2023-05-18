@@ -90,13 +90,13 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_results
+#+begin_example
 dog is eating.
 dog says woof!
 
 cat is eating.
 cat says meow!
-#+end_results
+#+end_example
 
 Uma classe abstrata não necessariamente precisa ter algum método abstrato. Em outras linguagens isso é mais claro, em C++ uma classe abstrata precisa ter pelo menos um método virtual puro. Porém, em C++ métodos virtuais puros podem ter um corpo (note que, ainda assim, é necessário que classes derivadas o implementem! Não estamos quebrando a definição vista acima).
 
@@ -127,7 +127,9 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: Foo
+#+begin_example
+Foo
+#+end_example
 
 *Importante:* é uma boa prática sempre declarar o destrutor como virtual quando existe algum outro método virtual (mesmo que não puro)
 - Por quê?
@@ -158,39 +160,43 @@ int main() {
   #+end_src
 
   #+RESULTS:
-  : ~Base()
+  #+begin_example
+  ~Base()
+  #+end_example
 
 O destrutor chamado foi apenas o da Base!!! Ou seja, objetos que precisariam ser destruídos na classe Derivada não serão!
 
 Com destrutor virtual:
 
-  #+begin_src C++ :flags -std=c++17
-  #include <iostream>
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
 
-  class Base {
-  public:
-    virtual ~Base() {
-      std::cout << "~Base()" << std::endl;
-    }
-  };
-
-  class Derivada : public Base {
-  public:
-    ~Derivada() {
-      std::cout << "~Derivada()" << std::endl;
-    }
-  };
-
-  int main() {
-    Base *b = new Derivada();
-    delete b;
-    return 0;
+class Base {
+public:
+  virtual ~Base() {
+    std::cout << "~Base()" << std::endl;
   }
-  #+end_src
+};
 
-  #+RESULTS:
-  : ~Derivada()
-  : ~Base()
+class Derivada : public Base {
+public:
+  ~Derivada() {
+    std::cout << "~Derivada()" << std::endl;
+  }
+};
+
+int main() {
+  Base *b = new Derivada();
+  delete b;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+~Derivada()
+~Base()
+#+end_example
 
 * Interfaces
 
@@ -252,10 +258,12 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: Music is playing.
-: Music playback paused.
-: Video is playing.
-: Video playback paused.
+#+begin_example
+Music is playing.
+Music playback paused.
+Video is playing.
+Video playback paused.
+#+end_example
 
 MusicPlayer e VideoPlayer poderiam, também, ter uma função de gravar.
 - Faz sentido colocar esta operação em ~Playable~?
@@ -395,12 +403,14 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: Music is playing.
-: Recording music.
-: Music playback paused.
-: Video is playing.
-: Recording video.
-: Video playback paused.
+#+begin_example
+Music is playing.
+Recording music.
+Music playback paused.
+Video is playing.
+Recording video.
+Video playback paused.
+#+end_example
 
 * + Boas Práticas: SOLID
 
@@ -479,8 +489,10 @@ int main() {
 #+end_src
 
   #+RESULTS:
-  : $13765
-  : Processing credit payment type
+  #+begin_example
+  $13765
+  Processing credit payment type
+  #+end_example
 
 Antes de prosseguir, vamos fazer uma pequena modificação no exemplo: tanto pagamento por crédito quanto por débito requer um "código de segurança":
 
@@ -556,9 +568,11 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: $13765
-: Verifying security code: 123456
-: Processing credit payment type
+#+begin_example
+$13765
+Verifying security code: 123456
+Processing credit payment type
+#+end_example
   
 ** "O": Open for Extension/Closed for Modification
 
@@ -642,9 +656,11 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: $13765
-: Verifying email address: lebron.james@gmail.com
-: Processing paypal payment type
+#+begin_example
+$13765
+Verifying email address: lebron.james@gmail.com
+Processing paypal payment type
+#+end_example
 
 Você consegue perceber algo estranho? Este é um exemplo ilustrativo, em um sistema real existiria, de fato, verificações do código de segurança. Mas, acabamos de trocar (acidentalmente) esta verificação por uma verificação de endereço de email. Agora, clientes antigos da classe PaymentProcessor irão parar de funcionar!!!
 
@@ -747,9 +763,11 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: $13765
-: Verifying email adress: lebron.james@gmail.com
-: Processing paypal payment type
+#+begin_example
+$13765
+Verifying email adress: lebron.james@gmail.com
+Processing paypal payment type
+#+end_example
 
 *Importante: você não deve levar este princípio ao pé da letra*
 
@@ -900,9 +918,11 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: $13765
-: Verifying email adress: lebron.james@gmail.com
-: Processing paypal payment type
+#+begin_example
+$13765
+Verifying email adress: lebron.james@gmail.com
+Processing paypal payment type
+#+end_example
 
 *** Exemplo 2: Quadrado é um Retângulo?
 
@@ -952,8 +972,10 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: Area = 2
-: OK
+#+begin_example
+Area = 2
+OK
+#+end_example
 
 Perfeito, nossa implementação funciona, podemos redimensionar o retângulo e calcular a área dele.
 
@@ -1012,8 +1034,10 @@ int main() {
 #+end_src
 
 #+RESULTS:
-: Area = 4
-: FAIL
+#+begin_example
+Area = 4
+FAIL
+#+end_example
 
 Algo falhou... o resultado que esperávamos para a área do retângulo era 2, já que alteramos sua altura para 1 e sua largura para 2. O ponto é que a implementação do subtipo Square *não obedece* o contrato estabelecido pelo supertipo Rectangle: a pós-condição em cada método também é parte do contrato!
 
@@ -1042,7 +1066,9 @@ print(list(map(square, xs)))
 #+end_src
 
 #+RESULTS:
-: [1, 4, 9]
+#+begin_example
+[1, 4, 9]
+#+end_example
 
 Acima estamos aplicando map em uma lista. Podemos aplicar também em um tupla (tuplas são coleções heterogêneas, podemos elementos de tipos diferentes). Observe o código a seguir:
 
@@ -1082,7 +1108,9 @@ print(list(map(square_list, xss)))
 #+end_src
 
 #+RESULTS:
-: [[1, 4], [9, 16]]
+#+begin_example
+[[1, 4], [9, 16]]
+#+end_example
 
 Parece que funcionou, certo? Mas o que será que aconteceu com o ~xss~ original?
 
@@ -1103,8 +1131,10 @@ print(xss)
 #+end_src
 
 #+RESULTS:
-: [[1, 4], [9, 16]]
-: [[1, 4], [9, 16]]
+#+begin_example
+[[1, 4], [9, 16]]
+[[1, 4], [9, 16]]
+#+end_example
 
 A coleção original também foi alterada!!! Se precisássemos utilizá-la (a versão original) após o map, teríamos problemas!
 
