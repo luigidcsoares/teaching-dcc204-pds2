@@ -6,9 +6,6 @@
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
-
-
-
 Herança vs Composição (Recapitulando)
 ═════════════════════════════════════
 
@@ -112,6 +109,14 @@ Classes e Métodos Abstratos
   │ }
   └────
 
+  ┌────
+  │ dog is eating.
+  │ dog says woof!
+  │ 
+  │ cat is eating.
+  │ cat says meow!
+  └────
+
   Uma classe abstrata não necessariamente precisa ter algum método
   abstrato. Em outras linguagens isso é mais claro, em C++ uma classe
   abstrata precisa ter pelo menos um método virtual puro. Porém, em C++
@@ -148,6 +153,10 @@ Classes e Métodos Abstratos
   │ }
   └────
 
+  ┌────
+  │ Foo
+  └────
+
   *Importante:* é uma boa prática sempre declarar o destrutor como
    virtual quando existe algum outro método virtual (mesmo que não puro)
   • Por quê?
@@ -178,6 +187,10 @@ Classes e Métodos Abstratos
     │ }
     └────
 
+    ┌────
+    │ ~Base()
+    └────
+
   O destrutor chamado foi apenas o da Base!!! Ou seja, objetos que
   precisariam ser destruídos na classe Derivada não serão!
 
@@ -205,6 +218,11 @@ Classes e Métodos Abstratos
   │   delete b;
   │   return 0;
   │ }
+  └────
+
+  ┌────
+  │ ~Derivada()
+  │ ~Base()
   └────
 
 
@@ -273,6 +291,13 @@ Interfaces
   │ 
   │   return 0;
   │ }
+  └────
+
+  ┌────
+  │ Music is playing.
+  │ Music playback paused.
+  │ Video is playing.
+  │ Video playback paused.
   └────
 
   MusicPlayer e VideoPlayer poderiam, também, ter uma função de gravar.
@@ -412,6 +437,15 @@ Interfaces
   │ }
   └────
 
+  ┌────
+  │ Music is playing.
+  │ Recording music.
+  │ Music playback paused.
+  │ Video is playing.
+  │ Recording video.
+  │ Video playback paused.
+  └────
+
 
 + Boas Práticas: SOLID
 ══════════════════════
@@ -492,6 +526,11 @@ Interfaces
   │ }
   └────
 
+  ┌────
+  │ $13765
+  │ Processing credit payment type
+  └────
+
   Antes de prosseguir, vamos fazer uma pequena modificação no exemplo:
   tanto pagamento por crédito quanto por débito requer um "código de
   segurança":
@@ -565,6 +604,12 @@ Interfaces
   │ 
   │   return 0;
   │ }
+  └────
+
+  ┌────
+  │ $13765
+  │ Verifying security code: 123456
+  │ Processing credit payment type
   └────
 
 
@@ -653,6 +698,12 @@ Interfaces
   │ 
   │   return 0;
   │ }
+  └────
+
+  ┌────
+  │ $13765
+  │ Verifying email address: lebron.james@gmail.com
+  │ Processing paypal payment type
   └────
 
   Você consegue perceber algo estranho? Este é um exemplo ilustrativo,
@@ -761,6 +812,12 @@ Interfaces
   │   delete processor;
   │   return 0;
   │ }
+  └────
+
+  ┌────
+  │ $13765
+  │ Verifying email adress: lebron.james@gmail.com
+  │ Processing paypal payment type
   └────
 
   *Importante: você não deve levar este princípio ao pé da letra*
@@ -937,6 +994,12 @@ Interfaces
   │ }
   └────
 
+  ┌────
+  │ $13765
+  │ Verifying email adress: lebron.james@gmail.com
+  │ Processing paypal payment type
+  └────
+
 
 Exemplo 2: Quadrado é um Retângulo?
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
@@ -992,6 +1055,11 @@ Exemplo 2: Quadrado é um Retângulo?
   │ }
   └────
 
+  ┌────
+  │ Area = 2
+  │ OK
+  └────
+
   Perfeito, nossa implementação funciona, podemos redimensionar o
   retângulo e calcular a área dele.
 
@@ -1010,7 +1078,6 @@ Exemplo 2: Quadrado é um Retângulo?
   esse é o princípio de substituição de Liskov). Vamos testar isso:
 
   ┌────
-  │ #include <cassert>
   │ #include <iostream>
   │ 
   │ class Rectangle {
@@ -1058,6 +1125,11 @@ Exemplo 2: Quadrado é um Retângulo?
   │   std::cout << (test(&s) ? "OK" : "FAIL") << std::endl;
   │   return 0;
   │ }
+  └────
+
+  ┌────
+  │ Area = 4
+  │ FAIL
   └────
 
   Algo falhou… o resultado que esperávamos para a área do retângulo era
@@ -1109,6 +1181,10 @@ Exemplo 3: Liskov não é sobre Classes, é sobre Contratos!
   │ print(list(map(square, xs)))
   └────
 
+  ┌────
+  │ [1, 4, 9]
+  └────
+
   Acima estamos aplicando map em uma lista. Podemos aplicar também em um
   tupla (tuplas são coleções heterogêneas, podemos elementos de tipos
   diferentes). Observe o código a seguir:
@@ -1157,6 +1233,10 @@ Exemplo 3: Liskov não é sobre Classes, é sobre Contratos!
   │ print(list(map(square_list, xss)))
   └────
 
+  ┌────
+  │ [[1, 4], [9, 16]]
+  └────
+
   Parece que funcionou, certo? Mas o que será que aconteceu com o `xss'
   original?
 
@@ -1174,6 +1254,11 @@ Exemplo 3: Liskov não é sobre Classes, é sobre Contratos!
   │ xss = [[1, 2], [3, 4]]
   │ print(list(map(square_list, xss)))
   │ print(xss)
+  └────
+
+  ┌────
+  │ [[1, 4], [9, 16]]
+  │ [[1, 4], [9, 16]]
   └────
 
   A coleção original também foi alterada!!! Se precisássemos utilizá-la
