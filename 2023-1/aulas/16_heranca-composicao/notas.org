@@ -900,6 +900,211 @@ int main() {
 | Verifying  | email  | adress: | lebron.james@gmail.com |
 | Processing | paypal | payment | type                   |
 
+*** Exemplo 2: Quadrado é um Retângulo?
+
+O exemplo acima talvez seja muito superficial, já que, apesar da distinção semântica entre email e código de segurança, não conseguimos ver nenhum possível problema na prática. Vamos analisar um exemplo clássico:
+
+- Considere uma classe retângulo que possui largura, altura, sabe calcular sua área, e também podemos redimensionar.
+- Esse redimensionamento naturalmente possui uma pós-condição: alterar a largura não deve impactar na altura e vice-versa.
+- Para testar, vamos implementar uma função que recebe um retângulo, altera sua largura e altura, e calcula a nova área.
+
+#+begin_src C++ :flags -std=c++17 :export both
+#include <cassert>
+#include <iostream>
+
+class Rectangle {
+public:
+  // pós-condição: a altura deve permanecer inalterada
+  virtual void set_width(float width) {
+    _width = width;
+  }
+
+  // pós-condição: a largura deve permanecer inalterada
+  virtual void set_height(float height) {
+    _height = height;
+  }
+
+  float area() const {
+    return _width * _height;
+  }
+
+protected:
+  float _width;
+  float _height;
+};
+
+bool test(Rectangle *r) {
+  r->set_width(1);
+  r->set_height(2);
+  std::cout << "Area = " << r->area() << std::endl;
+  return r->area() == 2;
+}
+
+int main() {
+  Rectangle r;
+  std::cout << (test(&r) ? "OK" : "FAIL") << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| Area | = | 2 |
+| OK   |   |   |
+
+Perfeito, nossa implementação funciona, podemos redimensionar o retângulo e calcular a área dele.
+
+Matematicamente, um quadrado *é um* retângulo. Já que a relação é "é um", parece fazer sentido utilizar herança para implementar um quadrado. Porém, precisaremos sobrescrever os métodos ~set_width~ e ~set_height~ para garantir que o quadrado continue sendo um quadrado, isto é, tenha os lados iguais.
+
+Já dá para notar que tem algo no mínimo estranho. Um quadrado não deveria precisar de dois métodos para alterar seus lados. Vamos ignorar isso por enquanto e acreditar que está tudo correto. Um quadrado *é um* retângulo, então deveríamos conseguir passar um quadrado para a função de teste (ou seja, onde estamos utilizando o tipo Rectangle, deve ser possível utilizar Square sem nenhum problema; esse é o princípio de substituição de Liskov). Vamos testar isso:
+
+#+begin_src C++ :flags -std=c++17 :export both
+#include <cassert>
+#include <iostream>
+
+class Rectangle {
+public:
+  // pós-condição: a altura deve permanecer inalterada
+  virtual void set_width(float width) {
+    _width = width;
+  }
+
+  // pós-condição: a largura deve permanecer inalterada
+  virtual void set_height(float height) {
+    _height = height;
+  }
+
+  float area() const {
+    return _width * _height;
+  }
+
+protected:
+  float _width;
+  float _height;
+};
+
+class Square : public Rectangle {
+public:
+  void set_width(float width) override {
+    Rectangle::set_width(width);
+    Rectangle::set_height(width);
+  }
+  void set_height(float height) override {
+    Rectangle::set_width(height);
+    Rectangle::set_height(height);
+  }
+};
+
+bool test(Rectangle *r) {
+  r->set_width(1);
+  r->set_height(2);
+  std::cout << "Area = " << r->area() << std::endl;
+  return r->area() == 2;
+}
+
+int main() {
+  Square s;
+  std::cout << (test(&s) ? "OK" : "FAIL") << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| Area | = | 4 |
+| FAIL |   |   |
+
+Algo falhou... o resultado que esperávamos para a área do retângulo era 2, já que alteramos sua altura para 1 e sua largura para 2. O ponto é que a implementação do subtipo Square *não obedece* o contrato estabelecido pelo supertipo Rectangle: a pós-condição em cada método também é parte do contrato!
+
+Apesar de matematicamente um quadrado ser um retângulo, estamos modelando um retângulo *redimensionável*, e um quadrado *não é um retângulo redimensionável*. Não conseguimos substituir o subtipo Square onde aparecia o supertipo Rectangle, porque a definição de Square não está em conformidade com os contratos estabelecidos por Rectangle!
+
+Da forma que implementamos, introduzimos um comportamento inesperado ao uso de Rectangle. Esta é uma clara violação do princípio de substituição de Liskov.
+
+*** Exemplo 3: Liskov não é sobre Classes, é sobre Contratos!
+
+Os erros causados pela quebra do princípio de substituição de Liskov nos exemplos acima não são erros possíveis de serem identificados durante o processo de compilação, são erros mais sutis. Mas a violação deste princípio pode ser observada de forma gritante quando acontece algum erro durante a compilação do sistema.
+
+Um outro ponto que vale ressaltar é que o princípio de substituição de Liskov *não diz respeito apenas a classes*, mas sim a *contratos* que devem ser respeitados. Para ilustrar (e variar um pouquinho), vamos ver um caso em Python. Python possui uma função *map* que recebe uma função e uma coleção (lista, conjunto, etc), e aplica em cada elemento da coleção a função que foi passada. Por exemplo, imagine que temos uma função ~square(x) = x^2~.
+
+#+begin_example
+map(square, [1, 2, 3]) => [2, 4, 6]
+#+end_example
+
+Vamos ver o código em Python:
+
+#+begin_src python :results output :export both
+def square(x):
+    return x * x;
+
+xs = [1, 2, 3]
+print(list(map(square, xs)))
+#+end_src
+
+#+RESULTS:
+: [1, 4, 9]
+
+Acima estamos aplicando map em uma lista. Podemos aplicar também em um tupla (tuplas são coleções heterogêneas, podemos elementos de tipos diferentes). Observe o código a seguir:
+
+#+begin_src python :results silent
+def square(x):
+    return x * x;
+
+xs = (23, "a")
+print(tuple(map(square, xs)))
+#+end_src
+
+A aplicação de ~square~ ao elemento "a" não funciona, obtemos um erro durante a execução:
+
+#+begin_example
+TypeError: can't multiply sequence by non-int of type 'str'
+#+end_example
+
+Essa também é uma violação do princípio de substituição de Liskov: a função que passamos para o ~map~ não está em conformidade com o que o ~map~ esperava (uma função que seja aplicável a todos os elementos da coleção).
+
+O erro nesse exemplo é bem claro, mas poderia ser algo mais sutil. Imagine que temos uma lista de listas e vamos aplicar uma função a cada sublista. Esta função recebe uma lista de inteiros, percorre cada elemento e calcula o quadrado.
+
+Assuma para este exemplo que o ~map~ possui como pós-condição que a coleção original esteja inalterada, e uma nova coleção tenha sido construída (afinal de contas, o ~map~ retorna uma nova coleção).
+
+#+begin_src python :results output :export both
+def square(x):
+    return x * x
+
+def square_list(xs):
+    i = 0
+    while i < len(xs):
+        xs[i] = square(xs[i])
+        i = i + 1
+    return xs
+
+xss = [[1, 2], [3, 4]]
+print(list(map(square_list, xss)))
+#+end_src
+
+#+RESULTS:
+: [[1, 4], [9, 16]]
+
+Parece que funcionou, certo? Mas o que será que aconteceu com o ~xss~ original?
+
+#+begin_src python :results output :export both
+def square(x):
+    return x * x
+
+def square_list(xs):
+    i = 0
+    while i < len(xs):
+        xs[i] = square(xs[i])
+        i = i + 1
+    return xs
+
+xss = [[1, 2], [3, 4]]
+print(list(map(square_list, xss)))
+print(xss)
+#+end_src
+
+#+RESULTS:
+: [[1, 4], [9, 16]]
+: [[1, 4], [9, 16]]
+
+A coleção original também foi alterada!!! Se precisássemos utilizá-la (a versão original) após o map, teríamos problemas!
+
 ** "I" e "D"
 
 Os princípios restantes são o de Segregação de Interface ( *I* nterface segration ) e Inversão de Depedendências ( *D* ependency inversion). Não vamos cobrir os princípios restantes nesta aula, mas recomendo fortemente que estudem por conta própria. O vídeo utilizado como referência cobre todos os cinco princípios, e também passa por composição em um dos exemplos. É um ótimo ponto de partida!
