@@ -1,0 +1,960 @@
+#+title: Notas de Aula - 17 POO: Polimorfismo (parte 1)
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#+property: header-args :exports both :results scalar :wrap example
+- O que você acha que é?
+- Termo originário do grego:
+  - Poli: *muitas*
+  - Morphos: *formas*
+- Muitas formas... como assim? Ajuda em algo? Já vimos isso?
+
+** Polimorfismo de Subtipagem
+
+Na aula passada, ilustramos o conceito de classe abstrata
+com a classe ~Animal~. Assumimos que animais possuem a
+capacidade de falar, mas que cada um fala de uma maneira
+diferente:
+
+#+begin_example
+                        +--------+
+                        | Animal | 
+                        +--------+
+                        | say()  |
+                        +--------+
+      +----------------------+--------------------+
+      |                      |                    |
+  +--------+            +--------+            +--------+
+  |  Dog   |            |  Cat   |            |  Duck  |
+  +--------+            +--------+            +--------+
+  |  woof  |            |  meow  |            | quack  |
+  +--------+            +--------+            +--------+
+#+end_example
+
+Ou seja, um animal tem *muitas formas* de falar, a depender de
+qual animal em específico estamos considerando.
+
+Você lembra do código?
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <string>
+
+class Animal {
+public:
+  void eat() {
+    std::cout << "eating..." << std::endl;
+  }
+
+  virtual void say() = 0;
+  virtual ~Animal() {}
+
+protected:
+  std::string name_;
+};
+
+class Dog : public Animal {
+public:
+  void say() override {
+    std::cout << "woof!" << std::endl;
+  }
+};
+
+class Cat : public Animal {
+public:
+  void say() override {
+    std::cout << "meow!" << std::endl;
+  }
+};
+
+int main() {
+  Animal *dog = new Dog();
+  dog->say();
+  delete dog;
+  
+  Animal *cat = new Cat();
+  cat->say();
+  delete cat;
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+woof!
+meow!
+#+end_example
+
+Também falamos sobre interfaces (que em C++ são implementadas por meio de classes abstratas). Vimos o exemplo de tocador de música/vídeo:
+
+
+#+begin_example
+                +----------+        +------------+
+                | Playable |        | Recordable |
+                +----------+        +------------+
+                | play()   |        | record()   |
+                | pause()  |        +------------+
+                +----------+             |
+                     |                   |
+                     +---------|---------|
+      +------------------------+----------------+
+      |                                         |
+  +-------------+                         +-------------+
+  | MusicPlayer |                         | VideoPlayer |
+  +-------------+                         +-------------+
+#+end_example
+
+
+Em qualquer situação que tivermos um "Playable", este playable pode ser comportar como MusicPlayer ou VideoPlayer.
+
+- Estes são exemplos do que chamamos de Polimorfismo de *Subtipagem* (ou de *Inclusão*)
+  - Onde um objeto de um tipo T for esperado, um do subtipo S deve ser aceito (Princípio de Substituição de Liskov, lembram?)
+  - O contrário é válido? *Nem sempre*
+    
+- Você lembra do que a palavra-chave ~virtual~ faz?
+- Sem o ~virtual~, teríamos polimorfismo?
+
+O que acontecerá no código a seguir? Note que removemos os ~virtual~'s
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+// Interface
+class Playable {
+public:
+  void play();
+  void pause();
+};
+
+class MusicPlayer : public Playable {
+public:
+  void play() {
+    std::cout << "Music is playing." << std::endl;
+  }
+
+  void pause() {
+    std::cout << "Music playback paused." << std::endl;
+  }
+};
+
+class VideoPlayer : public Playable {
+public:
+  void play() {
+    std::cout << "Video is playing." << std::endl;
+  }
+
+  void pause() {
+    std::cout << "Video playback paused." << std::endl;
+  }
+};
+
+int main() {
+  MusicPlayer *p1 = new MusicPlayer();
+  VideoPlayer *p2 = new VideoPlayer();
+  p1->play();
+  p1->pause();
+  p2->play();
+  p2->pause();
+  delete p1;
+  delete p2;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Music is playing.
+Music playback paused.
+Video is playing.
+Video playback paused.
+#+end_example
+
+E no código a seguir?
+
+#+begin_src C++ :flags -std=c++17 :results silent
+#include <iostream>
+
+// Interface
+class Playable {
+public:
+  void play();
+  void pause();
+};
+
+class MusicPlayer : public Playable {
+public:
+  void play() {
+    std::cout << "Music is playing." << std::endl;
+  }
+
+  void pause() {
+    std::cout << "Music playback paused." << std::endl;
+  }
+};
+
+class VideoPlayer : public Playable {
+public:
+  void play() {
+    std::cout << "Video is playing." << std::endl;
+  }
+
+  void pause() {
+    std::cout << "Video playback paused." << std::endl;
+  }
+};
+
+int main() {
+  Playable *p1 = new MusicPlayer();
+  Playable *p2 = new VideoPlayer();
+  p1->play();
+  p1->pause();
+  p2->play();
+  p2->pause();
+  delete p1;
+  delete p2;
+  return 0;
+}
+#+end_src
+
+#+begin_example
+undefined reference to `Playable::play()'
+#+end_example
+
+E agora?
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+// Interface
+class Playable {
+public:
+  void play() {
+    std::cout << "Something is playing." << std::endl;
+  }
+  
+  void pause() {
+    std::cout << "Something was paused." << std::endl;
+  }
+};
+
+class MusicPlayer : public Playable {
+public:
+  void play() {
+    std::cout << "Music is playing." << std::endl;
+  }
+
+  void pause() {
+    std::cout << "Music playback paused." << std::endl;
+  }
+};
+
+class VideoPlayer : public Playable {
+public:
+  void play() {
+    std::cout << "Video is playing." << std::endl;
+  }
+
+  void pause() {
+    std::cout << "Video playback paused." << std::endl;
+  }
+};
+
+int main() {
+  Playable *p1 = new MusicPlayer();
+  Playable *p2 = new VideoPlayer();
+  p1->play();
+  p1->pause();
+  p2->play();
+  p2->pause();
+  delete p1;
+  delete p2;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Something is playing.
+Something was paused.
+Something is playing.
+Something was paused.
+#+end_example
+
+Note que, sem o ~virtual~, não conseguimos fazer um Playable
+se comportar de maneiras diferentes. Ou seja, isto *não* é
+polimorfismo.
+
+** Polimorfismo Paramétrico
+
+#+begin_src C++ :flags -std=c++17
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+void show(const std::vector<int> &xs) {
+  std::cout << "[";
+  if (!xs.empty()) {
+    std::cout << xs[0];
+    for (std::size_t i = 1; i < xs.size(); i++) {
+      std::cout << ", " << xs[i];
+    }
+  }
+  std::cout << "]" << std::endl;
+}
+
+int main() {
+  std::vector<int> xs = {3, 1, 2};
+  std::sort(xs.begin(), xs.end());
+  show(xs);
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1, 2, 3]
+#+end_example
+
+E se quiséssemos ordenar e imprimir strings?
+
+#+begin_src C++ :flags -std=c++17
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+void show(const std::vector<std::string> &xs) {
+  std::cout << "[";
+  if (!xs.empty()) {
+    std::cout << xs[0];
+    for (std::size_t i = 1; i < xs.size(); i++) {
+      std::cout << ", " << xs[i];
+    }
+  }
+  std::cout << "]" << std::endl;
+}
+
+int main() {
+  std::vector<std::string> xs = {"Harry", "Ron", "Hermione"};
+  std::sort(xs.begin(), xs.end());
+  show(xs);
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[Harry, Hermione, Ron]
+#+end_example
+
+- Quais as diferenças entre os dois códigos?
+- Os códigos possuem alguma redudância?
+- Como extrair essa redundância? *Templates!*
+
+#+begin_src C++ :flags -std=c++17
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+template <typename T>
+void show(const std::vector<T> &xs) {
+  std::cout << "[";
+  if (!xs.empty()) {
+    std::cout << xs[0];
+    for (std::size_t i = 1; i < xs.size(); i++) {
+      std::cout << ", " << xs[i];
+    }
+  }
+  std::cout << "]" << std::endl;
+}
+
+int main() {
+  std::vector<int> xs = {3, 1, 2};
+  std::sort(xs.begin(), xs.end());
+  show<int>(xs);
+
+  std::vector<std::string> ys= {"Harry", "Ron", "Hermione"};
+  std::sort(ys.begin(), ys.end());
+  show<std::string>(ys);
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1, 2, 3]
+[Harry, Hermione, Ron]
+#+end_example
+
+Este é um exemplo de Polimorfismo *Paramétrico*
+
+- Não há nenhuma restrição explícita em relação ao tipo T
+- Isso significa que vai funcionar para qualquer tipo?
+
+#+begin_src C++ :flags -std=c++17 :results silent
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+template <typename T>
+void show(const std::vector<T> &xs) {
+  std::cout << "[";
+  if (!xs.empty()) {
+    std::cout << xs[0];
+    for (std::size_t i = 1; i < xs.size(); i++) {
+      std::cout << ", " << xs[i];
+    }
+  }
+  std::cout << "]" << std::endl;
+}
+
+class Person {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+int main() {
+  std::vector<Person> ps = {
+    Person("Nikola Jokic", 28),
+    Person("Taylor Swift", 33),
+    Person("Fausto Silva", 73)
+  };
+  
+  std::sort(ps.begin(), ps.end());
+  show<Person>(ps);
+  
+  return 0;
+}
+#+end_src
+
+- O que uma pessoa precisa para ser "mostrável"? O operador de stream ~<<~
+- Como garantir que um tipo irá implementar este operador? *friend + classe abstrata/interface*
+    
+#+begin_src C++ :flags -std=c++17
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+template <typename T>
+void show(const std::vector<T> &xs) {
+  std::cout << "[";
+  if (!xs.empty()) {
+    std::cout << xs[0];
+    for (std::size_t i = 1; i < xs.size(); i++) {
+      std::cout << ", " << xs[i];
+    }
+  }
+  std::cout << "]" << std::endl;
+}
+
+class Printable {
+public:
+  friend std::ostream& operator<<(std::ostream& os, const Printable &s) {
+    s.print(os);
+    return os;
+  }
+
+  virtual ~Printable() {}
+
+protected:
+  virtual void print(std::ostream &os) const = 0;
+};
+
+class Person : public Printable {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+  
+protected:
+  void print(std::ostream &os) const override {
+    os << "(" << _name << ", " << _age << ")";
+  }
+  
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+int main() {
+  std::vector<Person> ps = {
+    Person("Nikola Jokic", 28),
+    Person("Taylor Swift", 33),
+    Person("Fausto Silva", 73)
+  };
+  
+  // std::sort(ps.begin(), ps.end());
+  show<Person>(ps);
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[(Nikola Jokic, 28), (Taylor Swift, 33), (Fausto Silva, 73)]
+#+end_example
+
+- Por quê o operador << é ~friend~?
+  - Primeiro ponto: um método ~friend~ *não* é um método da classe
+  - Gostaríamos de fazer algo do tipo ~std::cout << person~
+  - Isto é o equivalente a algo como ~operator<<(std::cout, person)~
+  - Se tivéssemos definido como método da classe, precisaríamos
+    escrever ~person.operator<<(std::cout)~, muito estranho/incomum...
+    
+- [[https://isocpp.org/wiki/faq/input-output#virtual-friend-fns][How can I provide printing for an entire hierarchy of classes?]]
+
+- E se tivéssemos esquecido de implementar o ~print~ em Person?
+- O erro seria capturado na compilação? *Sim --> Person vira classe abstrata!*
+
+- O que uma pessoa precisa para ser "ordenável"? O operador de comparação ~<~
+- Dá para seguir a mesma ideia?
+
+#+begin_src C++ :flags -std=c++17 :results silent
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+template <typename T>
+void show(const std::vector<T> &xs) {
+  std::cout << "[";
+  if (!xs.empty()) {
+    std::cout << xs[0];
+    for (std::size_t i = 1; i < xs.size(); i++) {
+      std::cout << ", " << xs[i];
+    }
+  }
+  std::cout << "]" << std::endl;
+}
+
+class Printable {
+public:
+  friend std::ostream& operator<<(std::ostream& os, const Printable &s) {
+    s.print(os);
+    return os;
+  }
+
+  virtual ~Printable() {}
+
+protected:
+  virtual void print(std::ostream &os) const = 0;
+};
+
+class Comparable {
+public:
+  virtual bool operator<(const Comparable &other) const = 0;
+  virtual ~Comparable() {}
+};
+
+class Person : public Printable, Comparable {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+
+  bool operator<(const Comparable &other) const override {
+    if (this->name() == other.name()) {
+      return this->age() < other.age();
+    }
+    return this->name() < other.name();
+  }
+  
+protected:
+  void print(std::ostream &os) const override {
+    os << "(" << _name << ", " << _age << ")";
+  }
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+int main() {
+  std::vector<Person> ps = {
+    Person("Nikola Jokic", 28),
+    Person("Taylor Swift", 33),
+    Person("Fausto Silva", 73)
+  };
+  
+  std::sort(ps.begin(), ps.end());
+  show<Person>(ps);
+  
+  return 0;
+}
+#+end_src
+
+#+begin_example
+‘const class Comparable’ has no member named ‘name’
+‘const class Comparable’ has no member named ‘age’
+#+end_example
+
+- O que aconteceu?
+  - O parâmetro que está sendo comparado é um ~Comparable~, não ~Person~! Precisaríamos converter para ~Person~!
+  - Faz sentido comparar ~Person~ com outro ~Comparable~, possivelmente diferente de ~Person~?
+  - Nem sempre interface é uma boa solução!
+  - Vamos só implementar o comparador específico para ~Person~:
+
+#+begin_src C++ :flags -std=c++17
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+template <typename T>
+void show(const std::vector<T> &xs) {
+  std::cout << "[";
+  if (!xs.empty()) {
+    std::cout << xs[0];
+    for (std::size_t i = 1; i < xs.size(); i++) {
+      std::cout << ", " << xs[i];
+    }
+  }
+  std::cout << "]" << std::endl;
+}
+
+class Printable {
+public:
+  friend std::ostream& operator<<(std::ostream& os, const Printable &s) {
+    s.print(os);
+    return os;
+  }
+
+  virtual ~Printable() {}
+  
+protected:
+  virtual void print(std::ostream &os) const = 0;
+};
+
+class Person : public Printable {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+
+  bool operator<(const Person &other) const {
+    if (this->name() == other.name()) {
+      return this->age() < other.age();
+    }
+    return this->name() < other.name();
+  }
+  
+protected:
+  void print(std::ostream &os) const override {
+    os << "(" << _name << ", " << _age << ")";
+  }
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+int main() {
+  std::vector<Person> ps = {
+    Person("Nikola Jokic", 28),
+    Person("Taylor Swift", 33),
+    Person("Fausto Silva", 73)
+  };
+  
+  std::sort(ps.begin(), ps.end());
+  show<Person>(ps);
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[(Fausto Silva, 73), (Nikola Jokic, 28), (Taylor Swift, 33)]
+#+end_example
+
+** Polimorfismo Ad-Hoc: Coerção de Tipos
+
+O que acontecerá no código a seguir?
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Square of int" << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;;
+  std::cout << square('a') << std::endl;;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Square of int
+1
+Square of int
+9409
+#+end_example
+
+Retomando o exemplo dos animais, qual o resultado do código?
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <string>
+
+class Animal {
+public:
+  virtual void say() = 0;
+  virtual ~Animal() {}
+
+protected:
+  std::string name_;
+};
+
+class Dog : public Animal {
+public:
+  void say() override {
+    std::cout << "woof!" << std::endl;
+  }
+};
+
+class Cat : public Animal {
+public:
+  void say() override {
+    std::cout << "meow!" << std::endl;
+  }
+};
+
+void say(Animal &a) {
+  a.say();
+}
+
+int main() {
+  Cat c;
+  say(c);
+  
+  Dog d;
+  say(d);
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+meow!
+woof!
+#+end_example
+
+O que aconteceu nos dois casos?
+- ~char~, apesar do nome, é um tipo numérico; ~int~ é um "supertipo" de ~char~ (char cabe em int)
+- ~Dog~ e ~Cat~ são ~Animal~; ~Animal~ é supertipo
+- Em ambas as funções, houve uma conversão de um subtipo
+  para um supertipo: *upcasting*
+- Nesses casos, a conversão é *implícita*, automática
+
+E o processo contrário? Vamos tentar um exemplo parecido com o ~Comparable~, a interface ~Equatable~, que define objetos que podem ser comparados (são iguais ou não)
+- Faz sentido comparar ~Person~ com qualquer outro ~Equatable~?
+- Precisaríamos converter o supertipo ~Comparable~ para o subtipo ~Person~: *downcasting*
+- É possível ser feito de forma automática? *Não!*
+  - A relação "é um" que existe no caso da herança não é simétrica:
+    toda pessoa é comparável, mas nem todo objeto comparável é uma pessoa
+- O que fazer quando o outro ~Equatable~ não é ~Person~?
+
+Opção 1: Erro
+
+#+begin_src C++ :flags -std=c++17 :results silent
+#include <iostream>
+
+class Equatable {
+public:
+  virtual bool operator==(const Equatable &other) const = 0;
+  virtual ~Equatable() {}
+};
+
+class Person : public Equatable {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+
+  bool operator==(const Equatable &other) const  override {
+    auto &other_person = dynamic_cast<const Person &>(other);
+    return this->name() == other_person.name() &&
+      this->age() == other_person.age();
+  }
+  
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+class Rectangle : public Equatable {
+public:
+  Rectangle(unsigned width, unsigned height)
+    : _width(width), _height(height) {}
+
+  unsigned width() const { return _width; }
+  unsigned height() const { return _height; }
+
+  bool operator==(const Equatable &other) const override {
+    auto &other_rect = dynamic_cast<const Rectangle &>(other);
+    return this->width() == other_rect.width() &&
+      this->height() == other_rect.height();
+  }
+  
+private:
+  unsigned _width;
+  unsigned _height;
+};
+
+int main() {
+  Person p("Vinícius Júnior", 22);
+  Rectangle r(1, 2);
+
+  std::cout << "Pessoa == Retângulo? " << (p == r) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+begin_example
+terminate called after throwing an instance of 'std::bad_cast'
+  what():  std::bad_cast
+#+end_example
+
+- Ao comparar Person e Rectangle, foi lançada uma exceção
+  - O que é isso? Tópico de aula futura!
+
+Opção 2: São objetos diferentes!!!
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+class Equatable {
+public:
+  virtual bool operator==(const Equatable &other) const = 0;
+  virtual ~Equatable() {}
+};
+
+class Person : public Equatable {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+
+  bool operator==(const Equatable &other) const  override {
+    auto other_person = dynamic_cast<const Person *>(&other);
+    if (other_person == nullptr) {
+      return false;
+    }
+    
+    return this->name() == other_person->name() &&
+      this->age() == other_person->age();
+  }
+  
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+class Rectangle : public Equatable {
+public:
+  Rectangle(unsigned width, unsigned height)
+    : _width(width), _height(height) {}
+
+  unsigned width() const { return _width; }
+  unsigned height() const { return _height; }
+
+  bool operator==(const Equatable &other) const override {
+    auto other_rect = dynamic_cast<const Rectangle *>(&other);
+    if (other_rect == nullptr) {
+      return false;
+    }
+    
+    return this->width() == other_rect->width() &&
+      this->height() == other_rect->height();
+  }
+  
+private:
+  unsigned _width;
+  unsigned _height;
+};
+
+int main() {
+  Person p("Vinícius Júnior", 22);
+  Rectangle r(1, 2);
+
+  std::cout << "Pessoa == Retângulo? " << (p == r) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Pessoa == Retângulo? 0
+#+end_example
+
+Qual a diferença nas duas implementações? Referência vs Ponteiro
+
+** Polimorfismo Ad-Hoc: Sobrecarga
+
+- Implementamos um operador ~\equal\equal~ para pessoas e retângulos
+- Este operador também funciona para inteiros, floats, doubles, strings, ...
+- Como pode um único método (mesmo "nome") funcionar para diferentes tipos (parâmetros)?
+- Já vimos isso em outro lugar? *Construtores*
+- O código a seguir funciona?
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Square of int" << std::endl;
+  return x * x;
+}
+
+double square(double x) {
+  std::cout << "Square of double" << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;
+  std::cout << square(2.5) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Square of int
+1
+Square of double
+6.25
+#+end_example
+
+- Ou seja, podemos ter um mesmo método (mesmo nome) definido para diferentes tipos!
+- Chamamos isto de *Sobrecarga*
+  
+** Os Tipos de Polimorfismo
+
+Recapitulando: podemos classificar os diferentes tipos de polimorfismo da seguinte maneira:
+
+#+begin_example
+            +----- Paramétrico
+            |
+Universal --+
+            |
+            +----- Subtipagem
+
+
+            +----- Sobrecarga
+            |
+Ad-Hoc    --+
+            |
+            +----- Coerção
+#+end_example
