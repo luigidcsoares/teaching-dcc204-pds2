@@ -740,10 +740,10 @@ O que aconteceu nos dois casos?
 
 E o processo contrário? Vamos tentar um exemplo parecido com o ~Comparable~, a interface ~Equatable~, que define objetos que podem ser comparados (são iguais ou não)
 - Faz sentido comparar ~Person~ com qualquer outro ~Equatable~?
-- Precisaríamos converter o supertipo ~Comparable~ para o subtipo ~Person~: *downcasting*
+- Precisaríamos converter o supertipo ~Equatable~ para o subtipo ~Person~: *downcasting*
 - É possível ser feito de forma automática? *Não!*
   - A relação "é um" que existe no caso da herança não é simétrica:
-    toda pessoa é comparável, mas nem todo objeto comparável é uma pessoa
+    toda pessoa é igualável, mas nem todo objeto comparável é uma pessoa
 - O que fazer quando o outro ~Equatable~ não é ~Person~?
 
 Opção 1: Erro
@@ -881,7 +881,7 @@ Qual a diferença nas duas implementações? Referência vs Ponteiro
 
 ** Polimorfismo Ad-Hoc: Sobrecarga
 
-- Implementamos um operador ~\equal\equal~ para pessoas e retângulos
+- Implementamos um operador == para pessoas e retângulos
 - Este operador também funciona para inteiros, floats, doubles, strings, ...
 - Como pode um único método (mesmo "nome") funcionar para diferentes tipos (parâmetros)?
 - Já vimos isso em outro lugar? *Construtores*

@@ -929,7 +929,7 @@ Polimorfismo Ad-Hoc: Coerção de Tipos
 Polimorfismo Ad-Hoc: Sobrecarga
 ═══════════════════════════════
 
-  • Implementamos um operador `\equal\equal' para pessoas e retângulos
+  • Implementamos um operador == para pessoas e retângulos
   • Este operador também funciona para inteiros, floats, doubles,
     strings, …
   • Como pode um único método (mesmo "nome") funcionar para diferentes
