@@ -88,6 +88,7 @@ Polimorfismo de Subtipagem
   │ meow!
   └────
 
+
   Também falamos sobre interfaces (que em C++ são implementadas por meio
   de classes abstratas). Vimos o exemplo de tocador de música/vídeo:
 
@@ -174,6 +175,7 @@ Polimorfismo de Subtipagem
   │ Video is playing.
   │ Video playback paused.
   └────
+
 
   E no código a seguir?
 
@@ -285,6 +287,7 @@ Polimorfismo de Subtipagem
   │ Something was paused.
   └────
 
+
   Note que, sem o `virtual', não conseguimos fazer um Playable se
   comportar de maneiras diferentes. Ou seja, isto *não* é polimorfismo.
 
@@ -320,6 +323,7 @@ Polimorfismo Paramétrico
   │ [1, 2, 3]
   └────
 
+
   E se quiséssemos ordenar e imprimir strings?
 
   ┌────
@@ -350,6 +354,7 @@ Polimorfismo Paramétrico
   ┌────
   │ [Harry, Hermione, Ron]
   └────
+
 
   • Quais as diferenças entre os dois códigos?
   • Os códigos possuem alguma redudância?
@@ -389,6 +394,7 @@ Polimorfismo Paramétrico
   │ [1, 2, 3]
   │ [Harry, Hermione, Ron]
   └────
+
 
   Este é um exemplo de Polimorfismo *Paramétrico*
 
@@ -506,6 +512,7 @@ Polimorfismo Paramétrico
   ┌────
   │ [(Nikola Jokic, 28), (Taylor Swift, 33), (Fausto Silva, 73)]
   └────
+
 
   • Por quê o operador << é `friend'?
     • Primeiro ponto: um método `friend' *não* é um método da classe
@@ -713,6 +720,7 @@ Polimorfismo Ad-Hoc: Coerção de Tipos
   │ 9409
   └────
 
+
   Retomando o exemplo dos animais, qual o resultado do código?
 
   ┌────
@@ -760,6 +768,7 @@ Polimorfismo Ad-Hoc: Coerção de Tipos
   │ meow!
   │ woof!
   └────
+
 
   O que aconteceu nos dois casos?
   • `char', apesar do nome, é um tipo numérico; `int' é um "supertipo"
@@ -913,6 +922,7 @@ Polimorfismo Ad-Hoc: Coerção de Tipos
   │ Pessoa == Retângulo? 0
   └────
 
+
   Qual a diferença nas duas implementações? Referência vs Ponteiro
 
 
@@ -953,6 +963,7 @@ Polimorfismo Ad-Hoc: Sobrecarga
   │ Square of double
   │ 6.25
   └────
+
 
   • Ou seja, podemos ter um mesmo método (mesmo nome) definido para
     diferentes tipos!

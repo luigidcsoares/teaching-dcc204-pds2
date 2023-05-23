@@ -2,7 +2,7 @@
 #+author: Luigi D. C. Soares
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#+property: header-args :exports both :results scalar :wrap example
+#+property: header-args :results scalar
 - O que você acha que é?
 - Termo originário do grego:
   - Poli: *muitas*
@@ -36,7 +36,7 @@ qual animal em específico estamos considerando.
 
 Você lembra do código?
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <iostream>
 #include <string>
 
@@ -81,10 +81,8 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-woof!
-meow!
-#+end_example
+: woof!
+: meow!
 
 Também falamos sobre interfaces (que em C++ são implementadas por meio de classes abstratas). Vimos o exemplo de tocador de música/vídeo:
 
@@ -117,7 +115,7 @@ Em qualquer situação que tivermos um "Playable", este playable pode ser compor
 
 O que acontecerá no código a seguir? Note que removemos os ~virtual~'s
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <iostream>
 
 // Interface
@@ -163,12 +161,10 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-Music is playing.
-Music playback paused.
-Video is playing.
-Video playback paused.
-#+end_example
+: Music is playing.
+: Music playback paused.
+: Video is playing.
+: Video playback paused.
 
 E no código a seguir?
 
@@ -223,7 +219,7 @@ undefined reference to `Playable::play()'
 
 E agora?
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <iostream>
 
 // Interface
@@ -274,12 +270,10 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-Something is playing.
-Something was paused.
-Something is playing.
-Something was paused.
-#+end_example
+: Something is playing.
+: Something was paused.
+: Something is playing.
+: Something was paused.
 
 Note que, sem o ~virtual~, não conseguimos fazer um Playable
 se comportar de maneiras diferentes. Ou seja, isto *não* é
@@ -287,7 +281,7 @@ polimorfismo.
 
 ** Polimorfismo Paramétrico
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <algorithm>
 #include <iostream>
 #include <vector>
@@ -312,13 +306,11 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-[1, 2, 3]
-#+end_example
+: [1, 2, 3]
 
 E se quiséssemos ordenar e imprimir strings?
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -344,15 +336,13 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-[Harry, Hermione, Ron]
-#+end_example
+: [Harry, Hermione, Ron]
 
 - Quais as diferenças entre os dois códigos?
 - Os códigos possuem alguma redudância?
 - Como extrair essa redundância? *Templates!*
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -383,10 +373,8 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-[1, 2, 3]
-[Harry, Hermione, Ron]
-#+end_example
+: [1, 2, 3]
+: [Harry, Hermione, Ron]
 
 Este é um exemplo de Polimorfismo *Paramétrico*
 
@@ -438,7 +426,7 @@ int main() {
 - O que uma pessoa precisa para ser "mostrável"? O operador de stream ~<<~
 - Como garantir que um tipo irá implementar este operador? *friend + classe abstrata/interface*
     
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -500,9 +488,7 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-[(Nikola Jokic, 28), (Taylor Swift, 33), (Fausto Silva, 73)]
-#+end_example
+: [(Nikola Jokic, 28), (Taylor Swift, 33), (Fausto Silva, 73)]
 
 - Por quê o operador << é ~friend~?
   - Primeiro ponto: um método ~friend~ *não* é um método da classe
@@ -603,7 +589,7 @@ int main() {
   - Nem sempre interface é uma boa solução!
   - Vamos só implementar o comparador específico para ~Person~:
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -671,15 +657,13 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-[(Fausto Silva, 73), (Nikola Jokic, 28), (Taylor Swift, 33)]
-#+end_example
+: [(Fausto Silva, 73), (Nikola Jokic, 28), (Taylor Swift, 33)]
 
 ** Polimorfismo Ad-Hoc: Coerção de Tipos
 
 O que acontecerá no código a seguir?
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <iostream>
 
 int square(int x) {
@@ -695,16 +679,14 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-Square of int
-1
-Square of int
-9409
-#+end_example
+: Square of int
+: 1
+: Square of int
+: 9409
 
 Retomando o exemplo dos animais, qual o resultado do código?
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <iostream>
 #include <string>
 
@@ -746,10 +728,8 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-meow!
-woof!
-#+end_example
+: meow!
+: woof!
 
 O que aconteceu nos dois casos?
 - ~char~, apesar do nome, é um tipo numérico; ~int~ é um "supertipo" de ~char~ (char cabe em int)
@@ -832,7 +812,7 @@ terminate called after throwing an instance of 'std::bad_cast'
 
 Opção 2: São objetos diferentes!!!
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <iostream>
 
 class Equatable {
@@ -895,9 +875,7 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-Pessoa == Retângulo? 0
-#+end_example
+: Pessoa == Retângulo? 0
 
 Qual a diferença nas duas implementações? Referência vs Ponteiro
 
@@ -909,7 +887,7 @@ Qual a diferença nas duas implementações? Referência vs Ponteiro
 - Já vimos isso em outro lugar? *Construtores*
 - O código a seguir funciona?
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src C++ :flags -std=c++17 :exports both
 #include <iostream>
 
 int square(int x) {
@@ -930,12 +908,10 @@ int main() {
 #+end_src
 
 #+RESULTS:
-#+begin_example
-Square of int
-1
-Square of double
-6.25
-#+end_example
+: Square of int
+: 1
+: Square of double
+: 6.25
 
 - Ou seja, podemos ter um mesmo método (mesmo nome) definido para diferentes tipos!
 - Chamamos isto de *Sobrecarga*
