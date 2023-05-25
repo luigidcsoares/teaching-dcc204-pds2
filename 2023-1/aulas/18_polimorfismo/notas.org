@@ -1,0 +1,284 @@
+#+title: Notas de Aula - 17 POO: Polimorfismo (parte 2)
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#+property: header-args :results scalar
+Recapitulando:
+- Aula passado falamos sobre dois tipos de polimorfimo (universal):
+  - Subtipagem/inclusão: em C++, alcançado por meio de herança/interface (Princípio de Substituição de Liskov)
+  - Paramétrico: em C++, alcançado por meio de templates
+- Hoje, vamos ver os últimos dois tipos de polimorfismo, comumente referidos como polimorfismo "ad-hoc"
+- Podemos classificar os tipos de polimorfismo da seguinte maneira:
+
+#+begin_example
+            +----- Paramétrico
+            |
+Universal --+
+            |
+            +----- Subtipagem
+
+
+            +----- Sobrecarga
+            |
+Ad-Hoc    --+
+            |
+            +----- Coerção
+#+end_example
+
+** Polimorfismo Ad-Hoc: Coerção de Tipos
+
+O que acontecerá no código a seguir?
+
+#+begin_src C++ :flags -std=c++17 :exports both
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Square of int" << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;;
+  std::cout << square('a') << std::endl;;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Square of int
+: 1
+: Square of int
+: 9409
+
+Retomando o exemplo dos animais, qual o resultado do código?
+
+#+begin_src C++ :flags -std=c++17 :exports both
+#include <iostream>
+#include <string>
+
+class Animal {
+public:
+  virtual void say() = 0;
+  virtual ~Animal() {}
+
+protected:
+  std::string name_;
+};
+
+class Dog : public Animal {
+public:
+  void say() override {
+    std::cout << "woof!" << std::endl;
+  }
+};
+
+class Cat : public Animal {
+public:
+  void say() override {
+    std::cout << "meow!" << std::endl;
+  }
+};
+
+void say(Animal &a) {
+  a.say();
+}
+
+int main() {
+  Cat c;
+  say(c);
+  
+  Dog d;
+  say(d);
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: meow!
+: woof!
+
+O que aconteceu nos dois casos?
+- ~char~, apesar do nome, é um tipo numérico; ~int~ é um "supertipo" de ~char~ (char cabe em int)
+- ~Dog~ e ~Cat~ são ~Animal~; ~Animal~ é supertipo
+- Em ambas as funções, houve uma conversão de um subtipo
+  para um supertipo: *upcasting*
+- Nesses casos, a conversão é *implícita*, automática
+
+E o processo contrário? Vamos tentar um exemplo parecido com o ~Comparable~, a interface ~Equatable~, que define objetos que podem ser comparados (são iguais ou não)
+- Faz sentido comparar ~Person~ com qualquer outro ~Equatable~?
+- Precisaríamos converter o supertipo ~Equatable~ para o subtipo ~Person~: *downcasting*
+- É possível ser feito de forma automática? *Não!*
+  - A relação "é um" que existe no caso da herança não é simétrica:
+    toda pessoa é igualável, mas nem todo objeto comparável é uma pessoa
+- O que fazer quando o outro ~Equatable~ não é ~Person~?
+
+Opção 1: Erro
+
+#+begin_src C++ :flags -std=c++17 :results silent
+#include <iostream>
+
+class Equatable {
+public:
+  virtual bool operator==(const Equatable &other) const = 0;
+  virtual ~Equatable() {}
+};
+
+class Person : public Equatable {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+
+  bool operator==(const Equatable &other) const  override {
+    auto &other_person = dynamic_cast<const Person &>(other);
+    return this->name() == other_person.name() &&
+      this->age() == other_person.age();
+  }
+  
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+class Rectangle : public Equatable {
+public:
+  Rectangle(unsigned width, unsigned height)
+    : _width(width), _height(height) {}
+
+  unsigned width() const { return _width; }
+  unsigned height() const { return _height; }
+
+  bool operator==(const Equatable &other) const override {
+    auto &other_rect = dynamic_cast<const Rectangle &>(other);
+    return this->width() == other_rect.width() &&
+      this->height() == other_rect.height();
+  }
+  
+private:
+  unsigned _width;
+  unsigned _height;
+};
+
+int main() {
+  Person p("Vinícius Júnior", 22);
+  Rectangle r(1, 2);
+
+  std::cout << "Pessoa == Retângulo? " << (p == r) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+begin_example
+terminate called after throwing an instance of 'std::bad_cast'
+  what():  std::bad_cast
+#+end_example
+
+- Ao comparar Person e Rectangle, foi lançada uma exceção
+  - O que é isso? Tópico de aula futura!
+
+Opção 2: São objetos diferentes!!!
+
+#+begin_src C++ :flags -std=c++17 :exports both
+#include <iostream>
+
+class Equatable {
+public:
+  virtual bool operator==(const Equatable &other) const = 0;
+  virtual ~Equatable() {}
+};
+
+class Person : public Equatable {
+public:
+  Person(std::string name, unsigned age) : _name(name), _age(age) {}
+  std::string name() const { return _name; }
+  unsigned age() const { return _age; }
+
+  bool operator==(const Equatable &other) const  override {
+    auto other_person = dynamic_cast<const Person *>(&other);
+    if (other_person == nullptr) {
+      return false;
+    }
+    
+    return this->name() == other_person->name() &&
+      this->age() == other_person->age();
+  }
+  
+private:
+  std::string _name;
+  unsigned _age;
+};
+
+class Rectangle : public Equatable {
+public:
+  Rectangle(unsigned width, unsigned height)
+    : _width(width), _height(height) {}
+
+  unsigned width() const { return _width; }
+  unsigned height() const { return _height; }
+
+  bool operator==(const Equatable &other) const override {
+    auto other_rect = dynamic_cast<const Rectangle *>(&other);
+    if (other_rect == nullptr) {
+      return false;
+    }
+    
+    return this->width() == other_rect->width() &&
+      this->height() == other_rect->height();
+  }
+  
+private:
+  unsigned _width;
+  unsigned _height;
+};
+
+int main() {
+  Person p("Vinícius Júnior", 22);
+  Rectangle r(1, 2);
+
+  std::cout << "Pessoa == Retângulo? " << (p == r) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Pessoa == Retângulo? 0
+
+Qual a diferença nas duas implementações? Referência vs Ponteiro
+
+** Polimorfismo Ad-Hoc: Sobrecarga
+
+- Implementamos um operador == para pessoas e retângulos
+- Este operador também funciona para inteiros, floats, doubles, strings, ...
+- Como pode um único método (mesmo "nome") funcionar para diferentes tipos (parâmetros)?
+- Já vimos isso em outro lugar? *Construtores*
+- O código a seguir funciona?
+
+#+begin_src C++ :flags -std=c++17 :exports both
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Square of int" << std::endl;
+  return x * x;
+}
+
+double square(double x) {
+  std::cout << "Square of double" << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;
+  std::cout << square(2.5) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Square of int
+: 1
+: Square of double
+: 6.25
+
+- Ou seja, podemos ter um mesmo método (mesmo nome) definido para diferentes tipos!
+- Chamamos isto de *Sobrecarga*
+  
