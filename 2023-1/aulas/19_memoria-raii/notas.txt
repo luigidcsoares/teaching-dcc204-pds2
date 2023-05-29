@@ -1,0 +1,887 @@
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            NOTAS DE AULA - 19 POO: GERENCIAMENTO DE MEMÓRIA
+
+                           Luigi D. C. Soares
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Quais as formas de gerenciamento de memória você conhece?
+• Na pilha: gerenciamento automático
+• No heap: gerenciamento manual
+  • new / delete
+  • new[] / delete[] (arrays)
+
+• Ser capaz de gerenciar o heap manualmente possibilita um uso eficiente
+  da memória
+• Você consegue enxergar algum "defeito" nesta abordagem?
+  • Muito fácil ter problemas!!! (vazamento de memória, erros, etc)
+  • Requer compreensão do modelo de memória e das operações de
+    gerenciamento
+
+Boas práticas:
+• Sempre inicializar as variáveis
+• Sempre liberar a memória após o uso
+• Antes de liberar a memória, certificar-se que não está mais em uso
+
+Ainda que adotemos as melhores práticas possíveis, estamos sujeitos a
+falhas!
+• Algumas linguagens implementam formas de gerenciamento automático
+  (contador de referência, coletores de lixo)
+• Outras linguagens abordam este problema de outras formas (Rust:
+  sistema de tipos, ownership)
+
+Será que temos alguma outra opção em C++, fora o gerenciamento manual?
+
+
+Resource Acquisition Is Initialization (RAII)
+═════════════════════════════════════════════
+
+  • Para entender este padrão RAII, vamos começar por um exemplo não
+    relacionado a memória
+  • Depois, aplicaremos o mesmo conceito ao gerenciamento de memória
+
+
+RAII: Manipulação de Arquivos
+─────────────────────────────
+
+  • Créditos: o exemplo foi retirado daqui
+    <https://www.tomdalling.com/blog/software-design/resource-acquisition-is-initialisation-raii-explained/>
+
+  • Imagine que estamos manipulando arquivos
+  • Queremos escrever em um arquivo
+  • Mas algo inesperado aconteceu antes do programa ser finalizado…
+    • Por exemplo, uma exceção foi lançada
+    • Ainda vamos falar sobre exceções. Tudo que você precisa saber por
+      enquanto é que o programa foi abortado por conta de alguma
+      situação que não prevemos/não faria sentido tratar
+
+  ┌────
+  │ #include <iostream>
+  │ #include <exception>
+  │ 
+  │ void create_file() {
+  │   FILE *file = fopen("teste.txt", "w");
+  │   fputs("Este é um arquivo de teste", file);
+  │ }
+  │ 
+  │ void do_something_else() {
+  │   throw std::runtime_error("Erro inesperado durante execução!");
+  │ }
+  │ 
+  │ int main() {
+  │   create_file();
+  │   do_something_else();
+  │   return 0;
+  │ }
+  └────
+
+  • Inspecione o arquivo
+  • O que aconteceu?
+    • Ele está vazio!
+    • Esquecemos de fechá-lo, e o programa não foi finalizado de forma
+      "natural"!!!
+
+  ┌────
+  │ #include <iostream>
+  │ #include <exception>
+  │ 
+  │ void create_file() {
+  │   FILE *file = fopen("teste.txt", "w");
+  │   fputs("Este é um arquivo de teste", file);
+  │   fclose(file);
+  │ }
+  │ 
+  │ void do_something_else() {
+  │   throw std::runtime_error("Erro inesperado durante execução!");
+  │ }
+  │ 
+  │ int main() {
+  │   create_file();
+  │   do_something_else();
+  │   return 0;
+  │ }
+  └────
+
+  • Como solucionar este problema?
+  • Como sabemos, o gerenciamento da pilha é realizado de forma
+    automática
+  • Qualquer objeto na pilha é destruído ao sair do escopo (função,
+    blocos como if/loops, etc)
+  • Por quê não usar a pilha ao nosso favor?
+
+
+Tentativa 1 (RUIM)
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+  • Vamos criar uma classe responsável pelo fechamento de um arquivo
+  • Esta classe armazenará e será responsável por gerenciar o ponteiro
+    para o arquivo
+  • A instância da classe estará na pilha, então ao sair do escopo
+    (função) o destrutor será chamado
+  • No destrutor, garantimos que o arquivo será fechado
+
+  ┌────
+  │ #include <iostream>
+  │ #include <exception>
+  │ 
+  │ class FileCloser {
+  │ public:
+  │   FileCloser(FILE *file) : _file(file) {}
+  │   ~FileCloser() {
+  │     fclose(_file);
+  │   }
+  │ 
+  │ private:
+  │   FILE *_file;
+  │ };
+  │ 
+  │ void create_file() {
+  │   FILE *file = fopen("teste.txt", "w");
+  │   FileCloser closer(file);
+  │   fputs("Este é um arquivo de teste", file);
+  │ }
+  │ 
+  │ void do_something_else() {
+  │   throw std::runtime_error("Erro inesperado durante execução!");
+  │ }
+  │ 
+  │ int main() {
+  │   create_file();
+  │   do_something_else();
+  │   return 0;
+  │ }
+  └────
+
+  • Funciona! O arquivo foi fechado, mesmo o programa tendo sido
+    abortado
+  • Você vê algum problema?
+    • Ainda podemos esquecer de instanciar FileCloser… Na verdade, não
+      resolvemos nada!
+    • Seria muito melhor que próprio arquivo se fechasse sozinho
+
+
+Tentativa 2 (+-)
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+  • Vamos encapsular o arquivo (as operações) na nossa classe
+
+  ┌────
+  │ #include <iostream>
+  │ #include <exception>
+  │ 
+  │ class FileWriter {
+  │ public:
+  │   FileWriter() : _file(nullptr) {}
+  │   ~FileWriter() {
+  │     if (is_open()) {
+  │       fclose(_file);
+  │     }
+  │   }
+  │ 
+  │   bool is_open() const {
+  │     return _file != nullptr;
+  │   }
+  │ 
+  │   void open(const char *file_path) {
+  │     _file = fopen(file_path, "w");
+  │   }
+  │ 
+  │   void write(const char *line) const {
+  │     fputs(line, _file);
+  │   }
+  │ 
+  │ private:
+  │   FILE *_file;
+  │ };
+  │ 
+  │ void create_file() {
+  │   FileWriter file;
+  │   file.open("teste.txt");
+  │   file.write("Este é um arquivo de teste");
+  │ }
+  │ 
+  │ void do_something_else() {
+  │   throw std::runtime_error("Erro inesperado durante execução!");
+  │ }
+  │ 
+  │ int main() {
+  │   create_file();
+  │   do_something_else();
+  │   return 0;
+  │ }
+  └────
+
+  • Ótimo! Agora não precisamos nos preocupar em chamar explicitamente
+    `fclose', nem vamos nos esquecer de instanciar um `FileCloser'
+  • Mas, ainda dá para melhorar!!!
+    • Será que precisamos mesmo ficar checando toda hora se o arquivo
+      está aberto?
+    • Desenhamos uma classe para lidar com *um* arquivo, faz sentido
+      permitir que a instância abra um outro arquivo?
+    • Como impedir um novo .open()? E como isso simplificaria nossa
+      implementaçã?
+
+
+Tentativa 3 (RAII)
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+  • Vamos modificar um pouco nossa classe, vamos definir a noção de um
+    "arquivo aberto"
+  • Queremos manipular um único arquivo por instância
+
+  ┌────
+  │ #include <iostream>
+  │ #include <exception>
+  │ 
+  │ class OpenFileW {
+  │ public:
+  │   OpenFileW(const char *file_path)
+  │     : _file(fopen(file_path, "w")) {}
+  │ 
+  │   ~OpenFileW() {
+  │     fclose(_file);
+  │   }
+  │ 
+  │   void write(const char *line) const {
+  │     fputs(line, _file);
+  │   }
+  │ 
+  │ private:
+  │   FILE *_file;
+  │ };
+  │ 
+  │ void create_file() {
+  │   OpenFileW file("teste.txt");
+  │   file.write("Este é um arquivo de teste");
+  │ }
+  │ 
+  │ void do_something_else() {
+  │   throw std::runtime_error("Erro inesperado durante execução!");
+  │ }
+  │ 
+  │ int main() {
+  │   create_file();
+  │   do_something_else();
+  │   return 0;
+  │ }
+  └────
+
+  Agora sim! Muito mais simples e seguro!
+  • O que acabamos de fazer? Como isso se relaciona com "Aquisição de
+    Recursos" e "Inicialização" (RAII)?
+  • Estamos adquirindo um recurso (arquivo) através do construtor
+    (inicialização do objeto)
+  • O tempo de vida do recurso (arquivo) está atrelado ao tempo de vida
+    do objeto que o envolve (instância de OpenFileW), que por sua vez é
+    alocado na pilha
+  • O recurso é liberado (fechar o arquivo) no momento da destruição do
+    objeto
+  • Todo objeto alocado na pilha é destruído (destrutor é chamado) ao
+    sair do escopo
+
+  Você deve ter notado que utilizamos ferramentas de C, e não de C++
+  • Já existe uma implementação de arquivos em C++ que segue este padrão
+    RAII! (`fstream')
+
+
+RAII: Gerenciamento de Memória
+──────────────────────────────
+
+  Considere a função `foo' abaixo:
+  • Você vê algum problema?
+  • O problema poderia ser ainda mais escondido: e se, no meio do
+    código, alguma operação lança uma exceção?
+
+  ┌────
+  │ bool do_some_check() {
+  │   // ...
+  │   return false;
+  │ }
+  │ 
+  │ void foo() {
+  │   int *p = new int;
+  │   // ...
+  │   if (do_some_check()) return;
+  │   // ...
+  │   delete p;
+  │ }
+  └────
+
+  Recapitulando a ideia que usamos no primeiro exemplo:
+  • Sabemos que o gerenciamento da pilha é automático
+  • Qualquer objeto na pilha é destruído quando sai do escopo (por
+    exemplo, quando a função acaba)
+  • Por quê não usar isso a nosso favor?
+
+  Vamos tentar implementar uma espécie de ponteiro "inteligente"
+
+  ┌────
+  │ template <typename T>
+  │ class SmartPointer {
+  │ public:
+  │   SmartPointer(T *pointer) : _raw_pointer(pointer) {}
+  │   ~SmartPointer() {
+  │     std::cout << "Cleaning owned data" << std::endl;
+  │     delete _raw_pointer;
+  │   }
+  │ 
+  │ private:
+  │   T *_raw_pointer;
+  │ };
+  └────
+
+  • Já parece interessante! Note que qualquer instância de SmartPointer
+    estará na pilha. Logo, sempre que sair do escopo, o destrutor será
+    chamado e o ponteiro interno será deletado!
+  • Mas, como usar? Como dereferenciar o ponteiro?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ template <typename T>
+  │ class SmartPointer {
+  │ public:
+  │   SmartPointer(T *pointer) : _raw_pointer(pointer) {}
+  │   ~SmartPointer() {
+  │     std::cout << "Cleaning owned data" << std::endl;
+  │     delete _raw_pointer;
+  │   }
+  │ 
+  │   T &operator*() {
+  │     return *_raw_pointer;
+  │   }
+  │ 
+  │   T *operator->() {
+  │     return _raw_pointer;
+  │   }
+  │ 
+  │ private:
+  │   T *_raw_pointer;
+  │ };
+  │ 
+  │ void foo() {
+  │   SmartPointer<int> p(new int);
+  │   *p = 13;
+  │   std::cout << *p << std::endl;
+  │ }
+  │ 
+  │ struct S { int x; int y; };
+  │ void bar() {
+  │   SmartPointer<S> p(new S);
+  │   p->x = 1;
+  │   p->y = 2;
+  │   std::cout << p->x << ", " << p->y << std::endl;
+  │ }
+  │ int main() {
+  │   foo();
+  │   bar();
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 13
+  │ Cleaning owned data
+  │ 1, 2
+  │ Cleaning owned data
+  └────
+
+
+  • O que aconteceria se atribuíssemos um smart pointer a outro?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ template <typename T>
+  │ class SmartPointer {
+  │ public:
+  │   SmartPointer(T *pointer) : _raw_pointer(pointer) {}
+  │   ~SmartPointer() {
+  │     std::cout << "Cleaning owned data" << std::endl;
+  │     delete _raw_pointer;
+  │   }
+  │ 
+  │   T &operator*() {
+  │     return *_raw_pointer;
+  │   }
+  │ 
+  │   T *operator->() {
+  │     return _raw_pointer;
+  │   }
+  │ 
+  │ private:
+  │   T *_raw_pointer;
+  │ };
+  │ 
+  │ void foo() {
+  │   SmartPointer<int> p(new int);
+  │   *p = 13;
+  │   std::cout << *p << std::endl;
+  │ }
+  │ 
+  │ struct S { int x; int y; };
+  │ void bar() {
+  │   SmartPointer<S> p(new S);
+  │   p->x = 1;
+  │   p->y = 2;
+  │   std::cout << p->x << ", " << p->y << std::endl;
+  │ 
+  │   SmartPointer<S> p2 = p;
+  │ }
+  │ 
+  │ int main() {
+  │   foo();
+  │   bar();
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 13
+  │ Cleaning owned data
+  │ 1, 2
+  │ Cleaning owned data
+  │ Cleaning owned data
+  └────
+
+
+  • O que aconteceu? O delete foi executado duas vezes!
+
+  ┌────
+  │ free(): double free detected
+  └────
+
+  • Faz sentido permitir a cópia do smart pointer? Depende!
+  • Para o nosso exemplo, vamos assumir que o smart pointer é o dono do
+    dado que foi alocado
+  • E, para simplificar, vamos assumir que o smart pointer não será
+    capaz de transferir a posse daquele dado para outro ponteiro
+  • Como resolver?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ template <typename T>
+  │ class SmartPointer {
+  │ public:
+  │   SmartPointer(T *pointer) : _raw_pointer(pointer) {}
+  │   ~SmartPointer() {
+  │     std::cout << "Cleaning owned data" << std::endl;
+  │     delete _raw_pointer;
+  │   }
+  │ 
+  │   SmartPointer(const SmartPointer &pointer) = delete;
+  │   SmartPointer &operator=(const SmartPointer &pointer) = delete;
+  │ 
+  │   T &operator*() {
+  │     return *_raw_pointer;
+  │   }
+  │ 
+  │   T *operator->() {
+  │     return _raw_pointer;
+  │   }
+  │ 
+  │ private:
+  │   T *_raw_pointer;
+  │ };
+  │ 
+  │ void foo() {
+  │   SmartPointer<int> p(new int);
+  │   *p = 13;
+  │   std::cout << *p << std::endl;
+  │ }
+  │ 
+  │ struct S { int x; int y; };
+  │ void bar() {
+  │   SmartPointer<S> p(new S);
+  │   p->x = 1;
+  │   p->y = 2;
+  │   std::cout << p->x << ", " << p->y << std::endl;
+  │ 
+  │   SmartPointer<S> p2 = p;
+  │ }
+  │ 
+  │ int main() {
+  │   foo();
+  │   bar();
+  │   return 0;
+  │ }
+  └────
+
+  • Agora o erro é de compilação!
+
+  ┌────
+  │ error: use of deleted function ‘SmartPointer<T>::SmartPointer(const SmartPointer<T>&) [with T = S]’
+  │ 47 |   SmartPointer<S> p2 = p;
+  └────
+
+  Para reforçar, vamos voltar aos questionamentos do primeiro exemplo:
+  • O que exatamente fizemos aqui?
+  • Você consegue relacionar a nossa abordagem com "Resource Acquisition
+    Is Initialization"?
+  • Por quê "aquisição"? Onde isso acontece?
+  • Adquirimos a posse de um dado através do construtor (inicialização
+    do objeto)
+  • Liberamos o dado (o espaço de memória que estava sendo utilizado) no
+    destrutor
+  • *Nenhum delete foi necessário no ponto de vista do usuário do
+     SmartPointer*
+
+  O ponteiro inteligente que acabamos de implementar é uma versão
+  simplificada/ilustrativa que um ponteiro inteligente que já existe em
+  C++ (desde C++11): o `std::unique_ptr'
+  • É o único dono do recurso alocado dinamicamente
+  • Se quisermos copiar um ponteiro para outro, devemos transferir a
+    posse (ownership) do recurso (`std::move')
+
+  ┌────
+  │ #include <iostream>
+  │ #include <memory>
+  │ 
+  │ int main() {
+  │   std::unique_ptr<int> p1(new int);
+  │   *p1 = 10;
+  │   std::cout << *p1 << std::endl;
+  │ 
+  │   // Equivalente (PREFERÊNCIA!):
+  │   auto p2 = std::make_unique<int>(20);
+  │   std::cout << *p2 << std::endl;
+  │ 
+  │   // Transferindo a posse para de p1 para p3:
+  │   auto p3 = std::move(p1);
+  │   std::cout << *p3 << std::endl;
+  │ 
+  │   // Não conseguimos mais utilizar p1, ele agora é nulo:
+  │   // std::cout << *p1 << std::endl; // ERRO
+  │   std::cout << (p1 == nullptr ? "Nulo" : "Válido") << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 10
+  │ 20
+  │ 10
+  │ Nulo
+  └────
+
+
+  Vamos ver a diferença entre um ponteiro comum e um ponteiro
+  inteligente:
+
+  ┌────
+  │ #include <iostream>
+  │ #include <memory>
+  │ 
+  │ class A {
+  │ public:
+  │   A(int id) : _id(id) {
+  │     std::cout << "Construtor A: " << _id << std::endl;
+  │   }
+  │ 
+  │   ~A() {
+  │     std::cout << "Destrutor A: " << _id << std::endl;
+  │   }
+  │ private:
+  │   int _id;
+  │ };
+  │ 
+  │ int main() {
+  │   A *p1 = new A(1);
+  │   auto p2 = std::make_unique<A>(2);
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor A: 1
+  │ Construtor A: 2
+  │ Destrutor A: 2
+  └────
+
+
+  O `std::unique_ptr' funciona bem quando temos essa noção de posse de
+  um recurso, mas e se quiséssemos que a posse fosse compartilhada?
+  `std::shared_ptr':
+  • Possui um recurso alocado compartilhado
+  • Mantém um contador interno com o número de `shared_ptr''s que
+    compartilham o mesmo recurso
+  • A liberação do recurso acontece quando o último dono (`shared_ptr')
+    for destruído
+  • É mais flexível, mas menos eficiente que `unique_ptr'!
+
+  ┌────
+  │ #include <iostream>
+  │ #include <memory>
+  │ 
+  │ class A {
+  │ public:
+  │   A(int id) : _id(id) {
+  │     std::cout << "Construtor A: " << _id << std::endl;
+  │   }
+  │ 
+  │   ~A() {
+  │     std::cout << "Destrutor A: " << _id << std::endl;
+  │   }
+  │ private:
+  │   int _id;
+  │ };
+  │ 
+  │ int main() {
+  │   auto p1 = std::make_shared<A>(2);
+  │   std::cout << "Quantos donos? " << p1.use_count() << std::endl;
+  │ 
+  │   // Agora conseguimos copiar! Compartilhamos o recurso
+  │   auto p2 = p1;
+  │   std::cout << "Quantos donos? " << p2.use_count() << std::endl;
+  │ 
+  │   p1 = nullptr;
+  │   std::cout << "Quantos donos? " << p2.use_count() << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor A: 2
+  │ Quantos donos? 1
+  │ Quantos donos? 2
+  │ Quantos donos? 1
+  │ Destrutor A: 2
+  └────
+
+
+  Note que o destrutor foi chamado uma única vez!
+
+  Você consegue ver algum problema com o código a seguir?
+
+  ┌────
+  │ #include <iostream>
+  │ #include <memory>
+  │ #include <vector>
+  │ 
+  │ class Animal {
+  │ public:
+  │   ~Animal() {
+  │     std::cout << "~Animal()" << std::endl;
+  │   }
+  │ 
+  │   virtual void say() = 0;
+  │ 
+  │ protected:
+  │   std::string name_;
+  │ };
+  │ 
+  │ class Dog : public Animal {
+  │ public:
+  │   ~Dog() {
+  │     std::cout << "~Dog()" << std::endl;
+  │   }
+  │ 
+  │   void say() override {
+  │     std::cout << "woof!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ class Cat : public Animal {
+  │ public:
+  │   ~Cat() {
+  │     std::cout << "~Cat()" << std::endl;
+  │   }
+  │ 
+  │   void say() override {
+  │     std::cout << "meow!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   std::vector<std::unique_ptr<Animal>> animals;
+  │   for (unsigned i = 0; i < 5; i++) {
+  │     if (i % 2 == 0) {
+  │       animals.push_back(std::make_unique<Dog>());
+  │     } else {
+  │       animals.push_back(std::make_unique<Cat>());
+  │     }
+  │   }
+  │ 
+  │   for (auto &a : animals) {
+  │     a->say();
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ woof!
+  │ meow!
+  │ woof!
+  │ meow!
+  │ woof!
+  │ ~Animal()
+  │ ~Animal()
+  │ ~Animal()
+  │ ~Animal()
+  │ ~Animal()
+  └────
+
+  *Lembre-se*: sempre que uma classe possui um método virtual, o
+   destrutor também deve ser!!! `std::unique_ptr' não te salva disso!!!
+
+  ┌────
+  │ #include <iostream>
+  │ #include <memory>
+  │ #include <vector>
+  │ 
+  │ class Animal {
+  │ public:
+  │   virtual ~Animal() {
+  │     std::cout << "~Animal()" << std::endl;
+  │   }
+  │ 
+  │   virtual void say() = 0;
+  │ 
+  │ protected:
+  │   std::string name_;
+  │ };
+  │ 
+  │ class Dog : public Animal {
+  │ public:
+  │   ~Dog() {
+  │     std::cout << "~Dog()" << std::endl;
+  │   }
+  │ 
+  │   void say() override {
+  │     std::cout << "woof!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ class Cat : public Animal {
+  │ public:
+  │   ~Cat() {
+  │     std::cout << "~Cat()" << std::endl;
+  │   }
+  │ 
+  │   void say() override {
+  │     std::cout << "meow!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   std::vector<std::unique_ptr<Animal>> animals;
+  │   for (unsigned i = 0; i < 5; i++) {
+  │     if (i % 2 == 0) {
+  │       animals.push_back(std::make_unique<Dog>());
+  │     } else {
+  │       animals.push_back(std::make_unique<Cat>());
+  │     }
+  │   }
+  │ 
+  │   for (auto &a : animals) {
+  │     a->say();
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ woof!
+  │ meow!
+  │ woof!
+  │ meow!
+  │ woof!
+  │ ~Dog()
+  │ ~Animal()
+  │ ~Cat()
+  │ ~Animal()
+  │ ~Dog()
+  │ ~Animal()
+  │ ~Cat()
+  │ ~Animal()
+  │ ~Dog()
+  │ ~Animal()
+  └────
+
+  Por outro lado, o `shared_ptr' realiza a chamada do destrutor base,
+  mesmo sem o virtual
+  • A diferença entre os dois ponteiros é puramente decisões de
+    implementação, visando eficiência no lado do `unique_ptr'
+  • Por via das dúvidas, siga a prática de: se um método é virtual, o
+    destrutor também deve ser
+
+  ┌────
+  │ #include <iostream>
+  │ #include <memory>
+  │ #include <vector>
+  │ 
+  │ class Animal {
+  │ public:
+  │   ~Animal() {
+  │     std::cout << "~Animal()" << std::endl;
+  │   }
+  │ 
+  │   virtual void say() = 0;
+  │ 
+  │ protected:
+  │   std::string name_;
+  │ };
+  │ 
+  │ class Dog : public Animal {
+  │ public:
+  │   ~Dog() {
+  │     std::cout << "~Dog()" << std::endl;
+  │   }
+  │ 
+  │   void say() override {
+  │     std::cout << "woof!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ class Cat : public Animal {
+  │ public:
+  │   ~Cat() {
+  │     std::cout << "~Cat()" << std::endl;
+  │   }
+  │ 
+  │   void say() override {
+  │     std::cout << "meow!" << std::endl;
+  │   }
+  │ };
+  │ 
+  │ int main() {
+  │   std::vector<std::shared_ptr<Animal>> animals;
+  │   for (unsigned i = 0; i < 5; i++) {
+  │     if (i % 2 == 0) {
+  │       animals.push_back(std::make_unique<Dog>());
+  │     } else {
+  │       animals.push_back(std::make_unique<Cat>());
+  │     }
+  │   }
+  │ 
+  │   for (auto &a : animals) {
+  │     a->say();
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ woof!
+  │ meow!
+  │ woof!
+  │ meow!
+  │ woof!
+  │ ~Dog()
+  │ ~Animal()
+  │ ~Cat()
+  │ ~Animal()
+  │ ~Dog()
+  │ ~Animal()
+  │ ~Cat()
+  │ ~Animal()
+  │ ~Dog()
+  │ ~Animal()
+  └────
