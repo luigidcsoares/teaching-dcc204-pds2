@@ -1,0 +1,439 @@
+               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                NOTAS DE AULA - 20 PROGRAMAÇÃO DEFENSIVA
+
+                           Luigi D. C. Soares
+               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+• Já ouviu falar em "Direção Defensiva"? O que é?
+• O que você entende por "Programação Defensiva"? Como relacionar as
+  duas coisas?
+• Já vimos algum exemplo de programação defensiva ao longo do curso?
+• Você se lembra da classe Pessoa, quando adicionamos um processo de
+  validação do nome?
+
+`error.hpp'
+
+┌────
+│ #ifndef ERROR_H
+│ #define ERROR_H
+│ 
+│ #include <string>
+│ 
+│ struct Error {
+│   int code;
+│   std::string message;
+│ };
+│ 
+│ #endif
+└────
+
+`person.hpp'
+
+┌────
+│ #ifndef PERSON_H
+│ #define PERSON_H
+│ 
+│ #include "error.hpp"
+│ #include <string>
+│ #include <variant>
+│ 
+│ class Person {
+│ public:
+│   Person() = delete; // Deletando o construtor padrão!!!
+│ 
+│   std::string name() const;
+│   static std::variant<Person, Error> make(std::string name);
+│ 
+│ private:
+│   std::string _name;
+│   Person(std::string name); // Construtor privado!
+│ };
+│ 
+│ #endif
+└────
+
+`person.cpp'
+
+┌────
+│ #include "person.hpp"
+│ 
+│ Person::Person(std::string name) : _name(name) {}
+│ std::string Person::name() const { return _name; }
+│ 
+│ std::variant<Person, Error> Person::make(std::string name) {
+│   for (char c : name) {
+│     if (std::isdigit(c)) {
+│       Error err = {100, "Nome inválido: contém números!"};
+│       return err;
+│     }
+│   }
+│ 
+│   return Person(name);
+│ }
+└────
+
+`main.cpp'
+
+┌────
+│ #include "error.hpp"
+│ #include "person.hpp"
+│ #include <iostream>
+│ 
+│ int main() {
+│   auto chico = Person::make("Chico Lírio");
+│   if (std::holds_alternative<Error>(chico)) {
+│     Error err = std::get<Error>(chico);
+│     std::cout
+│       << "Erro: " << err.message
+│       << " (código " << err.code << ")"
+│       << std::endl;
+│   } else {
+│     Person p = std::get<Person>(chico);
+│     std::cout << "Yey, uma pessoa: " << p.name() << std::endl;
+│   }
+│ 
+│   auto oliveira = Person::make("1 2 3 de Oliveira 4");
+│   if (std::holds_alternative<Error>(oliveira)) {
+│     Error err = std::get<Error>(oliveira);
+│     std::cout
+│       << "Erro: " << err.message
+│       << " (código " << err.code << ")"
+│       << std::endl;
+│   } else {
+│     Person p = std::get<Person>(oliveira);
+│     std::cout << "Yey, uma pessoa: " << p.name() << std::endl;
+│   }
+│ 
+│   // Note que não conseguimos usar construtores:
+│   // Person p1; // Construtor padrão não existe
+│   // Person p2("teste"); // Construtor privado
+│ 
+│   return 0;
+│ }
+└────
+
+┌────
+│ Yey, uma pessoa: Chico Lírio
+│ Erro: Nome inválido: contém números! (código 100)
+└────
+
+
+• O que fizemos neste exemplo?
+• Onde está a programação defensiva?
+• O que poderíamos fazer de diferente? O que seria "não defensivo"?
+  • E se, ao invés de lidarmos com o processo de validação e impedir a
+    criação do objeto no caso de falha, tivéssemos delegado isso ao
+    usuário?
+  • Como? Adicionando um método `is_valid' e deixando a cargo do usuário
+    lembrar de sempre fazer esta verificação!
+  • Você vê algum problema nisso? que poderia acontecer?
+
+
+Robustez vs Corretude
+═════════════════════
+
+  • O que você entende por "Robustez"?
+  • E por "Corretude"?
+  • Robustez está relacionado a tentar permitir que o software continue
+    funcionando, ainda que isto possa levar a resultados imprecisos
+  • Corretude signifca nunca retornar um resultado impreciso
+  • Qual priorizar?
+
+  • O que é o fatorial de um número?
+  • n! = n * (n - 1) * … * 1
+  • E se o número for negativo? A definição acima funciona?
+  • Considere a seguinte implementação da função fatorial
+    • O quão robusto é este código?
+    • O que acontecerá no caso de n = -2?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int factorial(int n) {
+  │   int f = 1;
+  │   for (int i = 1; i <= n; i++) {
+  │     f *= i;
+  │   }
+  │   return f;
+  │ }
+  │ 
+  │ int main() {
+  │   std::cout << factorial(-2) << std::endl;
+  │ }
+  └────
+
+  ┌────
+  │ 1
+  └────
+
+
+  • E agora? Pior ou melhor?
+  • Como resolver?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int factorial(int n) {
+  │   return n == 0 ? 1 : n * factorial(n-1);
+  │ }
+  │ 
+  │ int main() {
+  │   std::cout << factorial(-2) << std::endl;
+  │ }
+  └────
+
+
+Estratégia 1: Validação de Entradas + Barricadas
+════════════════════════════════════════════════
+
+  • Muitas vezes não temos controle sobre as entradas
+  • Podem ser inesperadas e imprevisíveis
+  • Podem, inclusive, ser mal-intencionadas
+  • Sempre assuma o pior de todas as entradas
+  • Defina um conjunto de valores válidos e valide cada entrada
+  • Defina um comportamento para entradas incorretas
+    • Terminar a execução?
+    • Repetir?
+    • Emitir algum alerta?
+
+  • Como isso se encaixa no exemplo da classe Pessoa?
+  • Qual comportamento adotamos?
+
+  • A ideia aqui é criarmos *Barricadas* no programa, para impedir ou
+    minimizar o dano causado por dados incorretos
+  • Barricadas são códigos intermediários responsáveis pela validação
+    dos dados
+  • Podem ser classes intermediárias, mas também podemos pensar em
+    termos da própria classe
+    • Métodos públicos: validam os dados externos (localize isto na
+      classe Pessoa)
+    • Métodos privados: assumem que os dados são seguros (localize isto
+      na classe Pessoa)
+
+  • Como testar se as validações estão corretas? (quem valida as
+    validações?)
+
+
+Asserções
+═════════
+
+  • Uma forma de verificar erros durante a execução de um programa é por
+    meio de asserções (assert)
+
+  • Voltando a classe Pessoa, como checar no construtor que, de fato, a
+    entrada é segura?  (afinal de contas, ele é um método privado)
+  • O que acontecerá no código a seguir?
+
+  `person.cpp'
+
+  ┌────
+  │ #include "person.hpp"
+  │ #include <cassert>
+  │ 
+  │ bool name_has_number(std::string name) {
+  │   for (char c : name) {
+  │     if (std::isdigit(c)) return true;
+  │   }
+  │   return false;
+  │ }
+  │ 
+  │ Person::Person(std::string name) {
+  │   assert(!name_has_number(name) && "Erro fatal: nome contém números!");
+  │   _name = name;
+  │ }
+  │ 
+  │ std::string Person::name() const { return _name; }
+  │ 
+  │ std::variant<Person, Error> Person::make(std::string name) {
+  │   if (!name_has_number(name)) {
+  │     return Error{100, "Nome inválido: contém números!"};
+  │   }
+  │ 
+  │   return Person(name);
+  │ }
+  └────
+
+  `main.cpp'
+
+  ┌────
+  │ #include "error.hpp"
+  │ #include "person.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   auto oliveira = Person::make("1 2 3 de Oliveira 4");
+  │   if (std::holds_alternative<Error>(oliveira)) {
+  │     Error err = std::get<Error>(oliveira);
+  │     std::cout
+  │       << "Erro: " << err.message
+  │       << " (código " << err.code << ")"
+  │       << std::endl;
+  │   } else {
+  │     Person p = std::get<Person>(oliveira);
+  │     std::cout << "Yey, uma pessoa: " << p.name() << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  • Oops, parece que erramos algo na refatoração do código… o quê?
+  • A asserção ajudou a capturar o erro durante o desenvolvimento!
+  • E se precisássemos adicionar uma outra validação? Imagine que,
+    agora, queremos validar se o nome contém pontuações como vírgula,
+    exclamação, interrogação, etc… (vamos fazer só vírgula, para
+    ilustrar)
+  • O que fazer primeiro? Vamos criar a validação e adicionar uma nova
+    asserção!
+
+  `person.cpp'
+
+  ┌────
+  │ #include "person.hpp"
+  │ #include <cassert>
+  │ 
+  │ bool name_has_number(std::string name) {
+  │   for (char c : name) {
+  │     if (std::isdigit(c)) return true;
+  │   }
+  │   return false;
+  │ }
+  │ 
+  │ bool name_has_comma(std::string name) {
+  │   for (char c : name) {
+  │     if (c == ',') return true;
+  │   }
+  │   return false;
+  │ }
+  │ 
+  │ Person::Person(std::string name) {
+  │   assert(!name_has_number(name) && "Erro fatal: nome contém números!");
+  │   assert(!name_has_comma(name) && "Erro fatal: nome contém vírgulas!");
+  │   _name = name;
+  │ }
+  │ 
+  │ std::string Person::name() const { return _name; }
+  │ 
+  │ std::variant<Person, Error> Person::make(std::string name) {
+  │   if (name_has_number(name)) {
+  │     return Error{100, "Nome inválido: contém números!"};
+  │   }
+  │ 
+  │   return Person(name);
+  │ }
+  └────
+
+  `main.cpp'
+
+  ┌────
+  │ #include "error.hpp"
+  │ #include "person.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   auto oliveira = Person::make("Oliveira, José");
+  │   if (std::holds_alternative<Error>(oliveira)) {
+  │     Error err = std::get<Error>(oliveira);
+  │     std::cout
+  │       << "Erro: " << err.message
+  │       << " (código " << err.code << ")"
+  │       << std::endl;
+  │   } else {
+  │     Person p = std::get<Person>(oliveira);
+  │     std::cout << "Yey, uma pessoa: " << p.name() << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  • Novamente, a asserção ajudou a capturar o erro de implementação
+
+  `person.cpp'
+
+  ┌────
+  │ #include "person.hpp"
+  │ #include <cassert>
+  │ 
+  │ bool name_has_number(std::string name) {
+  │   for (char c : name) {
+  │     if (std::isdigit(c)) return true;
+  │   }
+  │   return false;
+  │ }
+  │ 
+  │ bool name_has_comma(std::string name) {
+  │   for (char c : name) {
+  │     if (c == ',') return true;
+  │   }
+  │   return false;
+  │ }
+  │ 
+  │ Person::Person(std::string name) {
+  │   assert(!name_has_number(name) && "Erro fatal: nome contém números!");
+  │   assert(!name_has_comma(name) && "Erro fatal: nome contém vírgulas!");
+  │   _name = name;
+  │ }
+  │ 
+  │ std::string Person::name() const { return _name; }
+  │ 
+  │ std::variant<Person, Error> Person::make(std::string name) {
+  │   if (name_has_number(name)) {
+  │     return Error{100, "Nome inválido: contém números!"};
+  │   }
+  │ 
+  │   if (name_has_comma(name)) {
+  │     return Error{101, "Nome inválido: contém vírgulas!"};
+  │   }
+  │ 
+  │   return Person(name);
+  │ }
+  └────
+
+  `main.cpp'
+
+  ┌────
+  │ #include "error.hpp"
+  │ #include "person.hpp"
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   auto oliveira = Person::make("Oliveira, José");
+  │   if (std::holds_alternative<Error>(oliveira)) {
+  │     Error err = std::get<Error>(oliveira);
+  │     std::cout
+  │       << "Erro: " << err.message
+  │       << " (código " << err.code << ")"
+  │       << std::endl;
+  │   } else {
+  │     Person p = std::get<Person>(oliveira);
+  │     std::cout << "Yey, uma pessoa: " << p.name() << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Erro: Nome inválido: contém vírgulas! (código 101)
+  └────
+
+
+  • Agora a validação foi feita corretamente no passo intermediário
+    (barricada) e devolvida ao usuário
+
+  • Faz sentido mantermos as asserções no código final?
+    • Qual o custo das asserções?
+    • O que fazer? Podemos utilizar a macro `NDEBUG'
+
+  • No código:
+    • Antes de incluir a biblioteca
+    • Basta comentar, para habilitar as asserções
+
+  ┌────
+  │ #define NDEBUG
+  │ #include <cassert>
+  └────
+
+  • No comando de compilação, via `-DNDEBUG'
