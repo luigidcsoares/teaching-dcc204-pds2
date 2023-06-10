@@ -184,8 +184,8 @@ Robustez vs Corretude
   └────
 
 
-Estratégia 1: Validação de Entradas + Barricadas
-════════════════════════════════════════════════
+Validação de Entradas + Barricadas
+══════════════════════════════════
 
   • Muitas vezes não temos controle sobre as entradas
   • Podem ser inesperadas e imprevisíveis
@@ -278,6 +278,10 @@ Asserções
   │ }
   └────
 
+  ┌────
+  │ Assertion `!name_has_number(name) && "Erro fatal: nome contém números!"' failed.
+  └────
+
   • Oops, parece que erramos algo na refatoração do código… o quê?
   • A asserção ajudou a capturar o erro durante o desenvolvimento!
   • E se precisássemos adicionar uma outra validação? Imagine que,
@@ -346,6 +350,10 @@ Asserções
   │ 
   │   return 0;
   │ }
+  └────
+
+  ┌────
+  │ Assertion `!name_has_comma(name) && "Erro fatal: nome contém vírgulas!"' failed
   └────
 
   • Novamente, a asserção ajudou a capturar o erro de implementação
@@ -437,3 +445,261 @@ Asserções
   └────
 
   • No comando de compilação, via `-DNDEBUG'
+
+
+Programação por Contrato
+════════════════════════
+
+  • O que o contrato espera?
+  • O que o contrato garante?
+  • O que o contrato mantém?
+  • Formalização lógica:
+    • {Pré-condições} *ação* {Pós-condições}
+    • {Invariantes}
+
+  • Você já ouviu falar do algoritmo de busca binária?
+    • Considere uma lista ordenada
+    • Se o elemento do meio da lista é o que estamos buscando, acabou
+    • Se não, ou o elemento está na sublista da esquerda ou da direita
+    • Por exemplo, considere a chamada `binary_search(3, [1, 2, 3, 4, 5,
+      6, 7])'
+
+  ┌────
+  │ [1, 2, 3, 4, 5, 6, 7]
+  │ meio = 4 != 3
+  │ 3 está na sublista da esquerda
+  │ 
+  │ [1, 2, 3, 4]
+  │ meio = 2 \neq 3
+  │ 3 está na sublista da direita
+  │ 
+  │ [3, 4]
+  │ meio = 3, encontramos!
+  └────
+
+  • Quais as pré-condições deste algoritmo?
+    • A lista precisa estar ordenada
+
+  • E as pós-condições?
+    • Imagine que a função retorna o índice do elemento, se encontrado,
+      ou -1 caso contrário
+    • Consegue pensar em alguma pós-condição?
+
+  • Vamos começar com a pré-condição: a lista está ordenada?
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool sorted(std::vector<T> xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> xs) {
+  │   assert(sorted(xs) && "Pre-condition broken: input list is not sorted!");
+  │ }
+  └────
+
+  • E a pós-condição: se o índice a ser retornado é >= 0, então ele é
+    (i) < que o tamanho da lista e (ii) o elemento naquele índice com
+    certeza é o que buscamos
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool sorted(std::vector<T> xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> xs) {
+  │   assert(sorted(xs) && "Pre-condition broken: input list is not sorted!");
+  │   int index = -1;
+  │   // ...
+  │   assert((index < 0 || (index < xs.size() && xs[index] == x))
+  │          && "Post-condition broken: index returned is wrong!");
+  │ }
+  └────
+
+  • Agora vamos implementar a função:
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool sorted(std::vector<T> xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> xs) {
+  │   assert(sorted(xs) && "Pre-condition broken: input list is not sorted!");
+  │   int index = -1;
+  │   int start = 0;
+  │   int end = xs.size() - 1;
+  │ 
+  │   while (start <= end) {
+  │     int mid = (start + end) / 2;
+  │     if (x == xs[mid]) {
+  │       index = mid;
+  │       break;
+  │     }
+  │ 
+  │     if (x < xs[mid]) {
+  │       end = mid - 1;
+  │     } else {
+  │       start = mid + 1;
+  │     }
+  │   }
+  │ 
+  │   assert((index < 0 || (index < xs.size() && xs[index] == x))
+  │          && "Post-condition broken: index returned is wrong!");
+  │ 
+  │   return index;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {1, 2, 3, 4, 5, 6, 7};
+  │   std::cout << binary_search(3, xs) << std::endl;
+  │   std::cout << binary_search(8, xs) << std::endl;
+  │   std::vector<int> ys = {2, 1, 3, 4, 5, 6, 7};
+  │   std::cout << binary_search(3, ys) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 2
+  │ -1
+  └────
+
+
+  • O erro capturado pela asserção:
+
+  ┌────
+  │ int binary_search(T, std::vector<T>) [with T = int]: Assertion `sorted(xs) && "Pre-condition broken: input list is not sorted!"' failed.
+  └────
+
+  • E em relação a invariantes? Você entende o que é isso?
+  • Um *invariante de loop* é uma condição que
+    • É verdadeira no início de cada iteração
+    • Se mantém verdadeira ao final de cada iteração
+  • Observe o laço de repetição na implementação da busca binária
+    • Você consegue identificar alguma propriedade interessante que está
+      sendo mantida a cada iteração do laço?
+    • Pense na pós-condição, será que tem algo parecido que podemos
+      garantir a cada iteração?
+    • Se o elemento x existe na lista, então ele existe na sublista
+      [start, end]
+    • Precisamos de uma espécie de "oráculo" em que confiamos, para
+      realizar esta asserção (confuso? lembre-se que as asserções não
+      farão parte do código final)
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool sorted(std::vector<T> xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ bool is_in(T x, std::vector<T> xs, int start, int end) {
+  │   if (start >= xs.size() || start > end) {
+  │     return false;
+  │   }
+  │ 
+  │   if (x == xs[start]) {
+  │     return true;
+  │   }
+  │ 
+  │   return is_in(x, xs, start + 1, end);
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> xs) {
+  │   assert(sorted(xs) && "Pre-condition broken: input list is not sorted!");
+  │   int index = -1;
+  │   int start = 0;
+  │   int end = xs.size() - 1;
+  │ 
+  │   while (start <= end) {
+  │     assert((!is_in(x, xs, 0, xs.size() - 1) || is_in(x, xs, start, end))
+  │            && "Loop invariant broken: element is not in sublist");
+  │     int mid = (start + end) / 2;
+  │     if (x == xs[mid]) {
+  │       index = mid;
+  │       break;
+  │     }
+  │ 
+  │     if (x < xs[mid]) {
+  │       end = mid - 1;
+  │     } else {
+  │       start = mid + 1;
+  │     }
+  │   }
+  │ 
+  │   assert((index < 0 || (index < xs.size() && xs[index] == x))
+  │          && "Post-condition broken: index returned is wrong!");
+  │ 
+  │   return index;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {1, 2, 3, 4, 5, 6, 7};
+  │   for (int x : xs) {
+  │     std::cout << binary_search(x, xs) << std::endl;
+  │   }
+  │   std::cout << binary_search(8, xs) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 0
+  │ 1
+  │ 2
+  │ 3
+  │ 4
+  │ 5
+  │ 6
+  │ -1
+  └────
+
+
+  • Note que esta abordagem tem seus limites: precisamos executar o
+    código sob algumas entradas para testar
+  • Existe uma área da computação, *Métodos Formais*, que lida com este
+    tipo de verificação, visando um processo automatizado
+
+
+Exercício: Ordenação
+────────────────────
+
+  • Considere o algoritmo de ordenação Bubblesort
+  • Quais as pré-condições?
+  • Quais as pós-condições?
+  • Quais os invariantes de loop, isto é as propriedades mantidas a cada
+    iteração do loop?
