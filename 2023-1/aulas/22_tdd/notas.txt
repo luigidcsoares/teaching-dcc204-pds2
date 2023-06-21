@@ -1,0 +1,636 @@
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            NOTAS DE AULA - 22 TEST-DRIVEN DEVELOPMENT (TDD)
+
+                           Luigi D. C. Soares
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Introdução a Testes
+═══════════════════
+
+  • O que é teste de software?
+
+  • Existem diferentes tipos/granularidades de testes
+    • Testes de Unidade ( *nosso foco* )
+      • Testes voltados para unidades individuais do código.
+      • Uma unidade é a menor parte testável de uma aplicação
+        (funções/métodos, ou você pode pensar em uma classe, se esta
+        obedece o SRP)
+      • Partes que utilizam o método devem ser testadas em outros casos
+        de teste
+    • Teste de integração
+      • Tipo de teste em que diferentes unidades, módulos, componentes
+        de uma aplicação são testadas como uma única entidade
+      • O objetivo é testar a interface/comunicação entre esses módulos
+        (estão se comunicando corretamente?)
+    • Testes do sistema
+      • Assumindo que a integração entre os módulos está correta, agora
+        passamos para a etapa de testar o sistema como um todo
+      • O objetivo é verificar se todos os requisitos foram atendidos
+      • O teste ainda é feito pelo próprio time de desenvolvimento
+    • Testes de Aceitação
+      • Testa-se o programa no ponto de vista do usuário final (o
+        próprio usuário realiza o teste)
+      • Testa-se o sistema como um todo, para verificar se o que o
+        usuário desejava foi atendido (lembre-se nem sempre o que o
+        requisito diz é o que o usuário realmente queria, erros podem
+        acontecer)
+    • Testes "caixa preta" vs "caixa branca"
+      • Caixa preta: temos pouco ou nenhum acesso ao código que será
+        testado (exemplo: sistema já pronto)
+      • Caixa branca ( *nosso foco* ): conhecemos o código e como ele
+        funciona
+
+
+Test-Driven Development (TDD)
+═════════════════════════════
+
+  • Test-Driven Development (Desenvolvimento Orientado por Testes) é uma
+    metodologia de desenvolvimento de software na qual testes são
+    desenvolvidos *antes* do código em si
+
+  • TDD funciona como uma repetição de um ciclo:
+    1. Selecionar a próxima funcionalidade a ser implementada
+    2. Criar um (ou mais) teste
+    3. Compilar o projeto, executar os testes já existente e verificar
+       os erros encontrados
+    4. Implementar a funcionalidade de modo a fazer com que o teste
+       passe
+    5. Refatorar o código
+    6. Repetir os testes, corrigindo o código caso algum teste falhe
+    7. Commitar as alterações
+    8. Voltar para o item (1)
+
+    - Fonte: <http://alexott.net/en/cpp/CppTestingIntro.html>
+
+  • O ponto principal, que vale reforçar, é: testes devem ser
+    desenvolvidos *antes* do código
+
+  • Em C++, vamos utilizar um framework chamado [Doctest] (poderíamos
+    fazer com simples asserções, mas mais trabalhoso… por quê "reiventar
+    a roda"?)
+  • Para instalar, basta copiar o `doctest.h'
+  • Agora, além de um executável para o software, vamos ter um
+    executável para os testes
+
+
+[Doctest] <https://github.com/doctest/doctest#documentation>
+
+
+Exemplo 1: Fatorial
+═══════════════════
+
+  • Vamos implementar uma função fatorial
+  • Vamos, a princípio, criar um fatorial "vazio" (se não, o código nem
+    compilaria…)
+
+  `fatorial.hpp'
+
+  ┌────
+  │ #ifndef FATORIAL_H
+  │ #define FATORIAL_H
+  │ int fatorial(int n);
+  │ #endif 
+  └────
+
+  `fatorial.cpp'
+
+  ┌────
+  │ #include "fatorial.hpp"
+  │ 
+  │ int fatorial(int n) {
+  │   return n;
+  │ }
+  └────
+
+  • E agora o teste:
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "fatorial.hpp"
+  │ 
+  │ TEST_CASE("Testando o fatorial de um número") {
+  │   CHECK(fatorial(1) == 1);
+  │   CHECK(fatorial(2) == 2);
+  │   CHECK(fatorial(3) == 6);
+  │   CHECK(fatorial(10) == 3628800);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-MsH5EO.cpp:12:
+  │ TEST CASE:  Testando o fatorial de um número
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-MsH5EO.cpp:15: ERROR: CHECK( fatorial(3) == 6 ) is NOT correct!
+  │   values: CHECK( 3 == 6 )
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-MsH5EO.cpp:16: ERROR: CHECK( fatorial(10) == 3628800 ) is NOT correct!
+  │   values: CHECK( 10 == 3628800 )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 4 | 2 passed | 2 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  • Agora que temos o teste pronto, vamos implementar a função de fato:
+
+  `fatorial.cpp'
+
+  ┌────
+  │ #include "fatorial.hpp"
+  │ 
+  │ int fatorial(int n) {
+  │   if (n <= 1) return n;
+  │   return n * fatorial(n - 1);
+  │ }
+  └────
+
+  • Se executarmos novamente, agora irá passar:
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 4 | 4 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Mas, será que está realmente correto?
+  • Qual o resultado para `fatorial(0)'? Não testamos!
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "fatorial.hpp"
+  │ 
+  │ TEST_CASE("Testando o fatorial de um número") {
+  │   CHECK(fatorial(0) == 1);
+  │   CHECK(fatorial(1) == 1);
+  │   CHECK(fatorial(2) == 2);
+  │   CHECK(fatorial(3) == 6);
+  │   CHECK(fatorial(10) == 3628800);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-2n9MTl.cpp:12:
+  │ TEST CASE:  Testando o fatorial de um número
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-2n9MTl.cpp:13: ERROR: CHECK( fatorial(0) == 1 ) is NOT correct!
+  │   values: CHECK( 0 == 1 )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 5 | 4 passed | 1 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  • Reescrevendo o fatorial, e executando o teste novamente:
+
+  `fatorial.cpp'
+
+  ┌────
+  │ #include "fatorial.hpp"
+  │ 
+  │ int fatorial(int n) {
+  │   if (n <= 1) return 1;
+  │   return n * fatorial(n - 1);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 5 | 5 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Algum outro problema no código? E se n < 0? Como lidar?
+  • Podemos dividir um teste em subcasos
+  • Por exemplo: caso base, caso recursivo e exceção
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include <stdexcept>
+  │ #include "doctest.hpp"
+  │ #include "fatorial.hpp"
+  │ 
+  │ TEST_CASE("Testando o fatorial de um número") {
+  │   SUBCASE("Caso base") {
+  │     CHECK(fatorial(0) == 1);
+  │   }
+  │ 
+  │   SUBCASE("Caso recursivo") {
+  │     CHECK(fatorial(1) == 1);
+  │     CHECK(fatorial(2) == 2);
+  │     CHECK(fatorial(3) == 6);
+  │     CHECK(fatorial(10) == 3628800);
+  │   }
+  │ 
+  │   SUBCASE("Exceção: entrada negativa") {
+  │     CHECK_THROWS_AS(fatorial(-1), std::invalid_argument);
+  │   }
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-uWT7PM.cpp:13:
+  │ TEST CASE:  Testando o fatorial de um número
+  │   Exceção: entrada negativa
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-uWT7PM.cpp:26: ERROR: CHECK_THROWS_AS( fatorial(-1), std::invalid_argument ) did NOT throw at all!
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 6 | 5 passed | 1 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  • Corrigindo novamente:
+
+  `fatorial.cpp'
+
+  ┌────
+  │ #include "fatorial.hpp"
+  │ #include <stdexcept>
+  │ 
+  │ int fatorial(int n) {
+  │   if (n < 0) throw std::invalid_argument("n < 0");
+  │   if (n <= 1) return 1;
+  │   return n * fatorial(n - 1);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 6 | 6 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+Exemplo 2: Fila de Prioridades
+══════════════════════════════
+
+  • Como vimos, a ideia é criar testes para cada unidade de código
+  • No caso de uma classe, vamos criar testes para cada método
+  • Você se lembra do TAD Fila de Prioridade?
+    • Temos algumas operações (para cada uma delas, pense no que testar)
+      • `enqueue': adiciona um elemento na fila
+      • `dequeue': remove o elemento de maior prioridade
+      • `peek': retorna o elemento de maior prioridade
+      • `size': retorna a quantidade de elementos na fila
+  • Vamos começar com um esqueleto da fila de prioridade:
+
+  `priority_queue.hpp'
+
+  ┌────
+  │ #ifndef PRIORITY_QUEUE_H
+  │ #define PRIORITY_QUEUE_H
+  │ 
+  │ #include <exception>
+  │ #include <utility>
+  │ #include <list>
+  │ 
+  │ class NoElementException : public std::exception {
+  │   const char *what() const noexcept override {
+  │     return "Container is empty!";
+  │   }
+  │ };
+  │ 
+  │ template <typename T>
+  │ class PriorityQueue {
+  │ public:
+  │   /// @brief Adiciona um elemento a fila
+  │   ///
+  │   /// @param e        O elemento a ser adicionado
+  │   /// @param priority A prioridade do elemento
+  │   void enqueue(T e, unsigned priority);
+  │ 
+  │   /// @brief Remove o elemento de maior prioridade
+  │   ///
+  │   /// Remove o elemento de maior prioridade. Se a fila
+  │   /// estiver vazia, não tem nenhum efeito.
+  │   void dequeue();
+  │ 
+  │   /// @brief Recupera o elemento de maior prioridade.
+  │   ///
+  │   /// Recupera o elemento de maior prioridade. A fila
+  │   /// não é alterada de nenhuma forma.
+  │   /// Se a fila estiver vazia, lança NoElementException
+  │   ///
+  │   /// @return O elemento de maior priodidade,
+  │   T peek();
+  │ 
+  │   /// @return Retorna a quantidade de elementos na fila.
+  │   std::size_t size();
+  │ 
+  │ private:
+  │   std::list<std::pair<T, unsigned>> _priority_queue;
+  │ };
+  │ 
+  │ template <typename T>
+  │ void PriorityQueue<T>::enqueue(T e, unsigned priority) {
+  │ 
+  │ }
+  │ 
+  │ template <typename T>
+  │ void PriorityQueue<T>::dequeue() {
+  │ 
+  │ }
+  │ 
+  │ template <typename T>
+  │ T PriorityQueue<T>::peek() {
+  │   return T();
+  │ }
+  │ 
+  │ template <typename T>
+  │ std::size_t PriorityQueue<T>::size() {
+  │   return 0;
+  │ }
+  │ #endif
+  └────
+
+  • Vamos começar com os testes
+  • Você vai notar que testes para um método potencialmente precisam de
+    outros métodos
+    • Por exemplo, para testar o `peek' vamos precisar preparar o estado
+      da fila, usando o `enqueue'
+    • Para o `enqueue/dequeue', precisamos testar o elemento do topo
+      (`peek')
+    • Não parece um problema, se você considerar que a fila de
+      prioridade satisfaz o SRP
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "priority_queue.hpp"
+  │ 
+  │ TEST_CASE("PriorityQueue::peek") {
+  │   PriorityQueue<int> pq;
+  │ 
+  │   SUBCASE("Empty queue") {
+  │     CHECK_THROWS_AS(pq.peek(), NoElementException);
+  │   }
+  │ 
+  │   SUBCASE("Nonempty queue") {
+  │     pq.enqueue(1, 2);
+  │     pq.enqueue(2, 1);
+  │ 
+  │     CHECK(pq.peek() == 1);
+  │   }
+  │ }
+  │ 
+  │ TEST_CASE("PriorityQueue::enqueue") {
+  │   PriorityQueue<int> pq;
+  │ 
+  │   pq.enqueue(1, 2);
+  │   pq.enqueue(2, 1);
+  │ 
+  │   CHECK(pq.peek() == 1);
+  │ }
+  │ 
+  │ TEST_CASE("PriorityQueue::dequeue") {
+  │   PriorityQueue<int> pq;
+  │ 
+  │   pq.enqueue(1, 2);
+  │   pq.enqueue(2, 1);
+  │ 
+  │   pq.dequeue();
+  │   CHECK(pq.peek() == 2);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:12:
+  │ TEST CASE:  PriorityQueue::peek
+  │   Empty queue
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:16: ERROR: CHECK_THROWS_AS( pq.peek(), NoElementException ) did NOT throw at all!
+  │ 
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:12:
+  │ TEST CASE:  PriorityQueue::peek
+  │   Nonempty queue
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:23: ERROR: CHECK( pq.peek() == 1 ) is NOT correct!
+  │   values: CHECK( 0 == 1 )
+  │ 
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:27:
+  │ TEST CASE:  PriorityQueue::enqueue
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:33: ERROR: CHECK( pq.peek() == 1 ) is NOT correct!
+  │   values: CHECK( 0 == 1 )
+  │ 
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:36:
+  │ TEST CASE:  PriorityQueue::dequeue
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-359FSo.cpp:43: ERROR: CHECK( pq.peek() == 2 ) is NOT correct!
+  │   values: CHECK( 0 == 2 )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 3 | 0 passed | 3 failed | 0 skipped
+  │ [doctest] assertions: 4 | 0 passed | 4 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  • Vamos começar com o par `enqueue' + `peek'
+
+  ┌────
+  │ template <typename T>
+  │ void PriorityQueue<T>::enqueue(T e, unsigned priority) {
+  │   auto it = _priority_queue.begin();
+  │   auto end = _priority_queue.end();
+  │ 
+  │   for (; it != end; ++it) {
+  │     if (priority > it->second) break;
+  │   }
+  │ 
+  │   _priority_queue.insert(it, {e, priority});
+  │ }
+  │ 
+  │ template <typename T>
+  │ T PriorityQueue<T>::peek() {
+  │   if (_priority_queue.empty()) {
+  │     throw NoElementException();
+  │   }
+  │   return _priority_queue.front().first;
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-00BE4a.cpp:36:
+  │ TEST CASE:  PriorityQueue::dequeue
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-00BE4a.cpp:43: ERROR: CHECK( pq.peek() == 2 ) is NOT correct!
+  │   values: CHECK( 1 == 2 )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 3 | 2 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 4 | 3 passed | 1 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  • Agora, vamos para o dequeue:
+
+  ┌────
+  │ template <typename T>
+  │ void PriorityQueue<T>::dequeue() {
+  │   if (!_priority_queue.empty()) {
+  │     _priority_queue.pop_front();
+  │   }
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 4 | 4 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Resta o método `size', vamos criar o teste
+
+  ┌────
+  │ TEST_CASE("PriorityQueue::size") {
+  │   PriorityQueue<int> pq;
+  │ 
+  │   SUBCASE("Empty queue") {
+  │     CHECK(pq.size() == 0);
+  │   }
+  │ 
+  │   SUBCASE("Single element") {
+  │     pq.enqueue(1, 2);
+  │     CHECK(pq.size() == 1);
+  │   }
+  │ 
+  │   SUBCASE("Multiple elements") {
+  │     for (int i = 0; i < 10; i++) {
+  │       pq.enqueue(i, i);
+  │     }
+  │ 
+  │     CHECK(pq.size() == 10);
+  │   }
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-ecsKew.cpp:46:
+  │ TEST CASE:  PriorityQueue::size
+  │   Single element
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-ecsKew.cpp:55: ERROR: CHECK( pq.size() == 1 ) is NOT correct!
+  │   values: CHECK( 0 == 1 )
+  │ 
+  │ ===============================================================================
+  │ /tmp/babel-R5V4Kw/C-src-ecsKew.cpp:46:
+  │ TEST CASE:  PriorityQueue::size
+  │   Multiple elements
+  │ 
+  │ /tmp/babel-R5V4Kw/C-src-ecsKew.cpp:63: ERROR: CHECK( pq.size() == 10 ) is NOT correct!
+  │   values: CHECK( 0 == 10 )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 4 | 3 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 7 | 5 passed | 2 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  • Implementando o método:
+
+  ┌────
+  │ template <typename T>
+  │ std::size_t PriorityQueue<T>::size() {
+  │   return _priority_queue.size();
+  │ }
+  └────
+
+  • Por fim, rodando todos os testes:
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 4 | 4 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 7 | 7 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Será que nossa implementação obedece a ordem de inserção, no caso de
+    elementos de mesma prioridade?
+  • Isso deveria estar no teste do enqueue ou do peek?
+
+  ┌────
+  │ TEST_CASE("PriorityQueue::enqueue") {
+  │   PriorityQueue<int> pq;
+  │ 
+  │   SUBCASE("Distinct priorities") {
+  │     pq.enqueue(1, 2);
+  │     pq.enqueue(2, 1);
+  │ 
+  │     CHECK(pq.peek() == 1);
+  │   }
+  │ 
+  │   SUBCASE("Insertion order") {
+  │     pq.enqueue(1, 2);
+  │     pq.enqueue(2, 2);
+  │ 
+  │     CHECK(pq.peek() == 1);
+  │   }
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 4 | 4 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 8 | 8 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+Extra
+═════
+
+  • A biblioteca doctest possui outras cláusulas além de `CHECK'
+  • `REQUIRE' pode ser usado para verificar "pré-condições" necessárias
+    para o teste
+  • Existem macros para imprimir informações (para debug)
+    • `CAPTURE(variavel)': imprime o conteúdo da variável
+    • `INFO("a variável i contém o valor", i)': imprime uma mensagem,
+      seguida do conteúdo da variável
+  • E muito mais… veja a documentação do Doctest (no Github)

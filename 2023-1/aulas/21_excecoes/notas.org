@@ -1,0 +1,527 @@
+#+title: Notas de Aula - 21 Tratamento de Exceções
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#+property: header-args :results scalar
+- Asserções são utilizadas para verificar erros que não deveriam acontecer de nenhuma forma (isto é, para capturar erros de programação)
+- Uma exceção é um evento inesperado que ocorre no contexto da execução do programa
+- Quando falamos de exceções, estamos lidando com erros "recuperáveis", isto é, erros que podemos tratar de alguma forma, tomando um caminho diferente no fluxo do programa
+- O que pode gerar uma exceção?
+  - Entradas inválidas
+  - Timeout ao enviar dados pela rede
+  - Abrir uma arquivo inexistente
+  - Acessar um índice inválido em um vetor (no caso de C++, depende da operação de acesso; o método ~at()~ gera uma exceção)
+
+Vamos voltar ao exemplo da classe Pessoa
+- A estratégia que adotamos consiste em impedir que o usuário acesse o construtor da classe
+- Isto, a princípio não seria possível impedir a construção do objeto e retornar um valor indicando o erro através do construtor
+- Bom, na verdade é possível sim, por meio do mecanismo de exceções!
+
+** Declarando e lançando uma exceção
+
+- C++ provê uma classe base para exceções, a ~std::exception~
+  - A classe ~std::exception~ provê um método virtual ~what~
+  - É preciso declarar este método como ~noexcept~ (indica que a função nunca gera, nem propaga uma exceção)
+- Podemos utilizar o mecanismo de herança para criar nossas próprias exceções
+- Lançamos a exceção com a palavra-chave ~throw~
+
+~person.hpp~
+
+#+begin_src C++ :main no :tangle person.hpp
+#ifndef PERSON_H
+#define PERSON_H
+
+#include <string>
+#include <exception>
+
+class InvalidNameException : public std::exception {
+public:
+  const char *what() const noexcept override;
+};
+
+class Person {
+public:
+  Person(std::string name);
+  std::string name() const;
+
+private:
+  std::string _name;
+};
+
+#endif
+#+end_src
+
+=person.cpp=
+
+#+begin_src C++ :main no :tangle person.cpp
+#include "person.hpp"
+
+const char *InvalidNameException::what() const noexcept {
+  return "Nome inválido!!!";
+}
+
+bool name_has_number(std::string name) {
+  for (char c : name) {
+    if (std::isdigit(c)) return true;
+  }
+  return false;
+}
+
+bool name_has_comma(std::string name) {
+  for (char c : name) {
+    if (c == ',') return true;
+  }
+  return false;
+}
+
+Person::Person(std::string name) {
+  if (name_has_number(name) || name_has_comma(name)) {
+    throw InvalidNameException();
+  }
+  _name = name;
+}
+
+std::string Person::name() const { return _name; }
+#+end_src
+
+=main.cpp=
+
+#+begin_src C++ :flags -std=c++17 -I. person.cpp :results silent
+#include "person.hpp"
+#include <iostream>
+
+int main() {
+  Person oliveira("Oliveira, José");
+  return 0;
+}
+#+end_src
+
+#+begin_example
+terminate called after throwing an instance of 'InvalidNameException'
+  what():  Nome inválido!!!
+#+end_example
+
+- Note que estamos lançando uma mesma exceção para erros diferentes
+- Podemos expandir a hierarquia da exceção, criando duas novas exceções, uma para cada erro
+- Ou, podemos modificar o construtor da nossa exceção, para receber uma string representando a mensagem de erro
+
+~person.hpp~
+
+#+begin_src C++ :main no :tangle person_v2.hpp
+#ifndef PERSON_H
+#define PERSON_H
+
+#include <string>
+#include <exception>
+
+class InvalidNameException : public std::exception {
+public:
+  InvalidNameException(const std::string &message);
+  const char *what() const noexcept override;
+  
+private:
+  std::string _message;
+};
+
+class Person {
+public:
+  Person(std::string name);
+  std::string name() const;
+
+private:
+  std::string _name;
+};
+
+#endif
+#+end_src
+
+=person.cpp=
+
+#+begin_src C++ :main no :tangle person_v2.cpp
+#include "person_v2.hpp"
+#include <sstream>
+
+InvalidNameException::InvalidNameException(const std::string &message)
+  : _message("Nome inválido: " + message + "!") {}
+
+const char *InvalidNameException::what() const noexcept {
+  return _message.c_str();
+}
+
+bool name_has_number(std::string name) {
+  for (char c : name) {
+    if (std::isdigit(c)) return true;
+  }
+  return false;
+}
+
+bool name_has_comma(std::string name) {
+  for (char c : name) {
+    if (c == ',') return true;
+  }
+  return false;
+}
+
+Person::Person(std::string name) {
+  if (name_has_number(name)) {
+    throw InvalidNameException("contém digitos");
+  }
+  
+  if (name_has_comma(name)) {
+    throw InvalidNameException("contém vírgulas");
+  }
+  _name = name;
+}
+
+std::string Person::name() const { return _name; }
+#+end_src
+
+=main.cpp=
+
+#+begin_src C++ :flags -std=c++17 -I. person_v2.cpp :results silent
+#include "person_v2.hpp"
+#include <iostream>
+
+int main() {
+  Person oliveira("Oliveira, José");
+  return 0;
+}
+#+end_src
+
+#+begin_example
+terminate called after throwing an instance of 'InvalidNameException'
+  what():  Nome inválido: contém vírgulas!
+#+end_example
+
+- O que acabamos de implementar (mensagem customizada), poderia ser alcançado através da classe ~std::runtime_error~
+
+#+begin_src C++ :flags -std=c++17 :results silent
+#include <stdexcept>
+
+int main() {
+  throw std::runtime_error("Mensagem de erro customizada");
+  return 0;
+}
+#+end_src
+
+#+begin_example
+terminate called after throwing an instance of 'InvalidNameException'
+  what():  Mensagem de erro customizada
+#+end_example
+
+** Capturando uma exceção 
+
+- Para capturar e lidar com uma exceção, usamos o bloco ~try-catch~
+- Nós *tentamos* (~try~) executar alguma operação e, caso alguma exceção seja gerada em algum passo, nós *capturamos* (~catch~) esta exceção e lidamos com ela da forma que julgamos ser a mais adequado
+- Note que existe uma alteração no fluxo do programa, assim como, por exemplo, em um ~if-else~
+  
+=main.cpp=
+
+#+begin_src C++ :flags -std=c++17 -I. person_v2.cpp :results scalar :exports both
+#include "person_v2.hpp"
+#include <iostream>
+
+int main() {
+  try {
+    Person p("Oliveira, José");
+    // Operação com a Pessoa, caso tenha sido criada com sucesso
+    std::cout << "Pessoa criada com sucesso! Nome: ";
+    std::cout << p.name() << std::endl;
+  } catch (const InvalidNameException &e) {
+    std::cout << "Erro capturado => " << e.what() << std::endl;
+    // Lidar com o erro de alguma forma
+  }
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Erro capturado => Nome inválido: contém vírgulas!
+
+- E se tivéssemos mais de uma exceção sendo lançada?
+- Podemos fazer uso do polimorfismo, capturando a exceção mais "geral" da hierarquia
+
+#+begin_src C++ :flags -std=c++17 :results scalar :exports both
+#include <exception>
+#include <iostream>
+
+class ExceptionA : public std::exception {
+public:
+  const char *what() const noexcept override {
+    return "A";
+  }
+};
+
+class ExceptionB : public std::exception {
+public:
+  const char *what() const noexcept override {
+    return "B";
+  }
+};
+
+void throw_A() {
+  throw ExceptionA();
+}
+
+void throw_B() {
+  throw ExceptionB();
+}
+
+int main() {
+  try {
+    // throw_A();
+    throw_B();
+  } catch (const std::exception &e) {
+    std::cout << e.what() << std::endl;
+  }
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: B
+
+- Ou, podemos lidar com cada exceção de uma forma específica, com múltiplas blocos ~catch~
+- Ordenamos as cláusulas da mais específica para a mais genérica
+
+#+begin_src C++ :flags -std=c++17 :results scalar :exports both
+#include <exception>
+#include <iostream>
+
+class ExceptionA : public std::exception {
+public:
+  const char *what() const noexcept override {
+    return "A";
+  }
+};
+
+class ExceptionB : public std::exception {
+public:
+  const char *what() const noexcept override {
+    return "B";
+  }
+};
+
+void throw_A() {
+  throw ExceptionA();
+}
+
+void throw_B() {
+  throw ExceptionB();
+}
+
+int main() {
+  try {
+    // throw_A();
+    throw_B();
+  } catch (const ExceptionA &e) {
+    std::cout << "Lidando com exceção A: " << e.what() << std::endl;
+  } catch (const ExceptionB &e) {
+    std::cout << "Lidando com exceção B: " << e.what() << std::endl;
+  }
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Lidando com exceção B: B
+
+** Propagando uma exceção
+
+- Exceções são naturalmente propagadas, até que se encontre um bloco ~try-catch~ lidando com ela (ou o programa aborta)
+
+#+begin_src C++ :flags -std=c++17 :results scalar :exports both
+#include <stdexcept>
+#include <iostream>
+
+void funcA() {
+  throw std::runtime_error("Erro na função A");
+}
+
+void funcB() {
+  funcA();
+}
+
+int main() {
+  try {
+    funcB();
+  } catch (const std::exception &e) {
+    std::cout << e.what() << std::endl;
+  }
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Erro na função A
+
+- Porém, em algumas situações você pode querer lidar com a exceção de alguma forma (fazer algum tipo de limpeza, e.g. liberar memória), e propagar a exceção para o próximo método
+- Basta utilizar o ~throw~ sem nenhum argumento
+
+#+begin_src C++ :flags -std=c++17 :results scalar :exports both
+#include <stdexcept>
+#include <iostream>
+
+void funcA() {
+  throw std::runtime_error("Erro na função A");
+}
+
+void funcB() {
+  try {
+    funcA();
+  } catch (const std::exception &e) {
+    std::cout << "Lidando com a exceção em B()" << std::endl;
+    throw;
+  }
+}
+
+int main() {
+  try {
+    funcB();
+  } catch (const std::exception &e) {
+    std::cout << e.what() << std::endl;
+  }
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Lidando com a exceção em B()
+: Erro na função A
+
+
+** Fluxo de execução
+
+- Como vimos, quando uma exceção é lançada, o fluxo do programa é alterado
+- Instruções subsequentes não são executadas
+
+#+begin_src C++ :flags -std=c++17 :results scalar :exports both
+#include <stdexcept>
+#include <iostream>
+
+int main() {
+  try {
+    throw std::runtime_error("Erro inesperado");
+    // Não executado:
+    std::cout << "Instrução subsequente" << std::endl;
+  } catch (const std::exception) {
+    std::cout << "Fluxo de execução alterado" << std::endl;
+  }
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Fluxo de execução alterado
+
+- E se alguma destas instruções subsequentes forem importantes?
+  - Deletar um ponteiro
+  - Fechar um arquivo
+- O que acontece com o ponteiro ~p~ no programa a seguir?
+  
+#+begin_src C++ :flags -std=c++17 :results scalar :exports both
+#include <stdexcept>
+#include <iostream>
+
+int *new_pointer(int v) {
+  int *p = new int;
+  ,*p = v;
+  return p;
+}
+
+int main() {
+  int *p = new_pointer(1);
+  try {
+    throw std::runtime_error("Erro inesperado");
+    // Não executado:
+  } catch (const std::exception) {
+    std::cout << "Fluxo de execução alterado" << std::endl;
+  }
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Fluxo de execução alterado
+
+- Como resolver o problema de vazamento de memória?
+  - Algumas linguagems definem um terceiro bloco ~finally~, cujas instruções serão *sempre* executadas
+  - C++ não possui este operador, então o que fazer? *RAII*!
+
+#+begin_src C++ :flags -std=c++17 :results scalar :exports both
+#include <stdexcept>
+#include <iostream>
+
+template <typename T>
+class SmartPointer {
+public:
+  SmartPointer(T *pointer) : _raw_pointer(pointer) {}
+  ~SmartPointer() {
+    std::cout << "Cleaning owned" << std::endl;
+    delete _raw_pointer;
+  }
+  
+  SmartPointer(SmartPointer &&pointer) = default;
+  // Equivalente:
+  // SmartPointer(SmartPointer &&pointer)
+  //   : _raw_pointer(std::move(pointer._raw_pointer)) {};
+  
+  SmartPointer(const SmartPointer &pointer) = delete;
+  SmartPointer &operator=(const SmartPointer &pointer) = delete;
+
+  T &operator*() {
+    return *_raw_pointer;
+  }
+
+  T *operator->() {
+    return _raw_pointer;
+  }
+  
+private:
+  T *_raw_pointer;
+};
+
+SmartPointer<int> new_pointer(int v) {
+  SmartPointer<int> p(new int);
+  ,*p = v;
+  return p;
+}
+
+int main() {
+  SmartPointer<int> p = new_pointer(1);
+  try {
+    throw std::runtime_error("Erro inesperado");
+    // Não executado:
+  } catch (const std::exception) {
+    std::cout << "Fluxo de execução alterado" << std::endl;
+  }
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Fluxo de execução alterado
+: Cleaning owned
+
+- Por quê isto funciona?
+
+** Stack Unwinding
+
+- Quando uma exceção é lançada, uma busca é realizada na pilha de chamadas de funções, até que se encontre o ponto em que a exceção está sendo capturada
+- Se este ponto de captura existe, todas as entradas na pilha acima da função que capturou a exceção são destruídas, o que significa que os objetos construídos são destruídos (destrutores são chamados), assim como acontece quando uma função termina (por meios naturais)
+- Por exemplo, considere que
+  - ~funcA~ chama ~funcB~
+  - ~funcB~ constrói um objeto e chama ~funcC~
+  - ~funcC~ lança uma exceção
+  - A exceção é capturada em ~funcA~
+  - Visualmente:
+    
+#+begin_example
+            |→ [ funcC() ] --| lança exceção
+cria Objeto |→ [ funcB() ]   | procura bloco catch, não encontra
+            |-- [ funcA() ] ←| procura bloco catch, encontra, detróis Objeto
+#+end_example
