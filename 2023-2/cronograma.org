@@ -1,0 +1,59 @@
+#+author: Prof. Luigi D. C. Soares
+#+title: Cronograma (\color{red}\bfseries última atualização: \today\color{black})
+
+#+startup: entitiespretty
+#+options: toc:nil title:nil 
+
+#+language: pt
+#+latex_class: article
+#+latex_class_options: [11pt]
+#+latex_header: \input{header.tex}
+
+\begin{center}
+    \Large\bfseries\thetitle{}
+\end{center}
+
+\begin{center}
+    \fcolorbox{black}{green!30}{\rule{0pt}{6pt}\rule{6pt}{0pt}}\quad Não haverá aula \qquad
+    \fcolorbox{black}{yellow!50}{\rule{0pt}{6pt}\rule{6pt}{0pt}}\quad Prova
+\end{center}
+
+\rowcolors{2}{gray!10}{gray!25}
+#+attr_latex: :booktabs t :align >{\bfseries}ccl>{\bfseries}c
+|                    *Aula* | *Data*  | *Tópico*                                   | *Projeto Final*     |
+|-------------------------+-------+------------------------------------------+-------------------|
+|                      01 | 17/08 | Apresentação do Curso e Introdução a C++ |                   |
+|                      02 | 22/08 | Armazenamento de Dados em Memória        |                   |
+|                      03 | 24/08 | Test-Driven Development (TDD)            |                   |
+|                      04 | 29/08 | Tipos Abstratos de Dados (TADs)          | Divulgação        |
+|                      05 | 31/08 | TAD: Listas Encadeadas                   |                   |
+|                      06 | 05/09 | TAD: Biblioteca Padrão (STL)             |                   |
+|     \rowcolor{green!40} | 07/09 | Feriado: Independência do Brasil         |                   |
+|                      07 | 12/09 | TAD: Biblioteca Padrão (STL)             |                   |
+|                      08 | 14/09 | Boas Práticas                            |                   |
+|                      09 | 19/09 | Modularização                            |                   |
+|                      10 | 21/09 | Ferramentas de Depuração                 |                   |
+|                      11 | 26/09 | Versionamento e Revisão de Código        |                   |
+|                      12 | 28/09 | Introdução à Orientação a Objetos (POO)  | Definição de Tema |
+|                      13 | 03/10 | Especificação de Software                |                   |
+|                      14 | 05/10 | POO: Classes                             |                   |
+|                      15 | 10/10 | POO: Encapsulamento                      |                   |
+|     \rowcolor{green!40} | 12/10 | Feriado: Nossa Senhora Aparecida         |                   |
+| \rowcolor{yellow!50} 16 | *17/10* | *Prova 1: Revisão*                         |                   |
+| \rowcolor{yellow!50} 17 | *19/10* | *Prova 1: Aplicação*                       |                   |
+|                      18 | 24/10 | Acompanhamento/Dúvidas Projeto           | Entrega Parcial   |
+|                      19 | 26/10 | POO: Herança e Composição                |                   |
+|                      20 | 31/10 | POO: Herança e Composição                |                   |
+|     \rowcolor{green!40} | 02/11 | Feriado: Finados                         |                   |
+|                      21 | 07/11 | POO: Polimorfismo                        |                   |
+|                      22 | 09/11 | POO: Polimorfismo                        |                   |
+|                      23 | 14/11 | POO: Gerenciamento de Memória            |                   |
+|                      24 | 16/11 | Programação Defensiva                    |                   |
+|                      25 | 21/11 | Tratamento de Exceções                   |                   |
+|                      26 | 23/11 | Acompanhamento/Dúvidas Projeto           |                   |
+|                      27 | 28/11 | Acompanhamento/Dúvidas Projeto           |                   |
+| \rowcolor{yellow!50} 28 | *30/11* | *Prova 2: Revisão*                         | Entrega Final     |
+| \rowcolor{yellow!50} 29 | *05/12* | *Prova 2: Aplicação*                       |                   |
+| \rowcolor{yellow!50} 30 | *07/12* | *Prova substitutiva*                       |                   |
+|                         |       |                                          |                   |
+|    \rowcolor{yellow!50} | *14/12* | *Exame especial*                           |                   |

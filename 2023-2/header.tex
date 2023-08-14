@@ -1,0 +1,55 @@
+% ======================================================
+% =====================  Packages  =====================
+% ======================================================
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{fancyhdr}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{datetime2}
+\usepackage[maxbibnames=99, style=numeric, sorting=none]{biblatex}
+\addbibresource{pds2.bib}
+
+% ======================================================
+% =====================    Info    =====================
+% ======================================================
+\makeatletter
+\DeclareRobustCommand*\course[1]{\gdef\@course{#1}}
+\DeclareRobustCommand*\institution[1]{%
+  \gdef\@institution{#1}}
+\DeclareRobustCommand*\semester[1]{\gdef\@semester{#1}}
+\course{Programação e Desenvolvimento de Software II}
+\institution{DCC / ICEx / UFMG}
+\semester{2023.2}
+\newcommand{\thetitle}{\@title{}}
+\newcommand{\theauthor}{\@author{}}
+\newcommand{\thecourse}{\@course{}}
+\newcommand{\theinstitution}{\@institution{}}
+\newcommand{\thesemester}{\@semester{}}
+\newcommand{\thedate}{\@date{}}
+\makeatother
+\DTMnewdatestyle{brDateStyle}{%
+    \renewcommand{\DTMdisplaydate}[4]{##3/##2/##1}%
+    \renewcommand{\DTMDisplaydate}{\DTMdisplaydate}}
+\DTMsetdatestyle{brDateStyle}
+
+% ======================================================
+% ==================    Page Style    ==================
+% ======================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+\setlength{\headheight}{15pt}
+\lhead{\theauthor{} \\ \thecourse{}}
+\rhead{\theinstitution{} \\ \thesemester{}}
+\rfoot{\thepage}
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}

@@ -12,6 +12,7 @@
 # Class notes
 !notas*.org
 !notas*.txt
+!**/aulas/01_apresentacao/slides.pdf
 
 # Schedule, syllabus
 !header.tex

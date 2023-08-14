@@ -1,0 +1,274 @@
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    NOTAS DE AULA - 01 APRESENTAÇÃO
+
+                           Luigi D. C. Soares
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+PDS 1 vs PDS 2
+══════════════
+
+  • O que vocês viram em PDS 1? Conceitos básicos, lógica, como
+    manipular o computador
+  • E o que vocês acham que vão ver em PDS 2? Como desenvolver *bons*
+    programas
+
+  • Quão grande pode ser um programa?
+    • Linux kernel (base do Android): > 20 milhões
+    • Chromium (C++, código aberto, base do chrome): > 35 milhões
+
+  • Como desenvolver e manter sistemas tão grandes?
+
+
+Por quê C++?
+════════════
+
+  • Tudo depende do contexto/propósito. Linux é escrito em C
+
+    Software <— comunica com —> S.O. <— comunica com —> Harware
+
+  • Esconder a complexidade: abstração!
+  • Ferramentas e bibliotecas que facilitam a escrita de código
+
+
+C vs C++: Exemplos
+══════════════════
+
+Hello World
+───────────
+
+  ┌────
+  │ #include <stdio.h>
+  │ 
+  │ int main(void) {
+  │   printf("Hello World");
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Hello World
+  └────
+
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   std::cout << "Hello World" << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Hello World
+  └────
+
+
+Como contar os dígitos de uma string?
+─────────────────────────────────────
+
+  ┌────
+  │ #include <stdio.h>
+  │ #include <string.h>
+  │ #include <ctype.h>
+  │ 
+  │ int main(void) {
+  │   char buffer[100];
+  │   scanf("%s", buffer); // Ou fgets se tiver espaços
+  │ 
+  │   unsigned count = 0;
+  │   for (unsigned i = 0; i < strlen(buffer); i++) {
+  │     if (isdigit(buffer[i])) count++;      
+  │   }
+  │ 
+  │   printf("%d\n", count);
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 3
+  └────
+
+
+  ┌────
+  │ #include <iostream>
+  │ #include <string>
+  │ 
+  │ int main() {
+  │   std::string buffer;
+  │   std::cin >> buffer;
+  │ 
+  │   unsigned count = 0;
+  │   for (unsigned i = 0; i < buffer.length(); i++) {
+  │     if (std::isdigit(buffer[i])) count++;
+  │   }
+  │ 
+  │   std::cout << count << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 3
+  └────
+
+
+  ┌────
+  │ #include <iostream>
+  │ #include <string>
+  │ 
+  │ int main() {
+  │   std::string buffer;
+  │   std::cin >> buffer;
+  │ 
+  │   unsigned count = 0;
+  │   for (char c : buffer) {
+  │     if (std::isdigit(c)) count++;
+  │   }
+  │ 
+  │   std::cout << count << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 3
+  └────
+
+
+Como contar a frequência de cada inteiro na entrada?
+────────────────────────────────────────────────────
+
+  ┌────
+  │ #include <stdio.h>
+  │ #include <stdlib.h>
+  │ #include <string.h>
+  │ 
+  │ typedef struct MapEntry {
+  │   int key;
+  │   unsigned value;
+  │ } MapEntry;
+  │ 
+  │ typedef MapEntry *Map;
+  │ 
+  │ int main(void) {
+  │   Map map = NULL;
+  │   unsigned n = 0;
+  │ 
+  │   int x;
+  │   while (scanf("%d", &x) > 0) {
+  │     unsigned i = 0;
+  │     for (; i < n && map[i].key != x; i++);
+  │ 
+  │     if (i == n) {
+  │       n++;
+  │       map = realloc(map, n * sizeof(MapEntry));
+  │ 
+  │       MapEntry e = {x, 1};
+  │       map[i] = e;
+  │     } else {
+  │       map[i].value++;
+  │     }
+  │   }
+  │ 
+  │   for (unsigned i = 0; i < n; i++) {
+  │     printf("%d => %d\n", map[i].key, map[i].value);
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 1 => 3
+  │ 2 => 2
+  │ 3 => 1
+  └────
+
+
+  Tentativa 1 em C++: busca linear com vector
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ 
+  │ struct MapEntry {
+  │   int key;
+  │   unsigned value;
+  │ };
+  │ 
+  │ using Map = std::vector<MapEntry>;
+  │ 
+  │ int main() {
+  │   Map map;
+  │ 
+  │   int x;
+  │   while (std::cin >> x) {
+  │     unsigned i = 0;
+  │     for (; i < map.size() && map[i].key != x; i++);
+  │ 
+  │     if (i == map.size()) {
+  │       MapEntry e = {x, 1};
+  │       map.push_back(e);
+  │     } else {
+  │       map[i].value++;
+  │     }
+  │   }
+  │ 
+  │   for (MapEntry e : map) {
+  │     std::cout << e.key << " => " << e.value << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 1 => 3
+  │ 2 => 2
+  │ 3 => 1
+  └────
+
+
+  Tentativa 2: std::map ([red-black tree]):
+
+  ┌────
+  │ #include <iostream>
+  │ #include <map>
+  │ #include <utility>
+  │ 
+  │ int main() {
+  │   std::map<int, unsigned> map;
+  │ 
+  │   int x;
+  │   while (std::cin >> x) {
+  │     // std::pair<std::map<int, unsigned>::iterator, bool> p =
+  │     //   map.insert({x, 1});
+  │     auto [entry, inserted] = map.insert({x, 1});
+  │ 
+  │     // if (!p.second) p.first->second++;
+  │     if (!inserted) entry->second++;
+  │   }
+  │ 
+  │   // for (std::pair<int, unsigned> e : map) {
+  │   //   std::cout << e.first << " => " << .second << std::endl;
+  │   // }
+  │ 
+  │   for (auto [key, value] : map) {
+  │     std::cout << key << " => " << value << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 1 => 3
+  │ 2 => 2
+  │ 3 => 1
+  └────
+
+
+[red-black tree] <https://en.wikipedia.org/wiki/Red%E2%80%93black_tree>
