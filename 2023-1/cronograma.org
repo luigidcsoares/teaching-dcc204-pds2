@@ -48,13 +48,14 @@
 |     \rowcolor{green!40} | 01/06 | Aula Cancelada                           |                   |
 |                      22 | 06/06 | POO: Gerenciamento de Memória            |                   |
 |     \rowcolor{green!40} | 08/06 | Recesso: Corpus Christi                  |                   |
-|                      23 | 13/06 | Programação Defensiva                    |                   |
-|                      24 | 15/06 | Tratamento de Exceções                   |                   |
-|                      25 | 20/06 | Introdução a Testes e TDD                |                   |
-|                      26 | 22/06 | Acompanhamento/Dúvidas Projeto           |                   |
-|                      27 | 27/06 | Acompanhamento/Dúvidas Projeto           |                   |
+|     \rowcolor{green!40} | 13/06 | Aula Cancelada                           |                   |
+|                      23 | 15/06 | Programação Defensiva                    |                   |
+|                      24 | 20/06 | Tratamento de Exceções                   |                   |
+|                      25 | 22/06 | Introdução a Testes e TDD                |                   |
+|                      26 | -     | Acompanhamento/Dúvidas Projeto           |                   |
+|                      27 | -     | Acompanhamento/Dúvidas Projeto           |                   |
 | \rowcolor{yellow!50} 28 | *29/06* | *Prova 02: Revisão*                        |                   |
 | \rowcolor{yellow!50} 29 | *04/07* | *Prova 02: Aplicação*                      |                   |
 | \rowcolor{yellow!50} 30 | *06/07* | *Prova substitutiva*                       | Entrega Final     |
 |                         |       |                                          |                   |
-|    \rowcolor{yellow!50} |       | *Exame especial*                           |                   |
+|    \rowcolor{yellow!50} | *11/07* | *Exame especial*                           |                   |
