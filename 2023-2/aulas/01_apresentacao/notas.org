@@ -2,7 +2,6 @@
 #+author: Luigi D. C. Soares
 #+startup: entitiespretty
 #+options: toc:nil num:nil
-#+property: header-args :results scalar
 * PDS 1 vs PDS 2
 
 - O que vocês viram em PDS 1? Conceitos básicos, lógica, como manipular o computador

@@ -1,0 +1,856 @@
+#+title: Notas de Aula - 03 Test-Driven Development (TDD)
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+* Introdução a Testes
+
+- O que é teste de software?
+  
+- Existem diferentes tipos/granularidades de testes
+  - Testes de Unidade ( *nosso foco* )
+    - Testes voltados para unidades individuais do código.
+    - Uma unidade é a menor parte testável de uma aplicação
+      
+  - Teste de integração
+    - Tipo de teste em que diferentes unidades, módulos, componentes de uma aplicação são testadas como uma única entidade
+    - O objetivo é testar a interface/comunicação entre esses módulos (estão se comunicando corretamente?)
+      
+  - Testes do sistema
+    - Assumindo que a integração entre os módulos está correta, passamos para a etapa de testar o sistema como um todo
+    - O objetivo é verificar se todos os requisitos foram atendidos
+    - O teste ainda é feito pelo próprio time de desenvolvimento
+      
+  - Testes de Aceitação
+    - Testa-se o programa no ponto de vista do usuário final (o próprio usuário realiza o teste)
+    - Testa-se o sistema como um todo, para verificar se o que o usuário desejava foi atendido (nem sempre o que o requisito diz é o que o usuário realmente queria, erros podem acontecer)
+
+ - Testes "caixa preta" vs "caixa branca"
+   - Caixa preta: temos pouco ou nenhum acesso ao código que será testado (exemplo: sistema já pronto)
+   - Caixa branca: conhecemos o código e como ele funciona
+     
+* Test-Driven Development (TDD)
+
+- Test-Driven Development (Desenvolvimento Orientado por Testes) é uma metodologia de desenvolvimento de software na qual testes são desenvolvidos *antes* do código em si
+
+- TDD funciona como uma repetição de um ciclo:
+  1. Construir um novo teste, *que deverá falhar*
+  2. Escrever o código *mais simples possível* que faça o teste passar
+  3. Criticar e refatorar o código, caso necessário/faça sentido
+  4. Voltar ao item (1)
+     
+- De uma maneira mais completa, pensando no processo de desenvolvimento de um software:
+  1. Selecionar a próxima funcionalidade a ser implementada
+  2. Construir um novo teste
+  3. Compilar o projeto, executar os testes já existente e verificar os erros encontrados
+  4. Implementar a funcionalidade, de modo a fazer com que o teste passe
+  5. Refatorar o código
+  6. Repetir os testes, corrigindo o código caso algum teste falhe
+  7. Commitar as alterações (veremos o que é isso mais a frente)
+  8. Voltar ao item (2), caso ainda existam mais casos a serem cobertos
+  9. Voltar ao item (1), movendo para a próxima funcionalidade
+
+  - Fonte: http://alexott.net/en/cpp/CppTestingIntro.html
+
+- O ponto principal, que vale reforçar, é: testes devem ser desenvolvidos *antes* do código
+
+- Em C++, vamos utilizar um framework chamado [[https://github.com/doctest/doctest#documentation][Doctest]] 
+- Para instalar, basta copiar o ~doctest.h~
+- Agora, além de um executável para o software, vamos ter um executável para os testes
+
+** Exemplo 1: Palíndromo
+
+- Uma palavra é considerada um palíndromo se permanece igual quando lida de trás para frente
+- Por exemplo, "arara" é um palíndromo
+- Passo 1: Vamos começar o ciclo do TDD escrevendo o primeiro teste
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results none
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+}
+#+end_src
+
+- Note que o código acima sequer compila, o que implica na falha do teste
+- Passo 2: vamos escrever o código mais simples possível que passe no teste
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 1 | 1 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 3: ainda não há nada para refatorar, então pulamos este passo por enquanto
+- Passo 1: para o próximo teste, vamos checar que "banana" não é um palíndromo
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/tmp/babel-8z37N7/C-src-5M9Ue5.cpp:15:
+TEST CASE:  Testando a verificação de palíndromo
+
+/tmp/babel-8z37N7/C-src-5M9Ue5.cpp:17: ERROR: CHECK_FALSE( is_palindrome("banana") ) is NOT correct!
+  values: CHECK_FALSE( true )
+
+===============================================================================
+[doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+[doctest] assertions: 2 | 1 passed | 1 failed |
+[doctest] Status: FAILURE!
+#+end_example
+
+- Passo 2: escrever o código mais simples possível que passe no teste
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  if (str == "arara") {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 2 | 2 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 3: ainda não há nada a refatorar...
+- Passo 1: e se testarmos um outro palíndromo, como "osso"?
+  
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  if (str == "arara") {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("osso"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/tmp/babel-8z37N7/C-src-l92HO0.cpp:19:
+TEST CASE:  Testando a verificação de palíndromo
+
+/tmp/babel-8z37N7/C-src-l92HO0.cpp:21: ERROR: CHECK( is_palindrome("osso") ) is NOT correct!
+  values: CHECK( false )
+
+===============================================================================
+[doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+[doctest] assertions: 3 | 2 passed | 1 failed |
+[doctest] Status: FAILURE!
+#+end_example
+
+- Passo 2: podemos resolver o teste adicionando um outro teste condicional
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  if (str == "arara") {
+    return true;
+  } else if (str == "osso") {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("osso"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 3 | 3 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 3: é fácil notar que, se continuarmos adicionando testes, vamos ter mais e mais if-elses, o que não faz muito sentido... hora de refatorar. Qual a implementação mais óbvia possível?
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  for (int i = 0, j = str.size() - 1; i < str.size(); i++, j--) {
+    if (str[i] != str[j]) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("osso"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 3 | 3 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Ainda no passo 3, é possível reduzir a quantidade de comparações?
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  for (int i = 0, j = str.size() - 1; i < str.size() / 2; i++, j--) {
+    if (str[i] != str[j]) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("osso"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 3 | 3 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+  
+- Passo 1: normalmente, desconsideramos maiúsculas/minúsculas na definição de palíndromo
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  for (int i = 0, j = str.size() - 1; i < str.size() / 2; i++, j--) {
+    if (str[i] != str[j]) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("aRarA"));
+  CHECK(is_palindrome("osso"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/tmp/babel-8z37N7/C-src-aOH6hV.cpp:18:
+TEST CASE:  Testando a verificação de palíndromo
+
+/tmp/babel-8z37N7/C-src-aOH6hV.cpp:20: ERROR: CHECK( is_palindrome("aRarA") ) is NOT correct!
+  values: CHECK( false )
+
+===============================================================================
+[doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+[doctest] assertions: 4 | 3 passed | 1 failed |
+[doctest] Status: FAILURE!
+#+end_example
+
+- Passo 2: para corrigir, podemos converter cada caractere para minúsculo
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  for (int i = 0, j = str.size() - 1; i < str.size() / 2; i++, j--) {
+    if (std::tolower(str[i]) != std::tolower(str[j])) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("aRarA"));
+  CHECK(is_palindrome("osso"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 4 | 4 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 1: além de maísculas/minúsculas, também desconsideramos espaços e pontuações
+  
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  for (int i = 0, j = str.size() - 1; i < str.size() / 2; i++, j--) {
+    if (std::tolower(str[i]) != std::tolower(str[j])) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("aRarA"));
+  CHECK(is_palindrome("osso"));
+  CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/tmp/babel-8z37N7/C-src-nLzKMe.cpp:19:
+TEST CASE:  Testando a verificação de palíndromo
+
+/tmp/babel-8z37N7/C-src-nLzKMe.cpp:23: ERROR: CHECK( is_palindrome("A Daniela ama a lei? Nada!") ) is NOT correct!
+  values: CHECK( false )
+
+===============================================================================
+[doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+[doctest] assertions: 5 | 4 passed | 1 failed |
+[doctest] Status: FAILURE!
+#+end_example
+
+- Passo 2: para corrigir, podemos limpar a string antes da verificação:
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string raw_str) {
+  std::string str = "";
+  for (char c : raw_str) {
+    if (c != ' ' && c != '?' && c != '!') {
+      str += c;
+    }
+  }
+
+  for (int i = 0, j = str.size() - 1; i < str.size() / 2; i++, j--) {
+    if (std::tolower(str[i]) != std::tolower(str[j])) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("aRarA"));
+  CHECK(is_palindrome("osso"));
+  CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 5 | 5 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 3: uma coisa que podemos fazer é já converter o caractere para minúscula durante a limpeza
+  
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string raw_str) {
+  std::string str = "";
+  for (char c : raw_str) {
+    if (c =! ' ' && c != '?' && c != '!') {
+      str += std::tolower(c);
+    }
+  }
+
+  for (int i = 0, j = str.size() - 1; i < str.size() / 2; i++, j--) {
+    if (str[i] != str[j]) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("aRarA"));
+  CHECK(is_palindrome("osso"));
+  CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 5 | 5 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Além disso, pensando em possíveis novos caracteres a serem desconsiderados (o que levaria a um teste if muito complexo), podemos definir um array de caracteres não desejados e realizar a busca nele:
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string raw_str) {
+  std::string str = "";
+  char discard[3] = {' ', '?', '!'};
+  
+  for (char c : raw_str) {
+    char *lookup = std::find(std::begin(discard), std::end(discard), c);
+    if (lookup == std::end(discard)) {
+      str += std::tolower(c);
+    }
+  }
+
+  for (int i = 0, j = str.size() - 1; i < str.size() / 2; i++, j--) {
+    if (str[i] != str[j]) return false;
+  }
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK(is_palindrome("arara"));
+  CHECK(is_palindrome("aRarA"));
+  CHECK(is_palindrome("osso"));
+  CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  CHECK_FALSE(is_palindrome("banana"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 5 | 5 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+** Exemplo 2: Fibonacci
+
+- Considere a sequência de Fibonacci 0, 1, 1, 2, 3, 5, 8, 13, ...
+- Note que ela pode ser definida como:
+  - fibonacci(0) = 0
+  - fibonacci(1) = 1
+  - fibonacci(n) = fibonacci(n - 1) + fibonacci(n - 2)
+
+- Passo 1: vamos construir um teste para o caso base onde n = 0
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results none
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK_EQ(fibonacci(0), 0);
+}
+#+end_src
+
+- Passo 2: vamos implementar a função da forma mais simples possível
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  return 0;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK_EQ(fibonacci(0), 0);
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 1 | 1 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 1: ainda temos um segundo caso base, quando n = 1
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  return 0;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK_EQ(fibonacci(0), 0);
+  CHECK_EQ(fibonacci(1), 1);
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/tmp/babel-8z37N7/C-src-MsGtfJ.cpp:15:
+TEST CASE:  Testando a verificação de palíndromo
+
+/tmp/babel-8z37N7/C-src-MsGtfJ.cpp:17: ERROR: CHECK_EQ( fibonacci(1), 1 ) is NOT correct!
+  values: CHECK_EQ( 0, 1 )
+
+===============================================================================
+[doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+[doctest] assertions: 2 | 1 passed | 1 failed |
+[doctest] Status: FAILURE!
+#+end_example
+
+- Passo 2: podemos separar os casos n = 0 e n = 1
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  if (n == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK_EQ(fibonacci(0), 0);
+  CHECK_EQ(fibonacci(1), 1);
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 2 | 2 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 1: poderíamos adicionar um teste para n = 2, que é o primeiro do caso recursivo, mas note que ele irá passar no teste. Vamos, então, testar o caso n = 3:
+  
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  if (n == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK_EQ(fibonacci(0), 0);
+  CHECK_EQ(fibonacci(1), 1);
+  CHECK_EQ(fibonacci(3), 2);
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/tmp/babel-8z37N7/C-src-9fuXNG.cpp:19:
+TEST CASE:  Testando a verificação de palíndromo
+
+/tmp/babel-8z37N7/C-src-9fuXNG.cpp:22: ERROR: CHECK_EQ( fibonacci(3), 2 ) is NOT correct!
+  values: CHECK_EQ( 1, 2 )
+
+===============================================================================
+[doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+[doctest] assertions: 3 | 2 passed | 1 failed |
+[doctest] Status: FAILURE!
+#+end_example
+
+- Passo 2: vamos implementar o caso recursivo:
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  if (n == 0) {
+    return 0;
+  } else if (n == 1) {
+    return 1;
+  } else {
+    return fibonacci(n - 1) + fibonacci(n - 2);
+  }
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK_EQ(fibonacci(0), 0);
+  CHECK_EQ(fibonacci(1), 1);
+  CHECK_EQ(fibonacci(3), 2);
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 3 | 3 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 3: podemos juntar os dois casos base em um só, simplificando o código (note que o ~else~ é desnecessário):
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK_EQ(fibonacci(0), 0);
+  CHECK_EQ(fibonacci(1), 1);
+  CHECK_EQ(fibonacci(3), 2);
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 3 | 3 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Se quiséssemos separar o caso de teste (~TEST_CASE~) em múltiplos casos, para fins de organização, seria perfeitamente possível. Além desta opção, o framework =doctest= nos permite criar subcasos:
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  SUBCASE("Caso base (n = 0, n = 1)") {
+    CHECK_EQ(fibonacci(0), 0);
+    CHECK_EQ(fibonacci(1), 1);
+  }
+
+  SUBCASE("Caso recursivo (n > 1)") {
+    CHECK_EQ(fibonacci(3), 2);
+  }
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 3 | 3 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Passo 1: vamos testar agora o caso n = 45
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  SUBCASE("Caso base (n = 0, n = 1)") {
+    CHECK_EQ(fibonacci(0), 0);
+    CHECK_EQ(fibonacci(1), 1);
+  }
+
+  SUBCASE("Caso recursivo (n > 1)") {
+    CHECK_EQ(fibonacci(3), 2);
+    CHECK_EQ(fibonacci(45), 1134903170);
+  }
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 4 | 4 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Note que o código passou, mas demorou alguns segundos. Você entende por que isso acontece?
+- Passo 3: vamos tentar refatorar o código para torná-lo mais eficiente. Para isto, vamos re-implementar a função de fibonacci de forma iterativa, ao invés de recursiva, e verificar se os testes ainda passam:
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+
+int fibonacci(unsigned n) {
+  int current = 0;
+  int next = 1;
+  for (int i = 1; i <= n; i++) {
+    int tmp = current + next;
+    current = next;
+    next = tmp;
+  }
+  return current;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  SUBCASE("Caso base (n = 0, n = 1)") {
+    CHECK_EQ(fibonacci(0), 0);
+    CHECK_EQ(fibonacci(1), 1);
+  }
+
+  SUBCASE("Caso recursivo (n > 1)") {
+    CHECK_EQ(fibonacci(3), 2);
+    CHECK_EQ(fibonacci(45), 1134903170);
+  }
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 4 | 4 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- É possível melhorar o código ainda mais (em termos de desempenho), utilizando a fórmula fechada de fibonacci:
+
+  fibonacci(n) = (φ^n - (1 - φ)^n)/√5,
+
+  onde φ = (1 + √5)/2 é o chamado "número de ouro"
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <cmath>
+
+int fibonacci(unsigned n) {
+  const double phi = (1 + sqrt(5)) / 2.0;
+  return (pow(phi, n) - pow(1 - phi, n)) / sqrt(5);
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  SUBCASE("Caso base (n = 0, n = 1)") {
+    CHECK_EQ(fibonacci(0), 0);
+    CHECK_EQ(fibonacci(1), 1);
+  }
+
+  SUBCASE("Caso recursivo (n > 1)") {
+    CHECK_EQ(fibonacci(3), 2);
+    CHECK_EQ(fibonacci(45), 1134903170);
+  }
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 4 | 4 passed | 0 failed |
+: [doctest] Status: SUCCESS!
