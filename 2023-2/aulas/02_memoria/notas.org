@@ -1,0 +1,348 @@
+#+title: Notas de Aula - 02 Memória
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+* Regiões de Memória
+
+- Onde ficam armazenados os valores que um programa manipula?
+- Como a memória do programa é dividida?
+  - Text (code)
+  - Globals/constants
+  - Stack
+  - Heap
+
+- Onde fica armazenado o arranjo =xs= do programa abaixo?
+  
+  #+begin_src C++ :flags -std=c++17 C++ :tangle static_array.cpp :exports both
+  #include <iostream>
+  
+  int xs[] = {2, 3, 5, 7, 11, 13, 17, 19};
+  int main() {
+    for (int x : xs) {
+      std::cout << x << std::endl;
+    } 
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  |  2 |
+  |  3 |
+  |  5 |
+  |  7 |
+  | 11 |
+  | 13 |
+  | 17 |
+  | 19 |
+
+- Como ver isso no código assembly?
+
+  #+begin_src sh 
+  g++ -S -std=c++17 static_array.cpp
+  #+end_src
+  
+- E constantes, onde ficam?
+
+  #+begin_src C++ :flags -std=c++17 :tangle constant_string.cpp :exports both
+  #include <iostream>
+
+  int main() {
+    std::cout << "Hello World!" << std::endl;
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  : Hello World!
+  
+  #+begin_src sh 
+  g++ -S -std=c++17 constant_string.cpp
+  #+end_src
+
+- O que fica armazenado na pilha?
+
+  #+begin_src C++ :flags -std=c++17 :tangle stack.cpp :exports both
+  #include <iostream>
+
+  int main() {
+    int xs[3] = {1, 2, 3};
+    int sum = xs[0] + xs[1] + xs[2];
+    std::cout << sum << std::endl;
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  : 6
+  
+  #+begin_src sh 
+  g++ -S -std=c++17 stack.cpp
+  #+end_src
+
+- E no heap?
+  
+  #+begin_src C++ :flags -std=c++17 :tangle heap.cpp :exports both
+  #include <iostream>
+
+  int main() {
+    int *x = new int;
+    int *y = new int;
+    ,*x = 1;
+    ,*y = 2;
+    std::cout << *x + *y << std::endl;
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  : 3
+
+  #+begin_src sh 
+  g++ -S -std=c++17 heap.cpp
+  #+end_src
+
+* Manipulando a Memória
+
+- Como alocar espaço no heap?
+- Como liberar o espaço alocado?
+- Em C: =malloc= e =free=
+- Em C++: =new + new[]= e =delete + delete[]=
+
+  #+begin_src C++ :flags -std=c++17 :exports both
+  #include <iostream>
+
+  int main() {
+    int *xs = new int[5];
+
+    for (int i = 0; i < 5; i++) {
+      xs[i] = i + 1;
+    }
+
+    int *sum = nullptr; // use nullptr ao invés de NULL
+    
+    sum = new int;
+    ,*sum = 0;
+
+    for (int i = 0; i < 5; i++) {
+      ,*sum = *sum + xs[i];
+    }
+
+    std::cout << *sum << std::endl;
+
+    delete[] xs;
+    delete sum;
+
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  : 15
+
+- O que o programa a seguir faz?
+
+  #+begin_src C++ :flags -std=c++17 :tangle leak.cpp :exports both
+  #include <iostream>
+
+  int *ones(unsigned n) {
+    int *xs = new int[n];
+    for (int i = 0; i < n; i++) {
+      xs[i] = 1;
+    }
+    return xs;
+  }
+
+  int main() {
+    int *xs = ones(10);
+    for (int i = 0; i < 10; i++) {
+      std::cout << xs[i] << " ";
+    }
+    std::cout << std::endl;
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  : 1 1 1 1 1 1 1 1 1 1
+
+- E qual o problema com ele?
+- Como verificar?
+
+  #+begin_src sh
+  g++ -std=c++17 -g -fsanitize=address leak.cpp
+  ./a.out
+  #+end_src
+
+  #+RESULTS:
+  : 1 1 1 1 1 1 1 1 1 1
+
+* Passagem de Parâmetros
+
+- O que o código a seguir faz?
+- Ele está correto?
+
+  #+begin_src C++ :flags -std=c++17 :exports both
+  #include <iostream>
+
+  void swap(int x, int y) {
+    int tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  int main() {
+    int x = 2;
+    int y = 3;
+    std::cout << "x = " << x << ", y = " << y << std::endl;
+    swap(x, y);
+    std::cout << "x = " << x << ", y = " << y << std::endl;
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  | x = 2 | y = 3 |
+  | x = 2 | y = 3 |
+
+- Como consertar?
+
+  #+begin_src C++ :flags -std=c++17 :exports both
+  #include <iostream>
+
+  void swap(int *x, int *y) {
+    int tmp = *x;
+    *x = *y;
+    *y = tmp;
+  }
+
+  int main() {
+    int x = 2;
+    int y = 3;
+    std::cout << "x = " << x << ", y = " << y << std::endl;
+    swap(&x, &y);
+    std::cout << "x = " << x << ", y = " << y << std::endl;
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  | x = 2 | y = 3 |
+  | x = 3 | y = 2 |
+
+- Em C++, temos outra opção (preferível): *referência*
+
+  #+begin_src C++ :flags -std=c++17 :exports both
+  #include <iostream>
+
+  void swap(int &x, int &y) {
+    int tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  int main() {
+    int x = 2;
+    int y = 3;
+    std::cout << "x = " << x << ", y = " << y << std::endl;
+    swap(x, y);
+    std::cout << "x = " << x << ", y = " << y << std::endl;
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  | x = 2 | y = 3 |
+  | x = 3 | y = 2 |
+
+* Revisões
+
+** Alocação de arranjos multi-dimensionais:
+
+A alocação de matrizes (ou arranjos com \geq 2 dimensões) é feita em C++ da mesma forma que em C, trocando apenas o operador de alocação (~malloc~ vs ~new []~): alocamos um arranjo de ponteiros e, para cada ponteiro, alocamos um novo arranjo.
+
+(algumas linguagens utilizam notações simplificadas como ~new int[2][2]~, mas não é o caso de C++)
+
+#+begin_src C++ :flags -std=c++17 :cmdline <<< "1 2 3 4" :exports both
+#include <iostream>
+
+int main() {
+  int **m = new int*[2];
+  for (int i = 0; i < 2; i++) {
+    m[i] = new int[2];
+  }
+
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      std::cin >> m[i][j];
+    }
+  }
+  
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      std::cout << m[i][j] <<  " ";
+    }
+    std::cout << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| 1 | 2 |
+| 3 | 4 |
+
+** Assembly: Alocação Estática (Pilha)
+
+A pilha começa no endereço mais alto e cresce de cima para baixo. Por isso, quando observamos o código assembly gerado vemos a instrução ~subq $16, %rsp~: subtraímos um valor do =stack pointer= ~rsp~ (o ~rsp~ aponta para o "topo" da pilha, visualizando a pilha ao contrário; dizemos topo porque é o local do último valor que foi inserido/do primeiro que será removido).
+
+Existe, também, um outro ponteiro ~rbp~ (=base pointer=), que aponta sempre para o ínicio de um frame (um frame é um conjunto de dados na pilha, por exemplo o conjunto que corresponde a chamada de uma função: seus argumentos, mais as variáveis locais a função).
+
+  #+begin_src C++ :flags -std=c++17 :tangle stack2.cpp :exports both
+  #include <iostream>
+
+  int main() {
+    int xs[3] = {1, 2, 3};
+
+    for (int i = 0; i < 3; i++) {
+      std::cout << xs[i] << std::endl;
+    }
+
+    return 0;
+  }
+  #+end_src
+
+  #+RESULTS:
+  | 1 |
+  | 2 |
+  | 3 |
+
+  #+begin_src sh 
+  g++ -S -std=c++17 -fno-stack-protector stack2.cpp
+  #+end_src
+  
+O assembly gerado a partir do código acima se assemelha a algo como:
+
+#+begin_src
+subq $16, %rsp
+movl $1, -16(%rbp)
+movl $2, -12(%rbp)
+movl $3, -8(%rbp)
+movl $0, -4(%rbp)
+#+end_src
+
+Visualmente, temos algo como:
+
+| Pilha | Variável Correspondente |
+|-------+-------------------------|
+|     0 | i                       |
+|     3 | xs[2]                   |
+|     2 | xs[1]                   |
+|     1 | xs[0]                   |
+
+
+Acessamos um elemento da pilha através de um offset em relação ao ponteiro base ~rbp~ (poderia ser feito a partir do ~rsp~ também). Lembre-se que o ~rbp~ aponta para a base do frame atual. Por exemplo, a variável ~i~ que controla o ~for~ está armazenada entre ~rbp~ e ~rbp - 4~ (de baixo para cima. Note que o espaço entre, por exemplo, ~rbp~ e ~rbp - 1~ corresponde a 1 byte).
+
+** Memória Cache
+
+Em sistemas modernos, as memórias cache geralmente se encontram na própria CPU, embora em hardwares mais antigo os níveis \geq 2 de cache apareciam na placa mãe.
