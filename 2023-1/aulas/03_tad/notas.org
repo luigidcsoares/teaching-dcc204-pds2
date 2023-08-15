@@ -357,21 +357,18 @@ private:
  }
 
  void IntSet::_rehash() {
-   std::vector<std::pair<int, bool>> new_set;
-   new_set.reserve(_set.capacity() * 2);
+   std::size_t capacity = _set.capacity();
+   _set.reserve(capacity * 2);
 
-   for (auto [x, in_use] : _set) {
-     if (in_use) {
-       unsigned i = _hash(x);
-       new_set.insert(new_set.begin() + i, {x, true});
-     }
+   for (std::size_t i = 0; i < capacity; i++) {
+     auto [x, in_use] = _set[i];
+     _set[i].second = false;
+
+     unsigned j = _hash(x);
+     _set.insert(_set.begin() + j, {x, true});
    }
-
-   _set = new_set;
  }
  #+end_src
-
- #+RESULTS:
 
  Note que a utilização do tipo continua exatamente o mesmo (a interface não mudou):
 
