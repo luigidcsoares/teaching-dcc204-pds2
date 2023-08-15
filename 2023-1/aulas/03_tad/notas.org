@@ -296,14 +296,12 @@ private:
 #endif
 #+end_src
 
- #+RESULTS:
-
  #+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle int_hashset.cpp
  #include <iostream>
  #include "int_hashset.hpp"
 
  IntSet::IntSet() {
-   _set.reserve(8);
+   _set.reserve(1);
  }
 
  bool IntSet::insert(int x) {
@@ -357,13 +355,12 @@ private:
  }
 
  void IntSet::_rehash() {
-   std::size_t capacity = _set.capacity();
-   _set.reserve(capacity * 2);
+   std::vector<std::pair<int, bool>> old_set = _set;
 
-   for (std::size_t i = 0; i < capacity; i++) {
-     auto [x, in_use] = _set[i];
-     _set[i].second = false;
+   _set.clear();
+   _set.reserve(old_set.size() * 2);
 
+   for (auto [x, _] : old_set) {
      unsigned j = _hash(x);
      _set.insert(_set.begin() + j, {x, true});
    }
@@ -379,7 +376,9 @@ private:
  int main() {
    IntSet set;
    std::cout << set.insert(2) << std::endl;
+   std::cout << set.contains(2) << std::endl;
    std::cout << set.insert(10) << std::endl;
+   std::cout << set.contains(2) << std::endl;
    std::cout << set.remove(2) << std::endl;
    std::cout << set.contains(10) << std::endl;
    std::cout << set.insert(1) << std::endl;
@@ -389,12 +388,13 @@ private:
    std::cout << set.remove(2) << std::endl;
    std::cout << set.remove(2) << std::endl;
    std::cout << set.contains(2) << std::endl;
-
-  return 0;
+   return 0;
  }
  #+end_src
 
  #+RESULTS:
+ | 1 |
+ | 1 |
  | 1 |
  | 1 |
  | 1 |
