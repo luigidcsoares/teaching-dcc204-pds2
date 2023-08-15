@@ -345,7 +345,7 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ #include "int_hashset.hpp"
   │ 
   │ IntSet::IntSet() {
-  │   _set.reserve(8);
+  │   _set.reserve(1);
   │ }
   │ 
   │ bool IntSet::insert(int x) {
@@ -399,17 +399,15 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ }
   │ 
   │ void IntSet::_rehash() {
-  │   std::vector<std::pair<int, bool>> new_set;
-  │   new_set.reserve(_set.capacity() * 2);
+  │   std::vector<std::pair<int, bool>> old_set = _set;
   │ 
-  │   for (auto [x, in_use] : _set) {
-  │     if (in_use) {
-  │       unsigned i = _hash(x);
-  │       new_set.insert(new_set.begin() + i, {x, true});
-  │     }
+  │   _set.clear();
+  │   _set.reserve(old_set.size() * 2);
+  │ 
+  │   for (auto [x, _] : old_set) {
+  │     unsigned j = _hash(x);
+  │     _set.insert(_set.begin() + j, {x, true});
   │   }
-  │ 
-  │   _set = new_set;
   │ }
   └────
 
@@ -423,7 +421,9 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ int main() {
   │   IntSet set;
   │   std::cout << set.insert(2) << std::endl;
+  │   std::cout << set.contains(2) << std::endl;
   │   std::cout << set.insert(10) << std::endl;
+  │   std::cout << set.contains(2) << std::endl;
   │   std::cout << set.remove(2) << std::endl;
   │   std::cout << set.contains(10) << std::endl;
   │   std::cout << set.insert(1) << std::endl;
@@ -433,7 +433,6 @@ Exemplo 2: Conjunto de inteiros (hash)
   │   std::cout << set.remove(2) << std::endl;
   │   std::cout << set.remove(2) << std::endl;
   │   std::cout << set.contains(2) << std::endl;
-  │ 
-  │  return 0;
+  │   return 0;
   │ }
   └────
