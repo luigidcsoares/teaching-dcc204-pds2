@@ -13,6 +13,7 @@
 !notas*.org
 !notas*.txt
 !**/aulas/01_apresentacao/slides.pdf
+!doctest.hpp
 
 # Schedule, syllabus
 !header.tex

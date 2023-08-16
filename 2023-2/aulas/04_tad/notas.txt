@@ -1,0 +1,938 @@
+                       ━━━━━━━━━━━━━━━━━━━━━━━━━
+                        NOTAS DE AULA - 04 TADS
+
+                           Luigi D. C. Soares
+                       ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Abstração
+═════════
+
+  • O que significa /abstração/? *Esconder* detalhes
+  • Exemplo: navegador
+
+    Quando você digita no navegador `ufmg.br' e aperta a tecla `enter',
+    existem várias etapas para que a página da UFMG possa ser carregada:
+
+    1. O navegador faz uma requisição a um servidor DNS (possivelmente
+       por intermédio do sistema operacional), que traduz o endereço
+       `ufmg.br' para o endereço IP `150.164.76.8'. Essa comunicação é
+       feita por meio de um protocolo chamado UDP.
+    2. O navegador, então, abre uma conexão TCP com o servidor que
+       hospeda o site da UFMG e envia, por meio dessa conexão, uma
+       requisição HTTP.
+    3. O servidor retorna a página solicitada (da UFMG)
+
+    Na prática, existem ainda mais detalhes neste processo, esta é só
+    uma visão simplificada. Vários protocolos estão envolvidos, várias
+    camadas diferentes de `abstração'.
+
+    Nenhum destes detalhes importam para o usuário final, apenas a
+    *operação* importa: abrir a página da UFMG. Todos os detalhes de
+    implementação estão escondidos do usuário. Isto é abstrair! E é um
+    conceito extremamente importante!
+
+
+Tipos Abstratos de Dados
+════════════════════════
+
+O que é um tipo?
+────────────────
+
+  Uma representação de um conjunto de dados e as operações possíveis de
+  serem realizadas
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Tipo     Conjunto                          Operações     
+  ──────────────────────────────────────────────────────────
+   Inteiro  Números sem componente fracional  +, −, ×       
+   Bool     `verdadeiro' ou  `falso'          =, ≠, ¬, ∧, ∨ 
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Os tipos acima são chamados de tipos /primitivos/. A partir destes,
+  podemos definir nossos próprios tipos.
+
+
+O que é um tipo abstrato de dados (TAD)?
+────────────────────────────────────────
+
+  • Encapsula um conjunto de *operações* sobre determinados valores
+  • Detalhes a *implementação* são *escondidos* do usuário
+  • É um conceito de programação, não parte de uma linguagem
+
+  O importante (para o usuário) é *o que* o TAD faz, não *como*!
+
+  Quais as vantagens de se esconder a implementação?
+  • A implementação pode ser alterada sem que isto afete o usuário
+    final, já que as operações permanecem as mesmas
+
+
+Exemplo 1: Conjunto de inteiros (vector)
+────────────────────────────────────────
+
+  Quais operações um conjunto deve oferecer?
+  • Inserção
+  • Remoção
+  • Busca
+  • Outros: percorrer o conjunto, união, interseção, tamanho, …
+
+  Lembre-se que a ideia de um TAD é separar a implementação da
+  interface. Por isso, vamos primeiro definir as operações do nosso TAD
+  e depois implementá-las. A definição da interface será feita em um
+  arquivo de cabeçalho (convenção que irei adotar: extensão .hpp),
+  enquanto que a implementação será feita em um arquivo de código
+  (extensão .cpp).
+
+  `int_set.hpp'
+
+  ┌────
+  │ #pragma once
+  │ #include <vector>
+  │ 
+  │ class IntSet {
+  │ public:
+  │   /// @brief Tenta inserir um inteiro no conjunto.
+  │   /// @param x Inteiro a ser inserido.
+  │   /// @return true se o elemento foi inserido,
+  │   ///         false se ele já estava no conjunto.
+  │   bool insert(int x);
+  │ 
+  │   /// @brief Tenta remover um inteiro do conjunto.
+  │   /// @param x Inteiro a ser removido.
+  │   /// @return true se elemento foi removido com sucesso,
+  │   ///         false se não foi encontrado.
+  │   bool remove(int x);
+  │ 
+  │   /// @brief Verifica se um elemento existe no conjunto
+  │   /// @param x Inteiro a ser pesquisado.
+  │   /// @return true se o elemento foi encontrado, false caso contrário.
+  │   bool contains(int x);
+  │ 
+  │ private:
+  │   std::vector<int> _set;
+  │ };
+  └────
+
+  • `class' e `struct' representam a mesma coisa em C++, com uma única
+    diferença: a visibilidade padrão.
+  • O que é visibilidade?
+    • `private': o usuário não tem acesso (lembra que queremos esconder
+      detalhes?)
+    • `public': o usuário tem acesso
+    • Vamos voltar nisso na aula de encapsulamento
+    • Usuário, neste contexto, é o programador que utilizará o TAD
+
+  • A visibilidade padrão em uma struct é public, enquanto que em uma
+    class é private.
+
+  • Quando usar class ou struct? Convenção! Defina a sua e siga de forma
+    *consistente*.
+    • Você pode usar sempre class
+    • Você pode usar sempre struct
+    • Você pode usar struct apenas para agrupamentos de dados (como em
+      C), sem operações (é a convenção que irei seguir)
+
+  • Um pouco mais de conveções: utilizarei o prefixo "_" para campos
+    privados.
+
+  Voltando ao nosso exemplo, vamos iniciar o ciclo do TDD:
+  • Primeiro teste: conjunto vazio, um elemento não pode ser encontrado
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "int_set.hpp"
+  │ 
+  │ TEST_CASE("Testando a interface do IntSet") {
+  │   IntSet set;
+  │   CHECK_FALSE(set.contains(1));
+  │ }
+  └────
+
+  • Vamos implementar a operação de busca:
+
+  `int_set.cpp'
+
+  ┌────
+  │ #include "int_set.hpp"
+  │ 
+  │ bool IntSet::contains(int x) {
+  │   for (int e : _set) {
+  │     if (x == e) return true;
+  │   }
+  │   return false;
+  │ }
+  └────
+
+  • Testando novamente:
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 1 | 1 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Após a inserção, o elemento deve estar no conjunto, e deve
+    permanecer após outras inserções:
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "int_set.hpp"
+  │ 
+  │ TEST_CASE("Testando a interface do IntSet") {
+  │   IntSet set;
+  │   CHECK_FALSE(set.contains(1));
+  │ 
+  │   CHECK(set.insert(1));
+  │   CHECK(set.contains(1));
+  │ 
+  │   CHECK(set.insert(2));
+  │   CHECK(set.contains(1));
+  │   CHECK(set.contains(2));
+  │ }
+  └────
+
+  • Implementando a inserção:
+
+  ┌────
+  │ bool IntSet::insert(int x) {
+  │   for (int e : _set) {
+  │     if (x == e) return false;
+  │   }
+  │ 
+  │   _set.push_back(x);
+  │   return true;
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 6 | 6 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • A inserção de um elemento já existente não deve ter efeito:
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "int_set.hpp"
+  │ 
+  │ TEST_CASE("Testando a interface do IntSet") {
+  │   IntSet set;
+  │   CHECK_FALSE(set.contains(1));
+  │ 
+  │   CHECK(set.insert(1));
+  │   CHECK(set.contains(1));
+  │ 
+  │   CHECK(set.insert(2));
+  │   CHECK(set.contains(1));
+  │   CHECK(set.contains(2));
+  │ 
+  │   CHECK_FALSE(set.insert(1));
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 7 | 7 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Por fim, vamos testar a remoção:
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "int_set.hpp"
+  │ 
+  │ TEST_CASE("Testando a interface do IntSet") {
+  │   IntSet set;
+  │   CHECK_FALSE(set.contains(1));
+  │ 
+  │   CHECK(set.insert(1));
+  │   CHECK(set.contains(1));
+  │ 
+  │   CHECK(set.insert(2));
+  │   CHECK(set.contains(1));
+  │   CHECK(set.contains(2));
+  │ 
+  │   CHECK_FALSE(set.insert(1));
+  │ 
+  │   CHECK(set.remove(1));
+  │   CHECK_FALSE(set.contains(1));
+  │   CHECK_FALSE(set.remove(1));
+  │ }
+  └────
+
+  • E a implementação da remoção:
+
+  ┌────
+  │ bool IntSet::remove(int x) {
+  │   std::size_t i = 0;
+  │   for (; i < _set.size() && _set[i] != x; i++);
+  │ 
+  │   if (i == _set.size()) return false;
+  │ 
+  │   _set.erase(_set.begin() + i);
+  │   return true;
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 10 | 10 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+Exemplo 2: Conjunto de inteiros (hash)
+──────────────────────────────────────
+
+  • Uma TAD é definida pelas operações fornecidas
+  • Podemos alterar a implementação sem que isto afete a utilização do
+    tipo.
+
+  • No exemplo anterior, para inserir, remover e procurar por um
+    elemento foi preciso percorrer o vetor até encontrar (ou não) o
+    valor em questão. No pior caso, seria preciso percorrer o vetor
+    inteiro! Vamos tentar melhorar isso?
+
+  • Ideia: e se tentarmos mapear uma posição para cada inteiro no vetor?
+  • Como? Talvez criar um vetor de tamanho 2n? Posições 0..n-1 para
+    números negativos, n..2n-1 para positivos:
+    • -1 na posição 0, -2 na posição 1, …
+    • 0 na posição n, 1 na posição n + 1
+
+    • Exemplo: n = 2
+
+  ┌────
+  │ set.insert(0)
+  │ set.insert(1)
+  │ set.insert(-1)
+  │ set.insert(-2)
+  │ 
+  │ [-1, -2, 0, 1]
+  └────
+
+  • Qual o problema? E se tivéssemos inserido apenas números positivos?
+
+  ┌────
+  │ set.insert(0)
+  │ set.insert(1)
+  │ 
+  │ [?, ?, 0, 1]
+  └────
+
+  • *Espaço*! Gastamos o dobro do que o necessário! Precisamos ser mais
+     inteligentes.
+  • E se definíssemos uma única posição para o positivo e o negativo de
+    um número?
+
+  ┌────
+  │ set.insert(0)
+  │ set.insert(-1)
+  │ set.insert(-2)
+  │ set.insert(1)
+  │ 
+  │ Índice 0 --> [0]
+  │ Índice 1 --> [-1, 1]
+  │ Índice 2 --> [-2]
+  └────
+
+  • Neste caso, não gastamos espaço desnecessário com o que seria a
+    posição do 2, por exemplo. Mas ainda temos problema…
+
+  ┌────
+  │ set.insert(0)
+  │ set.insert(9) 
+  │ 
+  │ Índice 0 --> [0]
+  │ Índice 1 --> []
+  │ Índice 2 --> []
+  │ Índice 3 --> []
+  │ Índice 4 --> []
+  │ Índice 5 --> []
+  │ Índice 6 --> []
+  │ Índice 7 --> []
+  │ Índice 8 --> []
+  │ Índice 9 --> [9]
+  └────
+
+  • Que tal definir um tamanho inicial e usar o operador % (resto)?
+  • E se houver uma colisão? Uma solução é procurar pelo próximo índice
+    disponível (e aumentar o tamanho, se não existir):
+  • Suponha que o tamanho inicial `n' seja 4:
+
+  ┌────
+  │ set.insert(0): 0 % 4 = 0
+  │ set.insert(1): 1 % 4 = 1
+  │ set.insert(-1): -1 % 4 = -1, mas se pegarmos o valor absoluto então é 1, conflito!
+  │ 
+  │ Índice 0 --> 0
+  │ índice 1 --> 1
+  │ Índice 2 --> -1
+  │ 
+  │ set.insert(9): 9 % 4 = 1, novo conflito no índice
+  │ 
+  │ Índice 0 --> 0
+  │ índice 1 --> 1
+  │ Índice 2 --> -1
+  │ Índice 3 --> 9
+  └────
+
+  • Vamos tentar esta implementação
+  • Note que a interface (operações) é a mesma (insert, remove,
+    contains)!!!
+
+  `int_hashset.hpp'
+
+  ┌────
+  │ #pragma once
+  │ #include <utility>
+  │ #include <vector>
+  │ 
+  │ class IntSet {
+  │ public:
+  │   /// @brief Tenta inserir um inteiro no conjunto.
+  │   /// @param x Inteiro a ser inserido.
+  │   /// @return true se o elemento foi inserido,
+  │   ///         false se ele já estava no conjunto.
+  │   bool insert(int x);
+  │ 
+  │   /// @brief Tenta remover um inteiro do conjunto.
+  │   /// @param x Inteiro a ser removido.
+  │   /// @return true se elemento foi removido com sucesso,
+  │   ///         false se não foi encontrado.
+  │   bool remove(int x);
+  │ 
+  │   /// @brief Verifica se um elemento existe no conjunto
+  │   /// @param x Inteiro a ser pesquisado.
+  │   /// @return true se o elemento foi encontrado, false caso contrário.
+  │   bool contains(int x);
+  │ 
+  │ private:
+  │   /// Segundo elemento é true se a posição está em uso.
+  │   using _Node = std::pair<int, bool>;
+  │   std::vector<_Node> _set = std::vector<_Node>(1, {0, false});
+  │ 
+  │   /// @brief Função hash para obter o índice do elemento.
+  │   ///
+  │   /// A primeira posição a ser testada é abs(x % _set.size()). Se não
+  │   /// disponível, verifica o próximo índice de maneira circular. Se
+  │   /// não há espaço disponível, retorna _set.size(). Um rehash deve
+  │   /// ser aplicado, em caso de tentativa de inserção do elemento.
+  │   ///
+  │   /// @param x Elemento a ter o índice calculado.
+  │   /// @return O índice para o qual o elemento foi mapeado,
+  │   ///         ou -1 se não há espaço disponível.
+  │   int _hash(int x);
+  │ 
+  │   /// @brief Duplica o tamanho interno do conjunto e recalcula índices.
+  │   void _rehash();
+  │ };
+  └────
+
+  • Vamos reaproveitar os testes da primeira implementação
+  • Não testamos as funções `_hash' e `_rehash' individualmente, pois
+    são detalhes de implementação
+
+  • Vamos começar com a verificação de um elemento, que envolve o
+    cálculo do índice através da função `_hash':
+
+  `int_hashset.cpp'
+
+  ┌────
+  │ #include "int_hashset.hpp"
+  │ #include <cmath>
+  │ 
+  │ bool IntSet::contains(int x) {
+  │   int i = _hash(x);
+  │   return i != -1 && _set[i].first == x;
+  │ }
+  │ 
+  │ int IntSet::_hash(int x) {
+  │   int i = std::abs(x) % _set.size();
+  │   int j = i;
+  │ 
+  │   do {
+  │     if (!_set[j].second || _set[j].first == x) return j;
+  │     j = (j + 1) % _set.size();
+  │   } while (j != i);
+  │ 
+  │   return -1;
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 1 | 1 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Será que realmente está certo?
+  • Vamos testar outro valor, o zero:
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-XD6C2f/C-src-ROoykw.cpp:12:
+  │ TEST CASE:  Testando a interface do IntSet (versão HashSet)
+  │ 
+  │ /tmp/babel-XD6C2f/C-src-ROoykw.cpp:14: ERROR: CHECK_FALSE( set.contains(0) ) is NOT correct!
+  │   values: CHECK_FALSE( true )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 2 | 1 passed | 1 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  • O que aconteceu? Lembre-se que inicializamos o vetor com pares {0,
+    false} (0 foi arbitrário, poderia ser qualquer valor)
+  • Vamos voltar na implementação da operação `contains'. O que está
+    faltando?
+
+  ┌────
+  │ bool IntSet::contains(int x) {
+  │   int i = _hash(x);
+  │   return i != -1 && _set[i].second && _set[i].first == x;
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 2 | 2 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Agora, vamos para a inserção
+
+  ┌────
+  │ bool IntSet::insert(int x) {
+  │   int i = _hash(x);
+  │ 
+  │   // Se não há espaço disponível, aplica-se a operação de rehash
+  │   if (i == -1) {
+  │     _rehash();
+  │     i = _hash(x);
+  │   }
+  │ 
+  │   // Se o nó já está em uso, com certeza o valor armazenado já é o x
+  │   else if (_set[i].second) {
+  │     return false;
+  │   }
+  │ 
+  │   _set[i] = {x, true};
+  │   return true;
+  │ }
+  │ 
+  │ void IntSet::_rehash() {
+  │   std::size_t n = _set.size();
+  │   _set.resize(n * 2);
+  │ 
+  │   for (std::size_t i = 0; i < n; i++) {
+  │     int x = _set[i].first;
+  │     _set[i].second = false;
+  │ 
+  │     unsigned j = _hash(x);
+  │     _set[j] = {x, true};
+  │   }
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 8 | 8 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • E a remoção, como funciona?
+
+  ┌────
+  │ bool IntSet::remove(int x) {
+  │   if (!contains(x)) return false;
+  │ 
+  │   int i = _hash(x);
+  │   _set[i].second = false;
+  │ 
+  │   return true;
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 11 | 11 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • A implementação está realmente correta?
+  • O que aconteceria se construíssemos um conjunto (em ordem de
+    inserção) {1, 2, 5}?
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "int_hashset.hpp"
+  │ 
+  │ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+  │   IntSet set;
+  │   CHECK_FALSE(set.contains(0));
+  │   CHECK_FALSE(set.contains(1));
+  │ 
+  │   CHECK(set.insert(1));
+  │   CHECK(set.contains(1));
+  │ 
+  │   CHECK(set.insert(2));
+  │   CHECK(set.insert(5));
+  │   CHECK(set.contains(1));
+  │   CHECK(set.contains(2));
+  │   CHECK(set.contains(5));
+  │ 
+  │   CHECK_FALSE(set.insert(1));
+  │ 
+  │   CHECK(set.remove(1));
+  │   CHECK_FALSE(set.contains(1));
+  │   CHECK_FALSE(set.remove(1));
+  │ 
+  │   CHECK(set.contains(2));
+  │   CHECK(set.contains(5));
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-XD6C2f/C-src-Db0K06.cpp:12:
+  │ TEST CASE:  Testando a interface do IntSet (versão HashSet)
+  │ 
+  │ /tmp/babel-XD6C2f/C-src-Db0K06.cpp:33: ERROR: CHECK( set.contains(5) ) is NOT correct!
+  │   values: CHECK( false )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases:  1 |  0 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 15 | 14 passed | 1 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  Vamos analisar com calma:
+
+  ┌────
+  │ set.insert(1) => [1]
+  │ set.insert(2) => rehash = [?, 1] => [2, 1]
+  │ set.insert(5) => rehash = [?, 1, 2, ?] => [?, 1, 2, 5]
+  │ set.remove(1) => [?, ?, 2, 5]
+  │ set.contains(5) => hash(5) = 1 => posição vazias...
+  └────
+
+  • No momento da inserção do 5, houve um conflito com o 1
+  • Após a remoção do 1, o conflito não existe mais
+  • Precisamos recalcular os índices que eram conflituosos
+  • Lembre-se do TDD: qual a implementação mais simples possível?
+
+  ┌────
+  │ bool IntSet::remove(int x) {
+  │   if (!contains(x)) return false;
+  │ 
+  │   int i = _hash(x);
+  │   _set[i].second = false;
+  │ 
+  │   std::vector<_Node> old_set = _set;
+  │   _set.assign(_set.size(), {0, false});
+  │ 
+  │   for (auto [x, in_use] : old_set) {
+  │     if (in_use) insert(x);
+  │   }
+  │ 
+  │   return true;
+  │ }
+  └────
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "int_hashset.hpp"
+  │ 
+  │ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+  │   IntSet set;
+  │   CHECK_FALSE(set.contains(0));
+  │   CHECK_FALSE(set.contains(1));
+  │ 
+  │   CHECK(set.insert(1));
+  │   CHECK(set.contains(1));
+  │ 
+  │   CHECK(set.insert(2));
+  │   CHECK(set.insert(5));
+  │   CHECK(set.contains(1));
+  │   CHECK(set.contains(2));
+  │   CHECK(set.contains(5));
+  │ 
+  │   CHECK_FALSE(set.insert(1));
+  │ 
+  │   CHECK(set.remove(1));
+  │   CHECK_FALSE(set.contains(1));
+  │   CHECK_FALSE(set.remove(1));
+  │ 
+  │   CHECK(set.contains(2));
+  │   CHECK(set.contains(5));
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 15 | 15 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Vamos para a terceira fase do TDD: a implementação atual é a melhor
+    possível? Dá para melhorar?
+  • Estamos re-inserindo todos os elementos, para lidar com elementos
+    inalcançáveis após a remoção
+  • Existe alguma forma de não precisar mover ninguém?
+  • E se, ao invés de marcar a posição como utilizada/não utilizada,
+    adicionarmos uma terceira possibilidade: deletada?
+
+  `int_hashset.hpp'
+
+  ┌────
+  │ #pragma once
+  │ #include <utility>
+  │ #include <vector>
+  │ 
+  │ class IntSet {
+  │ public:
+  │   // ...
+  │ private:
+  │   enum class _Status { free, in_use, deleted };
+  │   /// Segundo elemento é true se a posição está em uso.
+  │   using _Node = std::pair<int, _Status>;
+  │   std::vector<_Node> _set = std::vector<_Node>(1, {0, _Status::free});
+  │   // ...
+  │ };
+  └────
+
+  `int_hashset.cpp'
+
+  ┌────
+  │ #include "int_hashset_v2.hpp"
+  │ #include <cmath>
+  │ 
+  │ bool IntSet::insert(int x) {
+  │   int i = _hash(x);
+  │ 
+  │   // Se não há espaço disponível, aplica-se a operação de rehash
+  │   if (i == -1) {
+  │     _rehash();
+  │     i = _hash(x);
+  │   }
+  │ 
+  │   // Se o nó já está em uso, com certeza o valor armazenado já é o x
+  │   else if (_set[i].second == _Status::in_use) {
+  │     return false;
+  │   }
+  │ 
+  │   _set[i] = {x, _Status::in_use};
+  │   return true;
+  │ }
+  │ 
+  │ bool IntSet::remove(int x) {
+  │   if (!contains(x)) return false;
+  │   int i = _hash(x);
+  │   _set[i].second = _Status::deleted;
+  │   return true;
+  │ }
+  │ 
+  │ bool IntSet::contains(int x) {
+  │   int i = _hash(x);
+  │   return i != -1 && _set[i].second == _Status::in_use && _set[i].first == x;
+  │ }
+  │ 
+  │ int IntSet::_hash(int x) {
+  │   int i = std::abs(x) % _set.size();
+  │   int j = i;
+  │   do {
+  │     if (_set[j].second == _Status::free || _set[j].first == x) return j;
+  │     j = (j + 1) % _set.size();
+  │   } while (j != i);
+  │ 
+  │   return -1;
+  │ }
+  │ 
+  │ void IntSet::_rehash() {
+  │   std::size_t n = _set.size();
+  │   _set.resize(n * 2);
+  │ 
+  │   for (std::size_t i = 0; i < n; i++) {
+  │     int x = _set[i].first;
+  │     _set[i].second = _Status::free;
+  │ 
+  │     unsigned j = _hash(x);
+  │     _set[j] = {x, _Status::in_use};
+  │   }
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 15 | 15 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Você ainda vê algum problema com esta implementação?
+  • Considerando a capacidade inicial = 1, tente a seguinte sequência de
+    operações
+
+  ┌────
+  │ set.insert(1)
+  │ set.insert(2)
+  │ set.insert(5)
+  │ set.remove(1)
+  │ set.insert(9)
+  └────
+
+  • O que acontece com a posição marcada como deletada? Ela é
+    utilizável?
+  • O que fazer para solucionar este problema?
+
+  `int_hashset.hpp'
+
+  ┌────
+  │ #pragma once
+  │ #include <utility>
+  │ #include <vector>
+  │ 
+  │ class IntSet {
+  │ public:
+  │   // ...
+  │ private:
+  │   // ...
+  │   /// @brief Função hash para obter o índice do elemento.
+  │   ///
+  │   /// A primeira posição a ser testada é abs(x % _set.size()). Se não
+  │   /// disponível, verifica o próximo índice de maneira circular. Se
+  │   /// não há espaço disponível, retorna _set.size(). Um rehash deve
+  │   /// ser aplicado, em caso de tentativa de inserção do elemento.
+  │   ///
+  │   /// @param x Elemento a ter o índice calculado.
+  │   /// @param inserting Se o objetivo é a inserção de um elemento, o cálculo
+  │   ///                  considera posições deletadas como válidas.
+  │   /// @return O índice para o qual o elemento foi mapeado,
+  │   ///         ou -1 se não há espaço disponível.
+  │   int _hash(int x, bool inserting);
+  │   // ...
+  │ };
+  └────
+
+  `int_hashset.cpp'
+
+  ┌────
+  │ #include "int_hashset_v3.hpp"
+  │ #include <cmath>
+  │ 
+  │ bool IntSet::insert(int x) {
+  │   int i = _hash(x, true);
+  │ 
+  │   // Se não há espaço disponível, aplica-se a operação de rehash
+  │   if (i == -1) {
+  │     _rehash();
+  │     i = _hash(x, true);
+  │   }
+  │ 
+  │   // Se o nó já está em uso, com certeza o valor armazenado já é o x
+  │   else if (_set[i].second == _Status::in_use) {
+  │     return false;
+  │   }
+  │ 
+  │   _set[i] = {x, _Status::in_use};
+  │   return true;
+  │ }
+  │ 
+  │ bool IntSet::remove(int x) {
+  │   if (!contains(x)) return false;
+  │   int i = _hash(x, false);
+  │   _set[i].second = _Status::deleted;
+  │   return true;
+  │ }
+  │ 
+  │ bool IntSet::contains(int x) {
+  │   int i = _hash(x, false);
+  │   return i != -1 && _set[i].second == _Status::in_use && _set[i].first == x;
+  │ }
+  │ 
+  │ int IntSet::_hash(int x, bool inserting) {
+  │   int i = std::abs(x) % _set.size();
+  │   int j = i;
+  │   do {
+  │     auto [y, status] = _set[j];
+  │     bool insertable = status == _Status::free || (inserting && status == _Status::deleted);
+  │     if (insertable || y == x) return j;
+  │     j = (j + 1) % _set.size();
+  │   } while (j != i);
+  │ 
+  │   return -1;
+  │ }
+  │ 
+  │ void IntSet::_rehash() {
+  │   std::size_t n = _set.size();
+  │   _set.resize(n * 2);
+  │ 
+  │   for (std::size_t i = 0; i < n; i++) {
+  │     int x = _set[i].first;
+  │     _set[i].second = _Status::free;
+  │ 
+  │     unsigned j = _hash(x, true);
+  │     _set[j] = {x, _Status::in_use};
+  │   }
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 15 | 15 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
