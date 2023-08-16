@@ -97,32 +97,46 @@ private:
 
 - Um pouco mais de conveções: utilizarei o prefixo "_" para campos privados.
 
-Voltando ao nosso exemplo, vamos iniciar o ciclo do TDD:
-- Primeiro teste: conjunto vazio, um elemento não pode ser encontrado
+- Voltando ao nosso exemplo, vamos iniciar o ciclo do TDD
+- Vamos começar com a inserção
+  - Ao inserir um elemento que ainda não está no conjunto, o resultado deve ser =true=
+  - Ao inserir um elemento que já existe, o resultado deve ser =false=
 
 #+begin_src C++ :flags -std=c++17 -I ../ -I include/ :exports both :main no :results none
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.hpp"
 #include "int_set.hpp"
 
-TEST_CASE("Testando a interface do IntSet") {
+TEST_CASE("IntSet => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
+
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
+  
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
 }
 #+end_src
 
-- Vamos implementar a operação de busca:
+- Note que o teste falha (não compila), já que ainda não há nenhuma implementação
+- Vamos implementar a inserção
 
 =int_set.cpp=
 
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_set_v1.cpp
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_set_v1.cpp :exports code
 #include "int_set.hpp"
 
-bool IntSet::contains(int x) {
+bool IntSet::insert(int x) {
   for (int e : _set) {
-    if (x == e) return true;
+    if (x == e) return false;
   }
-  return false;
+
+  _set.push_back(x);
+  return true;
 }
 #+end_src
 
@@ -133,9 +147,18 @@ bool IntSet::contains(int x) {
 #include "doctest.hpp"
 #include "int_set.hpp"
 
-TEST_CASE("Testando a interface do IntSet") {
+TEST_CASE("IntSet => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
+
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
+  
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
 }
 #+end_src
 
@@ -144,40 +167,39 @@ TEST_CASE("Testando a interface do IntSet") {
 : [doctest] run with "--help" for options
 : ===============================================================================
 : [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 1 | 1 passed | 0 failed |
+: [doctest] assertions: 2 | 2 passed | 0 failed |
 : [doctest] Status: SUCCESS!
 
-- Após a inserção, o elemento deve estar no conjunto, e deve permanecer após outras inserções:
+- Vamos, agora, passar para a operação de busca
 
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_set_v1.cpp :exports both :main no :results none
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_set.hpp"
-
-TEST_CASE("Testando a interface do IntSet") {
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_set_v1.cpp :exports code :main no :results none
+TEST_CASE("IntSet => contains") {
   IntSet set;
-  CHECK_FALSE(set.contains(1));
 
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(1);
+    CHECK_FALSE(contains);
+  }
 
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
 }
 #+end_src
 
-- Implementando a inserção:
-
+- Novamente, o teste falha pois o código ainda não compila (a operação não existe)
+- Vamos implementá-la:
+  
 #+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_set_v2.cpp :exports none
 #include "int_set.hpp"
-
-bool IntSet::contains(int x) {
-  for (int e : _set) {
-    if (x == e) return true;
-  }
-  return false;
-}
 
 bool IntSet::insert(int x) {
   for (int e : _set) {
@@ -187,15 +209,109 @@ bool IntSet::insert(int x) {
   _set.push_back(x);
   return true;
 }
+
+bool IntSet::contains(int x) {
+  for (int e : _set) {
+    if (x == e) return true;
+  }
+  return false;
+}
 #+end_src
 
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :exports code
-bool IntSet::insert(int x) {
+#+begin_src C++ :flags -std=c++17 :exports code
+bool IntSet::contains(int x) {
   for (int e : _set) {
-    if (x == e) return false;
+    if (x == e) return true;
+  }
+  return false;
+}
+#+end_src
+
+- Repetindo todos os testes:
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_set_v2.cpp :exports results :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include "int_set.hpp"
+
+TEST_CASE("IntSet => insert") {
+  IntSet set;
+  bool inserted = set.insert(1);
+
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
+  
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
+
+TEST_CASE("IntSet => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(1);
+    CHECK_FALSE(contains);
   }
 
-  _set.push_back(x);
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+: [doctest] assertions: 5 | 5 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Por fim, temos os testes referentes a remoção:
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_set_v2.cpp :exports code :main no :results none
+TEST_CASE("IntSet => remove") {
+  IntSet set;
+
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
+}
+#+end_src
+
+- Implementando e testando a remoção:
+  
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_set_v2.cpp :exports code
+bool IntSet::remove(int x) {
+  std::size_t i = 0;
+  for (; i < _set.size() && _set[i] != x; i++);
+
+  if (i == _set.size()) return false;
+  
+  _set.erase(_set.begin() + i);
   return true;
 }
 #+end_src
@@ -205,148 +321,59 @@ bool IntSet::insert(int x) {
 #include "doctest.hpp"
 #include "int_set.hpp"
 
-TEST_CASE("Testando a interface do IntSet") {
+TEST_CASE("IntSet => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
 
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-  
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-}
-#+end_src
-
-#+RESULTS:
-: [doctest] doctest version is "2.4.11"
-: [doctest] run with "--help" for options
-: ===============================================================================
-: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 6 | 6 passed | 0 failed |
-: [doctest] Status: SUCCESS!
-
-- A inserção de um elemento já existente não deve ter efeito:
-
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_set_v2.cpp :exports both :main no :results scalar
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_set.hpp"
-
-TEST_CASE("Testando a interface do IntSet") {
-  IntSet set;
-  CHECK_FALSE(set.contains(1));
-
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-
-  CHECK_FALSE(set.insert(1));
-}
-#+end_src
-
-#+RESULTS:
-: [doctest] doctest version is "2.4.11"
-: [doctest] run with "--help" for options
-: ===============================================================================
-: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 7 | 7 passed | 0 failed |
-: [doctest] Status: SUCCESS!
-
-- Por fim, vamos testar a remoção:
-
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_set_v2.cpp :exports code :main no :results none
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_set.hpp"
-
-TEST_CASE("Testando a interface do IntSet") {
-  IntSet set;
-  CHECK_FALSE(set.contains(1));
-
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-  
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  
-  CHECK_FALSE(set.insert(1));
-  
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
-}
-#+end_src
-
-- E a implementação da remoção:
-
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_set_v3.cpp :exports none
-#include "int_set.hpp"
-
-bool IntSet::contains(int x) {
-  for (int e : _set) {
-    if (x == e) return true;
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
   }
-  return false;
+  
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
 }
 
-bool IntSet::insert(int x) {
-  for (int e : _set) {
-    if (x == e) return false;
+TEST_CASE("IntSet => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(1);
+    CHECK_FALSE(contains);
   }
 
-  _set.push_back(x);
-  return true;
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
 }
 
-bool IntSet::remove(int x) {
-  std::size_t i = 0;
-  for (; i < _set.size() && _set[i] != x; i++);
-
-  if (i == _set.size()) return false;
-  
-  _set.erase(_set.begin() + i);
-  return true;
-}
-#+end_src
-
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :exports code
-bool IntSet::remove(int x) {
-  std::size_t i = 0;
-  for (; i < _set.size() && _set[i] != x; i++);
-
-  if (i == _set.size()) return false;
-  
-  _set.erase(_set.begin() + i);
-  return true;
-}
-#+end_src
-
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_set_v3.cpp :exports results :main no :results scalar
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_set.hpp"
-
-TEST_CASE("Testando a interface do IntSet") {
+TEST_CASE("IntSet => remove") {
   IntSet set;
-  CHECK_FALSE(set.contains(1));
 
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  
-  CHECK_FALSE(set.insert(1));
-  
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
 }
 #+end_src
 
@@ -354,8 +381,8 @@ TEST_CASE("Testando a interface do IntSet") {
 : [doctest] doctest version is "2.4.11"
 : [doctest] run with "--help" for options
 : ===============================================================================
-: [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 10 | 10 passed | 0 failed |
+: [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+: [doctest] assertions: 8 | 8 passed | 0 failed |
 : [doctest] Status: SUCCESS!
 
 ** Exemplo 2: Conjunto de inteiros (hash)
@@ -370,7 +397,7 @@ TEST_CASE("Testando a interface do IntSet") {
   - -1 na posição 0, -2 na posição 1, ...
   - 0 na posição n, 1 na posição n + 1
     
-  - Exemplo: n = 2
+- Exemplo: n = 2
     
 #+begin_example
 set.insert(0)
@@ -381,7 +408,7 @@ set.insert(-2)
 [-1, -2, 0, 1]
 #+end_example
 
-  - Qual o problema? E se tivéssemos inserido apenas números positivos?
+- Qual o problema? E se tivéssemos inserido apenas números positivos?
 
 #+begin_example
 set.insert(0)
@@ -494,44 +521,30 @@ private:
 };
 #+end_src
 
-- Vamos reaproveitar os testes da primeira implementação
-- Não testamos as funções ~_hash~ e ~_rehash~ individualmente, pois são detalhes de implementação
+- Vamos reaproveitar os testes da primeira implementação a única alteração será no arquivo de cabeçalho incluído!)
+- Não testaremos as funções ~_hash~ e ~_rehash~ explicitamente, pois são detalhes de implementação
+- Vamos começar com a inserção (que depende tanto da operação de ~hash~ quanto da operação ~rehash~)
 
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ :exports results :main no :results none
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_hashset.hpp"
-
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
-  IntSet set;
-  CHECK_FALSE(set.contains(1));
-
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  
-  CHECK_FALSE(set.insert(1));
-  
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
-}
-#+end_src
-
-- Vamos começar com a verificação de um elemento, que envolve o cálculo do índice através da função ~_hash~:
-
-=int_hashset.cpp=
-
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v1.cpp
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v1.cpp :exports none
 #include "int_hashset.hpp"
 #include <cmath>
 
-bool IntSet::contains(int x) {
+bool IntSet::insert(int x) {
   int i = _hash(x);
-  return i != -1 && _set[i].first == x;
+
+  // Se não há espaço disponível, aplica-se a operação de rehash
+  if (i == -1) {
+    _rehash();
+    i = _hash(x);
+  }
+
+  // Se o nó já está em uso, com certeza o valor armazenado já é o x
+  else if (_set[i].second) {
+    return false;
+  }
+
+  _set[i] = {x, true};
+  return true;
 }
 
 int IntSet::_hash(int x) {
@@ -545,6 +558,19 @@ int IntSet::_hash(int x) {
 
   return -1;
 }
+
+void IntSet::_rehash() {
+  std::size_t n = _set.size();
+  _set.resize(n * 2);
+
+  for (std::size_t i = 0; i < n; i++) {
+    int x = _set[i].first;
+    _set[i].second = false;
+
+    unsigned j = _hash(x);
+    _set[j] = {x, true};
+  }
+}
 #+end_src
 
 #+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v1.cpp :exports results :main no :results scalar
@@ -552,22 +578,18 @@ int IntSet::_hash(int x) {
 #include "doctest.hpp"
 #include "int_hashset.hpp"
 
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+TEST_CASE("IntSet (versão hash) => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
 
-  // CHECK(set.insert(1));
-  // CHECK(set.contains(1));
-    
-  // CHECK(set.insert(2));
-  // CHECK(set.contains(1));
-  // CHECK(set.contains(2));
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
   
-  // CHECK_FALSE(set.insert(1));
-  
-  // CHECK(set.remove(1));
-  // CHECK_FALSE(set.contains(1));
-  // CHECK_FALSE(set.remove(1));
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
 }
 #+end_src
 
@@ -576,34 +598,144 @@ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
 : [doctest] run with "--help" for options
 : ===============================================================================
 : [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 1 | 1 passed | 0 failed |
+: [doctest] assertions: 2 | 2 passed | 0 failed |
 : [doctest] Status: SUCCESS!
 
-- Será que realmente está certo?
-- Vamos testar outro valor, o zero:
+- Agora, vamos passar para a operação de busca:
+
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v1.cpp
+bool IntSet::contains(int x) {
+  int i = _hash(x);
+  return i != -1 && _set[i].first == x;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v1.cpp :exports code :main no :results none
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(1);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+#+end_src
 
 #+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v1.cpp :exports results :main no :results scalar
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.hpp"
 #include "int_hashset.hpp"
 
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+TEST_CASE("IntSet (versão hash) => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
 
-  // CHECK(set.insert(1));
-  // CHECK(set.contains(1));
-    
-  // CHECK(set.insert(2));
-  // CHECK(set.contains(1));
-  // CHECK(set.contains(2));
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
   
-  // CHECK_FALSE(set.insert(1));
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(1);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+: [doctest] assertions: 5 | 5 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- Será que realmente está certo?
+- Vamos testar outro valor, o zero:
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v1.cpp :exports code :main no :results none
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  //...
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v1.cpp :exports results :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include "int_hashset.hpp"
+
+TEST_CASE("IntSet (versão hash) => insert") {
+  IntSet set;
+  bool inserted = set.insert(1);
+
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
   
-  // CHECK(set.remove(1));
-  // CHECK_FALSE(set.contains(1));
-  // CHECK_FALSE(set.remove(1));
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
 }
 #+end_src
 
@@ -612,15 +744,16 @@ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
 [doctest] doctest version is "2.4.11"
 [doctest] run with "--help" for options
 ===============================================================================
-/tmp/babel-XD6C2f/C-src-OF7fnI.cpp:12:
-TEST CASE:  Testando a interface do IntSet (versão HashSet)
+/tmp/babel-XD6C2f/C-src-cgHoea.cpp:26:
+TEST CASE:  IntSet (versão hash) => contains
+  Conjunto vazio
 
-/tmp/babel-XD6C2f/C-src-OF7fnI.cpp:14: ERROR: CHECK_FALSE( set.contains(0) ) is NOT correct!
+/tmp/babel-XD6C2f/C-src-cgHoea.cpp:31: ERROR: CHECK_FALSE( contains ) is NOT correct!
   values: CHECK_FALSE( true )
 
 ===============================================================================
-[doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
-[doctest] assertions: 2 | 1 passed | 1 failed |
+[doctest] test cases: 2 | 1 passed | 1 failed | 0 skipped
+[doctest] assertions: 5 | 4 passed | 1 failed |
 [doctest] Status: FAILURE!
 #+end_example
 
@@ -630,6 +763,24 @@ TEST CASE:  Testando a interface do IntSet (versão HashSet)
 #+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v2.cpp :exports none
 #include "int_hashset.hpp"
 #include <cmath>
+
+bool IntSet::insert(int x) {
+  int i = _hash(x);
+
+  // Se não há espaço disponível, aplica-se a operação de rehash
+  if (i == -1) {
+    _rehash();
+    i = _hash(x);
+  }
+
+  // Se o nó já está em uso, com certeza o valor armazenado já é o x
+  else if (_set[i].second) {
+    return false;
+  }
+
+  _set[i] = {x, true};
+  return true;
+}
 
 bool IntSet::contains(int x) {
   int i = _hash(x);
@@ -646,6 +797,19 @@ int IntSet::_hash(int x) {
   } while (j != i);
 
   return -1;
+}
+
+void IntSet::_rehash() {
+  std::size_t n = _set.size();
+  _set.resize(n * 2);
+
+  for (std::size_t i = 0; i < n; i++) {
+    int x = _set[i].first;
+    _set[i].second = false;
+
+    unsigned j = _hash(x);
+    _set[j] = {x, true};
+  }
 }
 #+end_src
 
@@ -661,23 +825,39 @@ bool IntSet::contains(int x) {
 #include "doctest.hpp"
 #include "int_hashset.hpp"
 
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+TEST_CASE("IntSet (versão hash) => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
 
-  // CHECK(set.insert(1));
-  // CHECK(set.contains(1));
-    
-  // CHECK(set.insert(2));
-  // CHECK(set.contains(1));
-  // CHECK(set.contains(2));
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
   
-  // CHECK_FALSE(set.insert(1));
-  
-  // CHECK(set.remove(1));
-  // CHECK_FALSE(set.contains(1));
-  // CHECK_FALSE(set.remove(1));
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
 }
 #+end_src
 
@@ -685,11 +865,236 @@ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
 : [doctest] doctest version is "2.4.11"
 : [doctest] run with "--help" for options
 : ===============================================================================
-: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 2 | 2 passed | 0 failed |
+: [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+: [doctest] assertions: 5 | 5 passed | 0 failed |
 : [doctest] Status: SUCCESS!
 
-- Agora, vamos para a inserção
+- E a remoção, como funciona?
+
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v2.cpp :exports code
+bool IntSet::remove(int x) {
+  if (!contains(x)) return false;
+  
+  int i = _hash(x);
+  _set[i].second = false;
+  
+  return true;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v2.cpp :exports code :main no :results none
+TEST_CASE("IntSet (versão hash) => remove") {
+  IntSet set;
+
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v2.cpp :exports results :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include "int_hashset.hpp"
+
+TEST_CASE("IntSet (versão hash) => insert") {
+  IntSet set;
+  bool inserted = set.insert(1);
+
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
+  
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => remove") {
+  IntSet set;
+
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+: [doctest] assertions: 8 | 8 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+- A implementação está realmente correta?
+- O que aconteceria se construíssemos um conjunto (em ordem de inserção) {1, 2, 5}?
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v2.cpp :exports code :main no :results none
+TEST_CASE("IntSet (versão hash) => remove") {
+  IntSet set;
+
+  // ...
+
+  SUBCASE("Remoção após colisão") {
+    set.insert(1);
+    set.insert(2);
+    set.insert(5);
+    
+    set.remove(1);
+    CHECK(set.contains(5));
+  }
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v2.cpp :exports results :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include "int_hashset.hpp"
+
+TEST_CASE("IntSet (versão hash) => insert") {
+  IntSet set;
+  bool inserted = set.insert(1);
+
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
+  
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => remove") {
+  IntSet set;
+
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
+
+  SUBCASE("Remoção após colisão") {
+    set.insert(1);
+    set.insert(2);
+    set.insert(5);
+    
+    set.remove(1);
+    CHECK(set.contains(5));
+  }
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/tmp/babel-XD6C2f/C-src-eBdqZS.cpp:47:
+TEST CASE:  IntSet (versão hash) => remove
+  Remoção após colisão
+
+/tmp/babel-XD6C2f/C-src-eBdqZS.cpp:72: ERROR: CHECK( set.contains(5) ) is NOT correct!
+  values: CHECK( false )
+
+===============================================================================
+[doctest] test cases: 3 | 2 passed | 1 failed | 0 skipped
+[doctest] assertions: 9 | 8 passed | 1 failed |
+[doctest] Status: FAILURE!
+#+end_example
+
+Vamos analisar com calma:
+  
+#+begin_example
+set.insert(1) => [1]
+set.insert(2) => rehash = [?, 1] => [2, 1]
+set.insert(5) => rehash = [?, 1, 2, ?] => [?, 1, 2, 5]
+set.remove(1) => [?, ?, 2, 5]
+set.contains(5) => hash(5) = 1 => posição vazias...
+#+end_example
+
+- No momento da inserção do 5, houve um conflito com o 1
+- Após a remoção do 1, o conflito não existe mais
+- Precisamos recalcular os índices que eram conflituosos
+- Lembre-se do TDD: qual a implementação mais simples possível?
 
 #+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v3.cpp :exports none
 #include "int_hashset.hpp"
@@ -713,6 +1118,22 @@ bool IntSet::insert(int x) {
   return true;
 }
 
+bool IntSet::remove(int x) {
+  if (!contains(x)) return false;
+  
+  int i = _hash(x);
+  _set[i].second = false;
+
+  std::vector<_Node> old_set = _set;
+  _set.assign(_set.size(), {0, false});
+  
+  for (auto [x, in_use] : old_set) {
+    if (in_use) insert(x);
+  }
+  
+  return true;
+}
+
 bool IntSet::contains(int x) {
   int i = _hash(x);
   return i != -1 && _set[i].second && _set[i].first == x;
@@ -745,35 +1166,20 @@ void IntSet::_rehash() {
 #+end_src
 
 #+begin_src C++ :flags -std=c++17 -I. -Wall :main no :exports code
-bool IntSet::insert(int x) {
+bool IntSet::remove(int x) {
+  if (!contains(x)) return false;
+  
   int i = _hash(x);
+  _set[i].second = false;
 
-  // Se não há espaço disponível, aplica-se a operação de rehash
-  if (i == -1) {
-    _rehash();
-    i = _hash(x);
+  std::vector<_Node> old_set = _set;
+  _set.assign(_set.size(), {0, false});
+  
+  for (auto [x, in_use] : old_set) {
+    if (in_use) insert(x);
   }
-
-  // Se o nó já está em uso, com certeza o valor armazenado já é o x
-  else if (_set[i].second) {
-    return false;
-  }
-
-  _set[i] = {x, true};
+  
   return true;
-}
-
-void IntSet::_rehash() {
-  std::size_t n = _set.size();
-  _set.resize(n * 2);
-
-  for (std::size_t i = 0; i < n; i++) {
-    int x = _set[i].first;
-    _set[i].second = false;
-
-    unsigned j = _hash(x);
-    _set[j] = {x, true};
-  }
 }
 #+end_src
 
@@ -782,23 +1188,68 @@ void IntSet::_rehash() {
 #include "doctest.hpp"
 #include "int_hashset.hpp"
 
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+TEST_CASE("IntSet (versão hash) => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
 
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
+  
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
+
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => remove") {
+  IntSet set;
+
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
+
+  SUBCASE("Remoção após colisão") {
+    set.insert(1);
+    set.insert(2);
+    set.insert(5);
     
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  
-  CHECK_FALSE(set.insert(1));
-  
-  // CHECK(set.remove(1));
-  // CHECK_FALSE(set.contains(1));
-  // CHECK_FALSE(set.remove(1));
+    set.remove(1);
+    CHECK(set.contains(5));
+  }
 }
 #+end_src
 
@@ -806,304 +1257,8 @@ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
 : [doctest] doctest version is "2.4.11"
 : [doctest] run with "--help" for options
 : ===============================================================================
-: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 8 | 8 passed | 0 failed |
-: [doctest] Status: SUCCESS!
-
-- E a remoção, como funciona?
-
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v4.cpp :exports none
-#include "int_hashset.hpp"
-#include <cmath>
-
-bool IntSet::insert(int x) {
-  int i = _hash(x);
-
-  // Se não há espaço disponível, aplica-se a operação de rehash
-  if (i == -1) {
-    _rehash();
-    i = _hash(x);
-  }
-
-  // Se o nó já está em uso, com certeza o valor armazenado já é o x
-  else if (_set[i].second) {
-    return false;
-  }
-
-  _set[i] = {x, true};
-  return true;
-}
-
-bool IntSet::remove(int x) {
-  if (!contains(x)) return false;
-  
-  int i = _hash(x);
-  _set[i].second = false;
-  
-  return true;
-}
-
-bool IntSet::contains(int x) {
-  int i = _hash(x);
-  return i != -1 && _set[i].second && _set[i].first == x;
-}
-
-int IntSet::_hash(int x) {
-  int i = std::abs(x) % _set.size();
-  int j = i;
-  do {
-    if (!_set[j].second || _set[j].first == x) return j;
-    j = (j + 1) % _set.size();
-  } while (j != i);
-
-  return -1;
-}
-
-void IntSet::_rehash() {
-  std::size_t n = _set.size();
-  _set.resize(n * 2);
-
-  for (std::size_t i = 0; i < n; i++) {
-    int x = _set[i].first;
-    _set[i].second = false;
-
-    unsigned j = _hash(x);
-    _set[j] = {x, true};
-  }
-}
-#+end_src
-
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :exports code
-bool IntSet::remove(int x) {
-  if (!contains(x)) return false;
-  
-  int i = _hash(x);
-  _set[i].second = false;
-  
-  return true;
-}
-#+end_src
-
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v4.cpp :exports results :main no :results scalar
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_hashset.hpp"
-
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
-  IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
-
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  
-  CHECK_FALSE(set.insert(1));
-  
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
-}
-#+end_src
-
-#+RESULTS:
-: [doctest] doctest version is "2.4.11"
-: [doctest] run with "--help" for options
-: ===============================================================================
-: [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 11 | 11 passed | 0 failed |
-: [doctest] Status: SUCCESS!
-
-- A implementação está realmente correta?
-- O que aconteceria se construíssemos um conjunto (em ordem de inserção) {1, 2, 5}?
-
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v4.cpp :exports both :main no :results scalar
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_hashset.hpp"
-
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
-  IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
-
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.insert(5));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
-  
-  CHECK_FALSE(set.insert(1));
-
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
-
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
-}
-#+end_src
-
-#+RESULTS:
-#+begin_example
-[doctest] doctest version is "2.4.11"
-[doctest] run with "--help" for options
-===============================================================================
-/tmp/babel-XD6C2f/C-src-lQuihJ.cpp:12:
-TEST CASE:  Testando a interface do IntSet (versão HashSet)
-
-/tmp/babel-XD6C2f/C-src-lQuihJ.cpp:33: ERROR: CHECK( set.contains(5) ) is NOT correct!
-  values: CHECK( false )
-
-===============================================================================
-[doctest] test cases:  1 |  0 passed | 1 failed | 0 skipped
-[doctest] assertions: 15 | 14 passed | 1 failed |
-[doctest] Status: FAILURE!
-#+end_example
-
-Vamos analisar com calma:
-  
-#+begin_example
-set.insert(1) => [1]
-set.insert(2) => rehash = [?, 1] => [2, 1]
-set.insert(5) => rehash = [?, 1, 2, ?] => [?, 1, 2, 5]
-set.remove(1) => [?, ?, 2, 5]
-set.contains(5) => hash(5) = 1 => posição vazias...
-#+end_example
-
-- No momento da inserção do 5, houve um conflito com o 1
-- Após a remoção do 1, o conflito não existe mais
-- Precisamos recalcular os índices que eram conflituosos
-- Lembre-se do TDD: qual a implementação mais simples possível?
-
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v5.cpp :exports none
-#include "int_hashset.hpp"
-#include <cmath>
-
-bool IntSet::insert(int x) {
-  int i = _hash(x);
-
-  // Se não há espaço disponível, aplica-se a operação de rehash
-  if (i == -1) {
-    _rehash();
-    i = _hash(x);
-  }
-
-  // Se o nó já está em uso, com certeza o valor armazenado já é o x
-  else if (_set[i].second) {
-    return false;
-  }
-
-  _set[i] = {x, true};
-  return true;
-}
-
-bool IntSet::remove(int x) {
-  if (!contains(x)) return false;
-  
-  int i = _hash(x);
-  _set[i].second = false;
-
-  std::vector<_Node> old_set = _set;
-  _set.assign(_set.size(), {0, false});
-  
-  for (auto [x, in_use] : old_set) {
-    if (in_use) insert(x);
-  }
-  
-  return true;
-}
-
-bool IntSet::contains(int x) {
-  int i = _hash(x);
-  return i != -1 && _set[i].second && _set[i].first == x;
-}
-
-int IntSet::_hash(int x) {
-  int i = std::abs(x) % _set.size();
-  int j = i;
-  do {
-    if (!_set[j].second || _set[j].first == x) return j;
-    j = (j + 1) % _set.size();
-  } while (j != i);
-
-  return -1;
-}
-
-void IntSet::_rehash() {
-  std::size_t n = _set.size();
-  _set.resize(n * 2);
-
-  for (std::size_t i = 0; i < n; i++) {
-    int x = _set[i].first;
-    _set[i].second = false;
-
-    unsigned j = _hash(x);
-    _set[j] = {x, true};
-  }
-}
-#+end_src
-
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :exports code
-bool IntSet::remove(int x) {
-  if (!contains(x)) return false;
-  
-  int i = _hash(x);
-  _set[i].second = false;
-
-  std::vector<_Node> old_set = _set;
-  _set.assign(_set.size(), {0, false});
-  
-  for (auto [x, in_use] : old_set) {
-    if (in_use) insert(x);
-  }
-  
-  return true;
-}
-#+end_src
-
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v5.cpp :exports both :main no :results scalar
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "int_hashset.hpp"
-
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
-  IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
-
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.insert(5));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
-  
-  CHECK_FALSE(set.insert(1));
-
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
-
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
-}
-#+end_src
-
-#+RESULTS:
-: [doctest] doctest version is "2.4.11"
-: [doctest] run with "--help" for options
-: ===============================================================================
-: [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 15 | 15 passed | 0 failed |
+: [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+: [doctest] assertions: 9 | 9 passed | 0 failed |
 : [doctest] Status: SUCCESS!
 
 - Vamos para a terceira fase do TDD: a implementação atual é a melhor possível? Dá para melhorar?
@@ -1179,7 +1334,7 @@ private:
 
 =int_hashset.cpp=
 
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v6.cpp :exports code
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v4.cpp :exports code
 #include "int_hashset_v2.hpp"
 #include <cmath>
 
@@ -1238,33 +1393,73 @@ void IntSet::_rehash() {
 }
 #+end_src
 
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v6.cpp :exports results :main no :results scalar
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v4.cpp :exports results :main no :results scalar
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.hpp"
-#include "int_hashset_v2.hpp"
+#include "int_hashset.hpp"
 
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+TEST_CASE("IntSet (versão hash) => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
 
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.insert(5));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
   
-  CHECK_FALSE(set.insert(1));
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
 
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
 
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => remove") {
+  IntSet set;
+
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
+
+  SUBCASE("Remoção após colisão") {
+    set.insert(1);
+    set.insert(2);
+    set.insert(5);
+    
+    set.remove(1);
+    CHECK(set.contains(5));
+  }
 }
 #+end_src
 
@@ -1272,8 +1467,8 @@ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
 : [doctest] doctest version is "2.4.11"
 : [doctest] run with "--help" for options
 : ===============================================================================
-: [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 15 | 15 passed | 0 failed |
+: [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+: [doctest] assertions: 9 | 9 passed | 0 failed |
 : [doctest] Status: SUCCESS!
 
 - Você ainda vê algum problema com esta implementação?
@@ -1370,7 +1565,7 @@ private:
 
 =int_hashset.cpp=
 
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v7.cpp :exports code
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v5.cpp :exports code
 #include "int_hashset_v3.hpp"
 #include <cmath>
 
@@ -1409,8 +1604,8 @@ int IntSet::_hash(int x, bool inserting) {
   int j = i;
   do {
     auto [y, status] = _set[j];
-    bool insertable = status == _Status::free || (inserting && status == _Status::deleted);
-    if (insertable || y == x) return j;
+    bool available = status == _Status::free || (inserting && status == _Status::deleted);
+    if (available || y == x) return j;
     j = (j + 1) % _set.size();
   } while (j != i);
 
@@ -1431,33 +1626,73 @@ void IntSet::_rehash() {
 }
 #+end_src
 
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v7.cpp :exports results :main no :results scalar
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/int_hashset_v5.cpp :exports results :main no :results scalar
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.hpp"
-#include "int_hashset_v3.hpp"
+#include "int_hashset.hpp"
 
-TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+TEST_CASE("IntSet (versão hash) => insert") {
   IntSet set;
-  CHECK_FALSE(set.contains(0));
-  CHECK_FALSE(set.contains(1));
+  bool inserted = set.insert(1);
 
-  CHECK(set.insert(1));
-  CHECK(set.contains(1));
-    
-  CHECK(set.insert(2));
-  CHECK(set.insert(5));
-  CHECK(set.contains(1));
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
+  SUBCASE("Elemento não está no conjunto") {
+    CHECK(inserted);
+  }
   
-  CHECK_FALSE(set.insert(1));
+  SUBCASE("Elemento já está no conjunto") {
+    inserted = set.insert(1);
+    CHECK_FALSE(inserted);
+  }
+}
 
-  CHECK(set.remove(1));
-  CHECK_FALSE(set.contains(1));
-  CHECK_FALSE(set.remove(1));
+TEST_CASE("IntSet (versão hash) => contains") {
+  IntSet set;
 
-  CHECK(set.contains(2));
-  CHECK(set.contains(5));
+  SUBCASE("Conjunto vazio") {
+    bool contains = set.contains(0);
+    CHECK_FALSE(contains);
+  }
+
+  SUBCASE("Após a inserção, o elemento é encontrado") {
+    set.insert(1);
+    bool contains = set.contains(1);
+    CHECK(contains);
+
+    SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+      set.insert(2);
+      bool contains = set.contains(1);
+      CHECK(contains);
+    }
+  }
+}
+
+TEST_CASE("IntSet (versão hash) => remove") {
+  IntSet set;
+
+  SUBCASE("O elemento nunca foi inserido") {
+    bool removed = set.remove(1);
+    CHECK_FALSE(removed);
+  }
+
+  SUBCASE("O elemento foi inserido") {
+    set.insert(1);
+    bool removed = set.remove(1);
+    CHECK(removed);
+
+    SUBCASE("Após a remoção, o resultado é falso") {
+      bool removed = set.remove(1);
+      CHECK_FALSE(removed);
+    }
+  }
+
+  SUBCASE("Remoção após colisão") {
+    set.insert(1);
+    set.insert(2);
+    set.insert(5);
+    
+    set.remove(1);
+    CHECK(set.contains(5));
+  }
 }
 #+end_src
 
@@ -1465,6 +1700,6 @@ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
 : [doctest] doctest version is "2.4.11"
 : [doctest] run with "--help" for options
 : ===============================================================================
-: [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-: [doctest] assertions: 15 | 15 passed | 0 failed |
+: [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+: [doctest] assertions: 9 | 9 passed | 0 failed |
 : [doctest] Status: SUCCESS!

@@ -135,71 +135,41 @@ Exemplo 1: Conjunto de inteiros (vector)
   • Um pouco mais de conveções: utilizarei o prefixo "_" para campos
     privados.
 
-  Voltando ao nosso exemplo, vamos iniciar o ciclo do TDD:
-  • Primeiro teste: conjunto vazio, um elemento não pode ser encontrado
+  • Voltando ao nosso exemplo, vamos iniciar o ciclo do TDD
+  • Vamos começar com a inserção
+    • Ao inserir um elemento que ainda não está no conjunto, o resultado
+      deve ser `true'
+    • Ao inserir um elemento que já existe, o resultado deve ser `false'
 
   ┌────
   │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
   │ #include "doctest.hpp"
   │ #include "int_set.hpp"
   │ 
-  │ TEST_CASE("Testando a interface do IntSet") {
+  │ TEST_CASE("IntSet => insert") {
   │   IntSet set;
-  │   CHECK_FALSE(set.contains(1));
+  │   bool inserted = set.insert(1);
+  │ 
+  │   SUBCASE("Elemento não está no conjunto") {
+  │     CHECK(inserted);
+  │   }
+  │ 
+  │   SUBCASE("Elemento já está no conjunto") {
+  │     inserted = set.insert(1);
+  │     CHECK_FALSE(inserted);
+  │   }
   │ }
   └────
 
-  • Vamos implementar a operação de busca:
+  • Note que o teste falha (não compila), já que ainda não há nenhuma
+    implementação
+  • Vamos implementar a inserção
 
   `int_set.cpp'
 
   ┌────
   │ #include "int_set.hpp"
   │ 
-  │ bool IntSet::contains(int x) {
-  │   for (int e : _set) {
-  │     if (x == e) return true;
-  │   }
-  │   return false;
-  │ }
-  └────
-
-  • Testando novamente:
-
-  ┌────
-  │ [doctest] doctest version is "2.4.11"
-  │ [doctest] run with "--help" for options
-  │ ===============================================================================
-  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 1 | 1 passed | 0 failed |
-  │ [doctest] Status: SUCCESS!
-  └────
-
-
-  • Após a inserção, o elemento deve estar no conjunto, e deve
-    permanecer após outras inserções:
-
-  ┌────
-  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-  │ #include "doctest.hpp"
-  │ #include "int_set.hpp"
-  │ 
-  │ TEST_CASE("Testando a interface do IntSet") {
-  │   IntSet set;
-  │   CHECK_FALSE(set.contains(1));
-  │ 
-  │   CHECK(set.insert(1));
-  │   CHECK(set.contains(1));
-  │ 
-  │   CHECK(set.insert(2));
-  │   CHECK(set.contains(1));
-  │   CHECK(set.contains(2));
-  │ }
-  └────
-
-  • Implementando a inserção:
-
-  ┌────
   │ bool IntSet::insert(int x) {
   │   for (int e : _set) {
   │     if (x == e) return false;
@@ -210,75 +180,93 @@ Exemplo 1: Conjunto de inteiros (vector)
   │ }
   └────
 
-  ┌────
-  │ [doctest] doctest version is "2.4.11"
-  │ [doctest] run with "--help" for options
-  │ ===============================================================================
-  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 6 | 6 passed | 0 failed |
-  │ [doctest] Status: SUCCESS!
-  └────
-
-
-  • A inserção de um elemento já existente não deve ter efeito:
-
-  ┌────
-  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-  │ #include "doctest.hpp"
-  │ #include "int_set.hpp"
-  │ 
-  │ TEST_CASE("Testando a interface do IntSet") {
-  │   IntSet set;
-  │   CHECK_FALSE(set.contains(1));
-  │ 
-  │   CHECK(set.insert(1));
-  │   CHECK(set.contains(1));
-  │ 
-  │   CHECK(set.insert(2));
-  │   CHECK(set.contains(1));
-  │   CHECK(set.contains(2));
-  │ 
-  │   CHECK_FALSE(set.insert(1));
-  │ }
-  └────
+  • Testando novamente:
 
   ┌────
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
   │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 7 | 7 passed | 0 failed |
+  │ [doctest] assertions: 2 | 2 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
 
-  • Por fim, vamos testar a remoção:
+  • Vamos, agora, passar para a operação de busca
 
   ┌────
-  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-  │ #include "doctest.hpp"
-  │ #include "int_set.hpp"
-  │ 
-  │ TEST_CASE("Testando a interface do IntSet") {
+  │ TEST_CASE("IntSet => contains") {
   │   IntSet set;
-  │   CHECK_FALSE(set.contains(1));
   │ 
-  │   CHECK(set.insert(1));
-  │   CHECK(set.contains(1));
+  │   SUBCASE("Conjunto vazio") {
+  │     bool contains = set.contains(1);
+  │     CHECK_FALSE(contains);
+  │   }
   │ 
-  │   CHECK(set.insert(2));
-  │   CHECK(set.contains(1));
-  │   CHECK(set.contains(2));
+  │   SUBCASE("Após a inserção, o elemento é encontrado") {
+  │     set.insert(1);
+  │     bool contains = set.contains(1);
+  │     CHECK(contains);
   │ 
-  │   CHECK_FALSE(set.insert(1));
-  │ 
-  │   CHECK(set.remove(1));
-  │   CHECK_FALSE(set.contains(1));
-  │   CHECK_FALSE(set.remove(1));
+  │     SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+  │       set.insert(2);
+  │       bool contains = set.contains(1);
+  │       CHECK(contains);
+  │     }
+  │   }
   │ }
   └────
 
-  • E a implementação da remoção:
+  • Novamente, o teste falha pois o código ainda não compila (a operação
+    não existe)
+  • Vamos implementá-la:
+
+  ┌────
+  │ bool IntSet::contains(int x) {
+  │   for (int e : _set) {
+  │     if (x == e) return true;
+  │   }
+  │   return false;
+  │ }
+  └────
+
+  • Repetindo todos os testes:
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 5 | 5 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Por fim, temos os testes referentes a remoção:
+
+  ┌────
+  │ TEST_CASE("IntSet => remove") {
+  │   IntSet set;
+  │ 
+  │   SUBCASE("O elemento nunca foi inserido") {
+  │     bool removed = set.remove(1);
+  │     CHECK_FALSE(removed);
+  │   }
+  │ 
+  │   SUBCASE("O elemento foi inserido") {
+  │     set.insert(1);
+  │     bool removed = set.remove(1);
+  │     CHECK(removed);
+  │ 
+  │     SUBCASE("Após a remoção, o resultado é falso") {
+  │       bool removed = set.remove(1);
+  │       CHECK_FALSE(removed);
+  │     }
+  │   }
+  │ }
+  └────
+
+  • Implementando e testando a remoção:
 
   ┌────
   │ bool IntSet::remove(int x) {
@@ -296,8 +284,8 @@ Exemplo 1: Conjunto de inteiros (vector)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 10 | 10 passed | 0 failed |
+  │ [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 8 | 8 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
@@ -320,7 +308,7 @@ Exemplo 2: Conjunto de inteiros (hash)
     • -1 na posição 0, -2 na posição 1, …
     • 0 na posição n, 1 na posição n + 1
 
-    • Exemplo: n = 2
+  • Exemplo: n = 2
 
   ┌────
   │ set.insert(0)
@@ -449,34 +437,52 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ };
   └────
 
-  • Vamos reaproveitar os testes da primeira implementação
-  • Não testamos as funções `_hash' e `_rehash' individualmente, pois
+  • Vamos reaproveitar os testes da primeira implementação a única
+    alteração será no arquivo de cabeçalho incluído!)
+  • Não testaremos as funções `_hash' e `_rehash' explicitamente, pois
     são detalhes de implementação
-
-  • Vamos começar com a verificação de um elemento, que envolve o
-    cálculo do índice através da função `_hash':
-
-  `int_hashset.cpp'
+  • Vamos começar com a inserção (que depende tanto da operação de
+    `hash' quanto da operação `rehash')
 
   ┌────
-  │ #include "int_hashset.hpp"
-  │ #include <cmath>
-  │ 
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 2 | 2 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  • Agora, vamos passar para a operação de busca:
+
+  ┌────
   │ bool IntSet::contains(int x) {
   │   int i = _hash(x);
   │   return i != -1 && _set[i].first == x;
   │ }
+  └────
+
+  ┌────
+  │ TEST_CASE("IntSet (versão hash) => contains") {
+  │   IntSet set;
   │ 
-  │ int IntSet::_hash(int x) {
-  │   int i = std::abs(x) % _set.size();
-  │   int j = i;
+  │   SUBCASE("Conjunto vazio") {
+  │     bool contains = set.contains(1);
+  │     CHECK_FALSE(contains);
+  │   }
   │ 
-  │   do {
-  │     if (!_set[j].second || _set[j].first == x) return j;
-  │     j = (j + 1) % _set.size();
-  │   } while (j != i);
+  │   SUBCASE("Após a inserção, o elemento é encontrado") {
+  │     set.insert(1);
+  │     bool contains = set.contains(1);
+  │     CHECK(contains);
   │ 
-  │   return -1;
+  │     SUBCASE("E o elemento permanece, mesmo após outras inserções") {
+  │       set.insert(2);
+  │       bool contains = set.contains(1);
+  │       CHECK(contains);
+  │     }
+  │   }
   │ }
   └────
 
@@ -484,8 +490,8 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 1 | 1 passed | 0 failed |
+  │ [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 5 | 5 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
@@ -494,18 +500,32 @@ Exemplo 2: Conjunto de inteiros (hash)
   • Vamos testar outro valor, o zero:
 
   ┌────
+  │ TEST_CASE("IntSet (versão hash) => contains") {
+  │   IntSet set;
+  │ 
+  │   SUBCASE("Conjunto vazio") {
+  │     bool contains = set.contains(0);
+  │     CHECK_FALSE(contains);
+  │   }
+  │ 
+  │   //...
+  │ }
+  └────
+
+  ┌────
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-ROoykw.cpp:12:
-  │ TEST CASE:  Testando a interface do IntSet (versão HashSet)
+  │ /tmp/babel-XD6C2f/C-src-GdDwhv.cpp:26:
+  │ TEST CASE:  IntSet (versão hash) => contains
+  │   Conjunto vazio
   │ 
-  │ /tmp/babel-XD6C2f/C-src-ROoykw.cpp:14: ERROR: CHECK_FALSE( set.contains(0) ) is NOT correct!
+  │ /tmp/babel-XD6C2f/C-src-GdDwhv.cpp:31: ERROR: CHECK_FALSE( contains ) is NOT correct!
   │   values: CHECK_FALSE( true )
   │ 
   │ ===============================================================================
-  │ [doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
-  │ [doctest] assertions: 2 | 1 passed | 1 failed |
+  │ [doctest] test cases: 2 | 1 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 5 | 4 passed | 1 failed |
   │ [doctest] Status: FAILURE!
   └────
 
@@ -525,53 +545,8 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 2 | 2 passed | 0 failed |
-  │ [doctest] Status: SUCCESS!
-  └────
-
-
-  • Agora, vamos para a inserção
-
-  ┌────
-  │ bool IntSet::insert(int x) {
-  │   int i = _hash(x);
-  │ 
-  │   // Se não há espaço disponível, aplica-se a operação de rehash
-  │   if (i == -1) {
-  │     _rehash();
-  │     i = _hash(x);
-  │   }
-  │ 
-  │   // Se o nó já está em uso, com certeza o valor armazenado já é o x
-  │   else if (_set[i].second) {
-  │     return false;
-  │   }
-  │ 
-  │   _set[i] = {x, true};
-  │   return true;
-  │ }
-  │ 
-  │ void IntSet::_rehash() {
-  │   std::size_t n = _set.size();
-  │   _set.resize(n * 2);
-  │ 
-  │   for (std::size_t i = 0; i < n; i++) {
-  │     int x = _set[i].first;
-  │     _set[i].second = false;
-  │ 
-  │     unsigned j = _hash(x);
-  │     _set[j] = {x, true};
-  │   }
-  │ }
-  └────
-
-  ┌────
-  │ [doctest] doctest version is "2.4.11"
-  │ [doctest] run with "--help" for options
-  │ ===============================================================================
-  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 8 | 8 passed | 0 failed |
+  │ [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 5 | 5 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
@@ -590,11 +565,33 @@ Exemplo 2: Conjunto de inteiros (hash)
   └────
 
   ┌────
+  │ TEST_CASE("IntSet (versão hash) => remove") {
+  │   IntSet set;
+  │ 
+  │   SUBCASE("O elemento nunca foi inserido") {
+  │     bool removed = set.remove(1);
+  │     CHECK_FALSE(removed);
+  │   }
+  │ 
+  │   SUBCASE("O elemento foi inserido") {
+  │     set.insert(1);
+  │     bool removed = set.remove(1);
+  │     CHECK(removed);
+  │ 
+  │     SUBCASE("Após a remoção, o resultado é falso") {
+  │       bool removed = set.remove(1);
+  │       CHECK_FALSE(removed);
+  │     }
+  │   }
+  │ }
+  └────
+
+  ┌────
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 11 | 11 passed | 0 failed |
+  │ [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 8 | 8 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
@@ -604,32 +601,19 @@ Exemplo 2: Conjunto de inteiros (hash)
     inserção) {1, 2, 5}?
 
   ┌────
-  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-  │ #include "doctest.hpp"
-  │ #include "int_hashset.hpp"
-  │ 
-  │ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
+  │ TEST_CASE("IntSet (versão hash) => remove") {
   │   IntSet set;
-  │   CHECK_FALSE(set.contains(0));
-  │   CHECK_FALSE(set.contains(1));
   │ 
-  │   CHECK(set.insert(1));
-  │   CHECK(set.contains(1));
+  │   // ...
   │ 
-  │   CHECK(set.insert(2));
-  │   CHECK(set.insert(5));
-  │   CHECK(set.contains(1));
-  │   CHECK(set.contains(2));
-  │   CHECK(set.contains(5));
+  │   SUBCASE("Remoção após colisão") {
+  │     set.insert(1);
+  │     set.insert(2);
+  │     set.insert(5);
   │ 
-  │   CHECK_FALSE(set.insert(1));
-  │ 
-  │   CHECK(set.remove(1));
-  │   CHECK_FALSE(set.contains(1));
-  │   CHECK_FALSE(set.remove(1));
-  │ 
-  │   CHECK(set.contains(2));
-  │   CHECK(set.contains(5));
+  │     set.remove(1);
+  │     CHECK(set.contains(5));
+  │   }
   │ }
   └────
 
@@ -637,15 +621,16 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-Db0K06.cpp:12:
-  │ TEST CASE:  Testando a interface do IntSet (versão HashSet)
+  │ /tmp/babel-XD6C2f/C-src-nTXWgf.cpp:47:
+  │ TEST CASE:  IntSet (versão hash) => remove
+  │   Remoção após colisão
   │ 
-  │ /tmp/babel-XD6C2f/C-src-Db0K06.cpp:33: ERROR: CHECK( set.contains(5) ) is NOT correct!
+  │ /tmp/babel-XD6C2f/C-src-nTXWgf.cpp:72: ERROR: CHECK( set.contains(5) ) is NOT correct!
   │   values: CHECK( false )
   │ 
   │ ===============================================================================
-  │ [doctest] test cases:  1 |  0 passed | 1 failed | 0 skipped
-  │ [doctest] assertions: 15 | 14 passed | 1 failed |
+  │ [doctest] test cases: 3 | 2 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 9 | 8 passed | 1 failed |
   │ [doctest] Status: FAILURE!
   └────
 
@@ -683,41 +668,11 @@ Exemplo 2: Conjunto de inteiros (hash)
   └────
 
   ┌────
-  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-  │ #include "doctest.hpp"
-  │ #include "int_hashset.hpp"
-  │ 
-  │ TEST_CASE("Testando a interface do IntSet (versão HashSet)") {
-  │   IntSet set;
-  │   CHECK_FALSE(set.contains(0));
-  │   CHECK_FALSE(set.contains(1));
-  │ 
-  │   CHECK(set.insert(1));
-  │   CHECK(set.contains(1));
-  │ 
-  │   CHECK(set.insert(2));
-  │   CHECK(set.insert(5));
-  │   CHECK(set.contains(1));
-  │   CHECK(set.contains(2));
-  │   CHECK(set.contains(5));
-  │ 
-  │   CHECK_FALSE(set.insert(1));
-  │ 
-  │   CHECK(set.remove(1));
-  │   CHECK_FALSE(set.contains(1));
-  │   CHECK_FALSE(set.remove(1));
-  │ 
-  │   CHECK(set.contains(2));
-  │   CHECK(set.contains(5));
-  │ }
-  └────
-
-  ┌────
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 15 | 15 passed | 0 failed |
+  │ [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 9 | 9 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
@@ -814,8 +769,8 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 15 | 15 passed | 0 failed |
+  │ [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 9 | 9 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
@@ -906,8 +861,8 @@ Exemplo 2: Conjunto de inteiros (hash)
   │   int j = i;
   │   do {
   │     auto [y, status] = _set[j];
-  │     bool insertable = status == _Status::free || (inserting && status == _Status::deleted);
-  │     if (insertable || y == x) return j;
+  │     bool available = status == _Status::free || (inserting && status == _Status::deleted);
+  │     if (available || y == x) return j;
   │     j = (j + 1) % _set.size();
   │   } while (j != i);
   │ 
@@ -932,7 +887,7 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ [doctest] test cases:  1 |  1 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 15 | 15 passed | 0 failed |
+  │ [doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 9 | 9 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
