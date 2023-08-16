@@ -17,7 +17,6 @@
 
 # Projects & exams (use this for private content, with submodule)
 !/*/atividades/
-!/*/atividades/*
 
 # Code
 !doctest.hpp
