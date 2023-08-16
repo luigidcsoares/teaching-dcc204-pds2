@@ -7,12 +7,19 @@
 !README.md
 
 # Subdirectories
-!*/
+!/*/
 
-# Class notes
-!notas*.org
-!notas*.txt
-!**/aulas/01_apresentacao/slides.pdf
+# Class notes & slides (use this for public content)
+!/*/aulas
+!/*/aulas/**/notas-*.org
+!/*/aulas/**/notas-*.txt
+!/*/aulas/01_apresentacao/slides.pdf
+
+# Projects & exams (use this for private content, with submodule)
+!/*/atividades/
+!/*/atividades/*
+
+# Code
 !doctest.hpp
 
 # Schedule, syllabus
