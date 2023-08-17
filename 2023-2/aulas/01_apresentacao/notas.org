@@ -13,15 +13,9 @@
 
 - Como desenvolver e manter sistemas tão grandes?
 
-* Por quê C++?
-
-- Tudo depende do contexto/propósito. Linux é escrito em C
+- Em PDS 1, vocês utilizaram a linguagem C
+- Em PDS 2, vamos passar para a linguagem C++
   
-  Software <--- comunica com ---> S.O. <--- comunica com ---> Harware
-  
-- Esconder a complexidade: abstração!
-- Ferramentas e bibliotecas que facilitam a escrita de código
-
 * C vs C++: Exemplos
 
 ** Hello World

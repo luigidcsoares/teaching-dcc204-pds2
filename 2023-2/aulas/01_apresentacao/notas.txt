@@ -19,16 +19,8 @@ PDS 1 vs PDS 2
 
   • Como desenvolver e manter sistemas tão grandes?
 
-
-Por quê C++?
-════════════
-
-  • Tudo depende do contexto/propósito. Linux é escrito em C
-
-    Software <— comunica com —> S.O. <— comunica com —> Harware
-
-  • Esconder a complexidade: abstração!
-  • Ferramentas e bibliotecas que facilitam a escrita de código
+  • Em PDS 1, vocês utilizaram a linguagem C
+  • Em PDS 2, vamos passar para a linguagem C++
 
 
 C vs C++: Exemplos
@@ -181,12 +173,11 @@ Como contar a frequência de cada inteiro na entrada?
   │ }
   └────
 
-  ┌────
-  │ 1 => 3
-  │ 2 => 2
-  │ 3 => 1
-  └────
-
+  ━━━━━━━━━━
+   1  =>  3 
+   2  =>  2 
+   3  =>  1 
+  ━━━━━━━━━━
 
   Tentativa 1 em C++: busca linear com vector
 
@@ -225,12 +216,11 @@ Como contar a frequência de cada inteiro na entrada?
   │ }
   └────
 
-  ┌────
-  │ 1 => 3
-  │ 2 => 2
-  │ 3 => 1
-  └────
-
+  ━━━━━━━━━━
+   1  =>  3 
+   2  =>  2 
+   3  =>  1 
+  ━━━━━━━━━━
 
   Tentativa 2: std::map ([red-black tree]):
 
@@ -264,11 +254,11 @@ Como contar a frequência de cada inteiro na entrada?
   │ }
   └────
 
-  ┌────
-  │ 1 => 3
-  │ 2 => 2
-  │ 3 => 1
-  └────
+  ━━━━━━━━━━
+   1  =>  3 
+   2  =>  2 
+   3  =>  1 
+  ━━━━━━━━━━
 
 
 [red-black tree] <https://en.wikipedia.org/wiki/Red%E2%80%93black_tree>
