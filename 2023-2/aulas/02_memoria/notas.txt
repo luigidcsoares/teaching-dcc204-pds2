@@ -5,6 +5,27 @@
                       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
+
+
+
+Hierarquia de Memória
+═════════════════════
+
+  • Registradores (CPU)
+  • Cache (nível 1, 2, 3, …)
+  • Memória principal (RAM)
+  • Memória secundária (HD/SSD, usado como extensão da memória = memória
+    virtual)
+  • Quanto mais perto do processador, mais rápido o acesso (e menor o
+    tamanho da memória)
+
+  • Princípio da localidade temporal: dados acessados *recentemente* têm
+    mais chances de serem acessados novamente
+  • Princípio da localidade espacial: dados e instruções em *endereços
+    próximos àqueles acessados recentemente* têm maior probabilidade de
+    acesso
+
+
 Regiões de Memória
 ══════════════════
 
@@ -17,89 +38,130 @@ Regiões de Memória
 
   • Onde fica armazenado o arranjo `xs' do programa abaixo?
 
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ int xs[] = {2, 3, 5, 7, 11, 13, 17, 19};
-    │ int main() {
-    │   for (int x : xs) {
-    │     std::cout << x << std::endl;
-    │   } 
-    │   return 0;
-    │ }
-    └────
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int xs[] = {2, 3, 5, 7, 11, 13, 17, 19};
+  │ int main() {
+  │   for (int x : xs) {
+  │     std::cout << x << std::endl;
+  │   } 
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━
+    2 
+    3 
+    5 
+    7 
+   11 
+   13 
+   17 
+   19 
+  ━━━━
 
   • Como ver isso no código assembly?
+  • Obs.: a opção `-fno-stack-protector' desabilita a inserção de código
+    gerado pelo compilador para proteção contra ataques como o "stack
+    smashing". Estamos utilizando apenas para simplificar o código
+    gerado.
 
-    ┌────
-    │ g++ -S -std=c++17 static_array.cpp
-    └────
+  ┌────
+  │ g++ -S -std=c++17 -fno-stack-protector src/static_array.cpp -o asm/static_array.s
+  └────
 
   • E constantes, onde ficam?
 
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ int main() {
-    │   std::cout << "Hello World!" << std::endl;
-    │   return 0;
-    │ }
-    └────
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   std::cout << "Hello World!" << std::endl;
+  │   return 0;
+  │ }
+  └────
 
-    ┌────
-    │ Hello World!
-    └────
+  ┌────
+  │ Hello World!
+  └────
 
 
-    ┌────
-    │ g++ -S -std=c++17 constant_string.cpp
-    └────
+  ┌────
+  │ g++ -S -std=c++17 -fno-stack-protector src/constant_string.cpp -o asm/constant_string.s
+  └────
 
   • O que fica armazenado na pilha?
 
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ int main() {
-    │   int xs[3] = {1, 2, 3};
-    │   int sum = xs[0] + xs[1] + xs[2];
-    │   std::cout << sum << std::endl;
-    │   return 0;
-    │ }
-    └────
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   int xs[3] = {1, 2, 3};
+  │   int sum = xs[0] + xs[1] + xs[2];
+  │   std::cout << sum << std::endl;
+  │   return 0;
+  │ }
+  └────
 
-    ┌────
-    │ 6
-    └────
+  ┌────
+  │ 6
+  └────
 
 
-    ┌────
-    │ g++ -S -std=c++17 stack.cpp
-    └────
+  ┌────
+  │ g++ -S -std=c++17 -fno-stack-protector src/stack.cpp -o asm/stack.s
+  └────
+
+  • A pilha começa no endereço mais alto e cresce de cima para baixo
+  • Temos dois ponteiros relacionados à pilha: `rbp' e `rsp'
+  • O `rbp' aponta para o início da pilha, enquanto o `rsp' aponta para
+    o final
+  • A pilha corresponde ao espaço entre o `rbp' e o `rsp'
+  • A instrução `subq $16, %rsp' reserva 16 bytes na pilha, para as
+    nossas variáveis locais
+  • As primeiras instruções correspondem a criação do array:
+
+  ┌────
+  │ movl	$1, -16(%rbp)
+  │ movl	$2, -12(%rbp)
+  │ movl	$3, -8(%rbp)
+  └────
+
+  • Em seguida, temos as instruções correspondentes a soma `xs[0] +
+    xs[1] + xs[2]'
+  • A atribuição da soma à variável `sum' acontece por meio da instrução
+
+  ┌────
+  │ movl	-4(%rbp), %eax
+  └────
+
+  • Isto é, o endereço de memória `rbp - 4' é o endereço da variável
+    `sum'
 
   • E no heap?
 
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ int main() {
-    │   int *x = new int;
-    │   int *y = new int;
-    │   *x = 1;
-    │   *y = 2;
-    │   std::cout << *x + *y << std::endl;
-    │   return 0;
-    │ }
-    └────
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   int *x = new int;
+  │   int *y = new int;
+  │   *x = 1;
+  │   *y = 2;
+  │   std::cout << *x + *y << std::endl;
+  │   return 0;
+  │ }
+  └────
 
-    ┌────
-    │ 3
-    └────
+  ┌────
+  │ 3
+  └────
 
 
-    ┌────
-    │ g++ -S -std=c++17 heap.cpp
-    └────
+  ┌────
+  │ g++ -S -std=c++17 -fno-stack-protector src/heap.cpp -o asm/heap.s
+  └────
 
 
 Manipulando a Memória
@@ -110,170 +172,45 @@ Manipulando a Memória
   • Em C: `malloc' e `free'
   • Em C++: `new + new[]' e `delete + delete[]'
 
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ int main() {
-    │   int *xs = new int[5];
-    │ 
-    │   for (int i = 0; i < 5; i++) {
-    │     xs[i] = i + 1;
-    │   }
-    │ 
-    │   int *sum = nullptr; // use nullptr ao invés de NULL
-    │ 
-    │   sum = new int;
-    │   *sum = 0;
-    │ 
-    │   for (int i = 0; i < 5; i++) {
-    │     *sum = *sum + xs[i];
-    │   }
-    │ 
-    │   std::cout << *sum << std::endl;
-    │ 
-    │   delete[] xs;
-    │   delete sum;
-    │ 
-    │   return 0;
-    │ }
-    └────
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int main() {
+  │   int *xs = new int[5];
+  │ 
+  │   for (int i = 0; i < 5; i++) {
+  │     xs[i] = i + 1;
+  │   }
+  │ 
+  │   int *sum = nullptr; // use nullptr ao invés de NULL
+  │ 
+  │   sum = new int;
+  │   *sum = 0;
+  │ 
+  │   for (int i = 0; i < 5; i++) {
+  │     *sum = *sum + xs[i];
+  │   }
+  │ 
+  │   std::cout << *sum << std::endl;
+  │ 
+  │   delete[] xs;
+  │   delete sum;
+  │ 
+  │   return 0;
+  │ }
+  └────
 
-    ┌────
-    │ 15
-    └────
-
-  • O que o programa a seguir faz?
-
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ int *ones(unsigned n) {
-    │   int *xs = new int[n];
-    │   for (int i = 0; i < n; i++) {
-    │     xs[i] = 1;
-    │   }
-    │   return xs;
-    │ }
-    │ 
-    │ int main() {
-    │   int *xs = ones(10);
-    │   for (int i = 0; i < 10; i++) {
-    │     std::cout << xs[i] << " ";
-    │   }
-    │   std::cout << std::endl;
-    │   return 0;
-    │ }
-    └────
-
-    ┌────
-    │ 1 1 1 1 1 1 1 1 1 1
-    └────
-
-  • E qual o problema com ele?
-  • Como verificar?
-
-    ┌────
-    │ g++ -std=c++17 -g -fsanitize=address leak.cpp
-    │ ./a.out
-    └────
+  ┌────
+  │ 15
+  └────
 
 
-Passagem de Parâmetros
-══════════════════════
-
-  • O que o código a seguir faz?
-  • Ele está correto?
-
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ void swap(int x, int y) {
-    │   int tmp = x;
-    │   x = y;
-    │   y = tmp;
-    │ }
-    │ 
-    │ int main() {
-    │   int x = 2;
-    │   int y = 3;
-    │   std::cout << "x = " << x << ", y = " << y << std::endl;
-    │   swap(x, y);
-    │   std::cout << "x = " << x << ", y = " << y << std::endl;
-    │   return 0;
-    │ }
-    └────
-
-    ━━━━━━━━━━━━━━
-     x = 2  y = 3 
-     x = 2  y = 3 
-    ━━━━━━━━━━━━━━
-
-  • Como consertar?
-
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ void swap(int *x, int *y) {
-    │   int tmp = *x;
-    │   *x = *y;
-    │   *y = tmp;
-    │ }
-    │ 
-    │ int main() {
-    │   int x = 2;
-    │   int y = 3;
-    │   std::cout << "x = " << x << ", y = " << y << std::endl;
-    │   swap(&x, &y);
-    │   std::cout << "x = " << x << ", y = " << y << std::endl;
-    │   return 0;
-    │ }
-    └────
-
-    ━━━━━━━━━━━━━━
-     x = 2  y = 3 
-     x = 3  y = 2 
-    ━━━━━━━━━━━━━━
-
-  • Em C++, temos outra opção (preferível): *referência*
-
-    ┌────
-    │ #include <iostream>
-    │ 
-    │ void swap(int &x, int &y) {
-    │   int tmp = x;
-    │   x = y;
-    │   y = tmp;
-    │ }
-    │ 
-    │ int main() {
-    │   int x = 2;
-    │   int y = 3;
-    │   std::cout << "x = " << x << ", y = " << y << std::endl;
-    │   swap(x, y);
-    │   std::cout << "x = " << x << ", y = " << y << std::endl;
-    │   return 0;
-    │ }
-    └────
-
-    ━━━━━━━━━━━━━━
-     x = 2  y = 3 
-     x = 3  y = 2 
-    ━━━━━━━━━━━━━━
-
-
-Revisões
-════════
-
-Alocação de arranjos multi-dimensionais:
-────────────────────────────────────────
-
-  A alocação de matrizes (ou arranjos com ≥ 2 dimensões) é feita em C++
-  da mesma forma que em C, trocando apenas o operador de alocação
-  (`malloc' vs `new []'): alocamos um arranjo de ponteiros e, para cada
-  ponteiro, alocamos um novo arranjo.
-
-  (algumas linguagens utilizam notações simplificadas como `new
-  int[2][2]', mas não é o caso de C++)
+  • A alocação de matrizes (ou arranjos com ≥ 2 dimensões) é feita em
+    C++ da mesma forma que em C, trocando apenas o operador de alocação
+    (`malloc' vs `new []')alocamos um arranjo de ponteiros e, para cada
+    ponteiro, alocamos um novo arranjo
+  • Algumas linguagens utilizam notações simplificadas como `new
+    int[2][2]', mas não é o caso de C++
 
   ┌────
   │ #include <iostream>
@@ -306,79 +243,120 @@ Alocação de arranjos multi-dimensionais:
    3  4 
   ━━━━━━
 
-
-Assembly: Alocação Estática (Pilha)
-───────────────────────────────────
-
-  A pilha começa no endereço mais alto e cresce de cima para baixo. Por
-  isso, quando observamos o código assembly gerado vemos a instrução
-  `subq $16, %rsp': subtraímos um valor do `stack pointer' `rsp' (o
-  `rsp' aponta para o "topo" da pilha, visualizando a pilha ao
-  contrário; dizemos topo porque é o local do último valor que foi
-  inserido/do primeiro que será removido).
-
-  Existe, também, um outro ponteiro `rbp' (`base pointer'), que aponta
-  sempre para o ínicio de um frame (um frame é um conjunto de dados na
-  pilha, por exemplo o conjunto que corresponde a chamada de uma função:
-  seus argumentos, mais as variáveis locais a função).
+  • O que o programa a seguir faz?
 
   ┌────
   │ #include <iostream>
   │ 
-  │ int main() {
-  │   int xs[3] = {1, 2, 3};
-  │ 
-  │   for (int i = 0; i < 3; i++) {
-  │     std::cout << xs[i] << std::endl;
+  │ int *ones(unsigned n) {
+  │   int *xs = new int[n];
+  │   for (int i = 0; i < n; i++) {
+  │     xs[i] = 1;
   │   }
+  │   return xs;
+  │ }
   │ 
+  │ int main() {
+  │   int *xs = ones(10);
+  │   for (int i = 0; i < 10; i++) {
+  │     std::cout << xs[i] << " ";
+  │   }
+  │   std::cout << std::endl;
   │   return 0;
   │ }
   └────
 
-  ━━━
-   1 
-   2 
-   3 
-  ━━━
-
   ┌────
-  │ g++ -S -std=c++17 -fno-stack-protector stack2.cpp
+  │ 1 1 1 1 1 1 1 1 1 1
   └────
 
-  O assembly gerado a partir do código acima se assemelha a algo como:
+
+  • E qual o problema com ele?
+  • Como verificar?
 
   ┌────
-  │ subq $16, %rsp
-  │ movl $1, -16(%rbp)
-  │ movl $2, -12(%rbp)
-  │ movl $3, -8(%rbp)
-  │ movl $0, -4(%rbp)
+  │ g++ -std=c++17 -g -fsanitize=address src/leak.cpp -o bin/leak
   └────
 
-  Visualmente, temos algo como:
 
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Pilha  Variável Correspondente 
-  ────────────────────────────────
-       0  i                       
-       3  xs[2]                   
-       2  xs[1]                   
-       1  xs[0]                   
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Passagem de Parâmetros
+══════════════════════
 
+  • O que o código a seguir faz?
+  • Ele está correto?
 
-  Acessamos um elemento da pilha através de um offset em relação ao
-  ponteiro base `rbp' (poderia ser feito a partir do `rsp'
-  também). Lembre-se que o `rbp' aponta para a base do frame atual. Por
-  exemplo, a variável `i' que controla o `for' está armazenada entre
-  `rbp' e `rbp - 4' (de baixo para cima. Note que o espaço entre, por
-  exemplo, `rbp' e `rbp - 1' corresponde a 1 byte).
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ void swap(int x, int y) {
+  │   int tmp = x;
+  │   x = y;
+  │   y = tmp;
+  │ }
+  │ 
+  │ int main() {
+  │   int x = 2;
+  │   int y = 3;
+  │   std::cout << "x = " << x << ", y = " << y << std::endl;
+  │   swap(x, y);
+  │   std::cout << "x = " << x << ", y = " << y << std::endl;
+  │   return 0;
+  │ }
+  └────
 
+  ━━━━━━━━━━━━━━
+   x = 2  y = 3 
+   x = 2  y = 3 
+  ━━━━━━━━━━━━━━
 
-Memória Cache
-─────────────
+  • Como consertar?
 
-  Em sistemas modernos, as memórias cache geralmente se encontram na
-  própria CPU, embora em hardwares mais antigo os níveis ≥ 2 de cache
-  apareciam na placa mãe.
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ void swap(int *x, int *y) {
+  │   int tmp = *x;
+  │   *x = *y;
+  │   *y = tmp;
+  │ }
+  │ 
+  │ int main() {
+  │   int x = 2;
+  │   int y = 3;
+  │   std::cout << "x = " << x << ", y = " << y << std::endl;
+  │   swap(&x, &y);
+  │   std::cout << "x = " << x << ", y = " << y << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━━━━━━━━━━━
+   x = 2  y = 3 
+   x = 3  y = 2 
+  ━━━━━━━━━━━━━━
+
+  • Em C++, temos outra opção (preferível): *referência*
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ void swap(int &x, int &y) {
+  │   int tmp = x;
+  │   x = y;
+  │   y = tmp;
+  │ }
+  │ 
+  │ int main() {
+  │   int x = 2;
+  │   int y = 3;
+  │   std::cout << "x = " << x << ", y = " << y << std::endl;
+  │   swap(x, y);
+  │   std::cout << "x = " << x << ", y = " << y << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━━━━━━━━━━━
+   x = 2  y = 3 
+   x = 3  y = 2 
+  ━━━━━━━━━━━━━━
