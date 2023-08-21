@@ -2,7 +2,6 @@
 #+author: Luigi D. C. Soares
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-
 * Hierarquia de Memória
 
 - Registradores (CPU)
