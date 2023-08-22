@@ -10,7 +10,7 @@ Hierarquia de Memória
 
   • Registradores (CPU)
   • Cache (nível 1, 2, 3, …)
-  • Memória principal (RAM)
+  • Memória RAM
   • Memória secundária (HD/SSD, usado como extensão da memória = memória
     virtual)
   • Quanto mais perto do processador, mais rápido o acesso (e menor o
