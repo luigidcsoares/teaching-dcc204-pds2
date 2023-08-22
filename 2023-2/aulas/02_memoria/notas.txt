@@ -275,6 +275,22 @@ Manipulando a Memória
   │ g++ -std=c++17 -g -fsanitize=address src/leak.cpp -o bin/leak
   └────
 
+  • Recapitulando…
+  • Para toda operação `ponteiro = new Tipo', deve-se ter uma operação
+    `delete ponteiro'
+  • Para toda operação `ponteiro = new Tipo[tamanho]', deve-se ter uma
+    operação `delete[] ponteiro'
+  • Diferentemente de C, em que temos a função `realloc', não existe um
+    operador de realocação em C++
+  • E, não existe garantia de que um `realloc' irá funcionar em um
+    espaço previamente alocado por meio do operador `new'
+  • A realocação, em C++, geralmente é feita alocando-se um novo espaço
+    do tamanho necessário e copiando/movendo o conteúdo do espaço
+    original para o novo espaço
+  • Na grande maioria dos casos, vamos usar estruturas como o
+    `std::vector', que cuidam desse gerenciamento, então não
+    precisaremos nos preocupar com realocação
+
 
 Passagem de Parâmetros
 ══════════════════════
@@ -357,3 +373,9 @@ Passagem de Parâmetros
    x = 2  y = 3 
    x = 3  y = 2 
   ━━━━━━━━━━━━━━
+
+
+Revisão
+───────
+
+  • Como realocar em C++?
