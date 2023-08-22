@@ -23,9 +23,9 @@
 
 # Schedule, syllabus
 !header.tex
-!cronograma.org
-!cronograma.tex
-!cronograma.pdf
+!cronograma*.org
+!cronograma*.tex
+!cronograma*.pdf
 !plano-ensino.org
 !plano-ensino.tex
 !plano-ensino.pdf
