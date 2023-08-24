@@ -33,6 +33,7 @@ Introdução a Testes
       • Testa-se o sistema como um todo, para verificar se o que o
         usuário desejava foi atendido (nem sempre o que o requisito diz
         é o que o usuário realmente queria, erros podem acontecer)
+
     • Testes "caixa preta" vs "caixa branca"
       • Caixa preta: temos pouco ou nenhum acesso ao código que será
         testado (exemplo: sistema já pronto)
@@ -150,10 +151,10 @@ Exemplo 1: Palíndromo
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-slOy8c.cpp:16:
+  │ /tmp/babel-zv6AUL/C-src-CKIOJ7.cpp:16:
   │ TEST CASE:  Testando a verificação de palíndromo
   │ 
-  │ /tmp/babel-XD6C2f/C-src-slOy8c.cpp:18: ERROR: CHECK_FALSE( is_palindrome("banana") ) is NOT correct!
+  │ /tmp/babel-zv6AUL/C-src-CKIOJ7.cpp:18: ERROR: CHECK_FALSE( is_palindrome("banana") ) is NOT correct!
   │   values: CHECK_FALSE( true )
   │ 
   │ ===============================================================================
@@ -220,10 +221,10 @@ Exemplo 1: Palíndromo
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-tehnlJ.cpp:20:
+  │ /tmp/babel-zv6AUL/C-src-TbPSwa.cpp:20:
   │ TEST CASE:  Testando a verificação de palíndromo
   │ 
-  │ /tmp/babel-XD6C2f/C-src-tehnlJ.cpp:22: ERROR: CHECK( is_palindrome("osso") ) is NOT correct!
+  │ /tmp/babel-zv6AUL/C-src-TbPSwa.cpp:22: ERROR: CHECK( is_palindrome("osso") ) is NOT correct!
   │   values: CHECK( false )
   │ 
   │ ===============================================================================
@@ -358,10 +359,10 @@ Exemplo 1: Palíndromo
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-kzxHv9.cpp:19:
+  │ /tmp/babel-zv6AUL/C-src-ZNIx1V.cpp:19:
   │ TEST CASE:  Testando a verificação de palíndromo
   │ 
-  │ /tmp/babel-XD6C2f/C-src-kzxHv9.cpp:21: ERROR: CHECK( is_palindrome("aRarA") ) is NOT correct!
+  │ /tmp/babel-zv6AUL/C-src-ZNIx1V.cpp:21: ERROR: CHECK( is_palindrome("aRarA") ) is NOT correct!
   │   values: CHECK( false )
   │ 
   │ ===============================================================================
@@ -431,10 +432,10 @@ Exemplo 1: Palíndromo
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-iNGEmg.cpp:19:
+  │ /tmp/babel-zv6AUL/C-src-cqQU1N.cpp:19:
   │ TEST CASE:  Testando a verificação de palíndromo
   │ 
-  │ /tmp/babel-XD6C2f/C-src-iNGEmg.cpp:23: ERROR: CHECK( is_palindrome("A Daniela ama a lei? Nada!") ) is NOT correct!
+  │ /tmp/babel-zv6AUL/C-src-cqQU1N.cpp:23: ERROR: CHECK( is_palindrome("A Daniela ama a lei? Nada!") ) is NOT correct!
   │   values: CHECK( false )
   │ 
   │ ===============================================================================
@@ -519,10 +520,10 @@ Exemplo 1: Palíndromo
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-kK6p4H.cpp:26:
+  │ /tmp/babel-zv6AUL/C-src-epgyt5.cpp:26:
   │ TEST CASE:  Testando a verificação de palíndromo
   │ 
-  │ /tmp/babel-XD6C2f/C-src-kK6p4H.cpp:31: ERROR: CHECK_FALSE( is_palindrome("banana") ) is NOT correct!
+  │ /tmp/babel-zv6AUL/C-src-epgyt5.cpp:31: ERROR: CHECK_FALSE( is_palindrome("banana") ) is NOT correct!
   │   values: CHECK_FALSE( true )
   │ 
   │ ===============================================================================
@@ -539,6 +540,7 @@ Exemplo 1: Palíndromo
   ┌────
   │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
   │ #include "doctest.hpp"
+  │ #include <algorithm>
   │ #include <string>
   │ 
   │ bool is_palindrome(std::string raw_str) {
@@ -577,6 +579,123 @@ Exemplo 1: Palíndromo
   └────
 
 
+  ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+  *Implementação alternativa vista em sala*
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include <string>
+  │ 
+  │ bool is_palindrome(std::string str) {
+  │   for (int i = 0, j = str.size() - 1; i <= j;) {
+  │     // Se for um caractere inválido à esquerda, move apenas o `i`
+  │     if (str[i] == ' ' || str[i] == '?' || str[i] == '!') {
+  │       i++;
+  │       continue;   
+  │     }
+  │ 
+  │     // Se for um caractere inválido à direita, move apenas o `j`
+  │     if (str[j] == ' ' || str[j] == '?' || str[j] == '!') {
+  │       j--;
+  │       continue;   
+  │     }
+  │ 
+  │     // Se ambos os caracteres são válidos, segue o processo normal
+  │     if (std::tolower(str[i]) != std::tolower(str[j])) {
+  │       return false;
+  │     }
+  │ 
+  │     i++;
+  │     j--;
+  │   }
+  │ 
+  │   return true;
+  │ }
+  │ 
+  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │   CHECK( is_palindrome("arara")  );
+  │   CHECK(is_palindrome("AraRa"));
+  │   CHECK(is_palindrome("rever"));
+  │   CHECK(is_palindrome("osso"));
+  │   CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  │   // CHECK(! is_palindrome("primavera"));
+  │   CHECK_FALSE(is_palindrome("primavera"));
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 6 | 6 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  Refatorando para utilizar o `std::find':
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include <algorithm>
+  │ #include <string>
+  │ 
+  │ bool is_palindrome(std::string str) {
+  │   char discard[] = {' ', '?', '!'};
+  │   for (int i = 0, j = str.size() - 1; i <= j;) {
+  │     // Se for um caractere inválido à esquerda, move apenas o `i`
+  │     char *lookup_i = std::find(std::begin(discard), std::end(discard), str[i]);
+  │     if (lookup_i != std::end(discard)) {
+  │       i++;
+  │       continue;   
+  │     }
+  │ 
+  │     // Se for um caractere inválido à direita, move apenas o `j`
+  │     char *lookup_j = std::find(std::begin(discard), std::end(discard), str[j]);
+  │     if (lookup_j != std::end(discard)) {
+  │       j--;
+  │       continue;   
+  │     }
+  │ 
+  │     // Se ambos os caracteres são válidos, segue o processo normal
+  │     if (std::tolower(str[i]) != std::tolower(str[j])) {
+  │       return false;
+  │     }
+  │ 
+  │     i++;
+  │     j--;
+  │   }
+  │ 
+  │   return true;
+  │ }
+  │ 
+  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │   CHECK( is_palindrome("arara")  );
+  │   CHECK(is_palindrome("AraRa"));
+  │   CHECK(is_palindrome("rever"));
+  │   CHECK(is_palindrome("osso"));
+  │   // CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  │   // CHECK(! is_palindrome("primavera"));
+  │   CHECK_FALSE(is_palindrome("primavera"));
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 5 | 5 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+
 Exemplo 2: Fibonacci
 ────────────────────
 
@@ -593,7 +712,7 @@ Exemplo 2: Fibonacci
   │ #include "doctest.hpp"
   │ 
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   CHECK_EQ(fibonacci(0), 0);
   │ }
   └────
@@ -608,7 +727,7 @@ Exemplo 2: Fibonacci
   │   return 0;
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   CHECK_EQ(fibonacci(0), 0);
   │ }
   └────
@@ -633,7 +752,7 @@ Exemplo 2: Fibonacci
   │   return 0;
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   CHECK_EQ(fibonacci(0), 0);
   │   CHECK_EQ(fibonacci(1), 1);
   │ }
@@ -643,10 +762,10 @@ Exemplo 2: Fibonacci
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-fmy8Wo.cpp:15:
-  │ TEST CASE:  Testando a verificação de palíndromo
+  │ /tmp/babel-zv6AUL/C-src-jyABgw.cpp:15:
+  │ TEST CASE:  Testando a sequência de fibonacci
   │ 
-  │ /tmp/babel-XD6C2f/C-src-fmy8Wo.cpp:17: ERROR: CHECK_EQ( fibonacci(1), 1 ) is NOT correct!
+  │ /tmp/babel-zv6AUL/C-src-jyABgw.cpp:17: ERROR: CHECK_EQ( fibonacci(1), 1 ) is NOT correct!
   │   values: CHECK_EQ( 0, 1 )
   │ 
   │ ===============================================================================
@@ -669,7 +788,7 @@ Exemplo 2: Fibonacci
   │   }
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   CHECK_EQ(fibonacci(0), 0);
   │   CHECK_EQ(fibonacci(1), 1);
   │ }
@@ -701,7 +820,7 @@ Exemplo 2: Fibonacci
   │   }
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   CHECK_EQ(fibonacci(0), 0);
   │   CHECK_EQ(fibonacci(1), 1);
   │   CHECK_EQ(fibonacci(3), 2);
@@ -712,10 +831,10 @@ Exemplo 2: Fibonacci
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-OD61v5.cpp:19:
-  │ TEST CASE:  Testando a verificação de palíndromo
+  │ /tmp/babel-zv6AUL/C-src-eEInzL.cpp:19:
+  │ TEST CASE:  Testando a sequência de fibonacci
   │ 
-  │ /tmp/babel-XD6C2f/C-src-OD61v5.cpp:22: ERROR: CHECK_EQ( fibonacci(3), 2 ) is NOT correct!
+  │ /tmp/babel-zv6AUL/C-src-eEInzL.cpp:22: ERROR: CHECK_EQ( fibonacci(3), 2 ) is NOT correct!
   │   values: CHECK_EQ( 1, 2 )
   │ 
   │ ===============================================================================
@@ -740,7 +859,7 @@ Exemplo 2: Fibonacci
   │   }
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   CHECK_EQ(fibonacci(0), 0);
   │   CHECK_EQ(fibonacci(1), 1);
   │   CHECK_EQ(fibonacci(3), 2);
@@ -769,7 +888,7 @@ Exemplo 2: Fibonacci
   │   return fibonacci(n - 1) + fibonacci(n - 2);
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   CHECK_EQ(fibonacci(0), 0);
   │   CHECK_EQ(fibonacci(1), 1);
   │   CHECK_EQ(fibonacci(3), 2);
@@ -799,7 +918,7 @@ Exemplo 2: Fibonacci
   │   return fibonacci(n - 1) + fibonacci(n - 2);
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   SUBCASE("Caso base (n = 0, n = 1)") {
   │     CHECK_EQ(fibonacci(0), 0);
   │     CHECK_EQ(fibonacci(1), 1);
@@ -832,7 +951,7 @@ Exemplo 2: Fibonacci
   │   return fibonacci(n - 1) + fibonacci(n - 2);
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   SUBCASE("Caso base (n = 0, n = 1)") {
   │     CHECK_EQ(fibonacci(0), 0);
   │     CHECK_EQ(fibonacci(1), 1);
@@ -877,7 +996,7 @@ Exemplo 2: Fibonacci
   │   return current;
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   SUBCASE("Caso base (n = 0, n = 1)") {
   │     CHECK_EQ(fibonacci(0), 0);
   │     CHECK_EQ(fibonacci(1), 1);
@@ -917,7 +1036,7 @@ Exemplo 2: Fibonacci
   │   return (pow(phi, n) - pow(1 - phi, n)) / sqrt(5);
   │ }
   │ 
-  │ TEST_CASE("Testando a verificação de palíndromo") {
+  │ TEST_CASE("Testando a sequência de fibonacci") {
   │   SUBCASE("Caso base (n = 0, n = 1)") {
   │     CHECK_EQ(fibonacci(0), 0);
   │     CHECK_EQ(fibonacci(1), 1);

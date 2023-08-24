@@ -481,6 +481,7 @@ TEST_CASE("Testando a verificação de palíndromo") {
 #+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.hpp"
+#include <algorithm>
 #include <string>
 
 bool is_palindrome(std::string raw_str) {
@@ -517,6 +518,112 @@ TEST_CASE("Testando a verificação de palíndromo") {
 : [doctest] assertions: 5 | 5 passed | 0 failed |
 : [doctest] Status: SUCCESS!
 
+-----
+
+*Implementação alternativa vista em sala*
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <string>
+
+bool is_palindrome(std::string str) {
+  for (int i = 0, j = str.size() - 1; i <= j;) {
+    // Se for um caractere inválido à esquerda, move apenas o `i`
+    if (str[i] == ' ' || str[i] == '?' || str[i] == '!') {
+      i++;
+      continue;   
+    }
+
+    // Se for um caractere inválido à direita, move apenas o `j`
+    if (str[j] == ' ' || str[j] == '?' || str[j] == '!') {
+      j--;
+      continue;   
+    }
+
+    // Se ambos os caracteres são válidos, segue o processo normal
+    if (std::tolower(str[i]) != std::tolower(str[j])) {
+      return false;
+    }
+
+    i++;
+    j--;
+  }
+  
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK( is_palindrome("arara")  );
+  CHECK(is_palindrome("AraRa"));
+  CHECK(is_palindrome("rever"));
+  CHECK(is_palindrome("osso"));
+  CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  // CHECK(! is_palindrome("primavera"));
+  CHECK_FALSE(is_palindrome("primavera"));
+}
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 6 | 6 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+Refatorando para utilizar o ~std::find~:
+
+#+begin_src C++ :flags -std=c++17 -I ../ :exports both :main no :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include <algorithm>
+#include <string>
+
+bool is_palindrome(std::string str) {
+  char discard[] = {' ', '?', '!'};
+  for (int i = 0, j = str.size() - 1; i <= j;) {
+    // Se for um caractere inválido à esquerda, move apenas o `i`
+    char *lookup_i = std::find(std::begin(discard), std::end(discard), str[i]);
+    if (lookup_i != std::end(discard)) {
+      i++;
+      continue;   
+    }
+    
+    // Se for um caractere inválido à direita, move apenas o `j`
+    char *lookup_j = std::find(std::begin(discard), std::end(discard), str[j]);
+    if (lookup_j != std::end(discard)) {
+      j--;
+      continue;   
+    }
+
+    // Se ambos os caracteres são válidos, segue o processo normal
+    if (std::tolower(str[i]) != std::tolower(str[j])) {
+      return false;
+    }
+
+    i++;
+    j--;
+  }
+  
+  return true;
+}
+
+TEST_CASE("Testando a verificação de palíndromo") {
+  CHECK( is_palindrome("arara")  );
+  CHECK(is_palindrome("AraRa"));
+  CHECK(is_palindrome("rever"));
+  CHECK(is_palindrome("osso"));
+  // CHECK(is_palindrome("A Daniela ama a lei? Nada!"));
+  // CHECK(! is_palindrome("primavera"));
+  CHECK_FALSE(is_palindrome("primavera"));
+}
+#+end_src
+
+#+RESULTS:
+
+-----
+
 ** Exemplo 2: Fibonacci
 
 - Considere a sequência de Fibonacci 0, 1, 1, 2, 3, 5, 8, 13, ...
@@ -532,7 +639,7 @@ TEST_CASE("Testando a verificação de palíndromo") {
 #include "doctest.hpp"
 
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   CHECK_EQ(fibonacci(0), 0);
 }
 #+end_src
@@ -547,7 +654,7 @@ int fibonacci(unsigned n) {
   return 0;
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   CHECK_EQ(fibonacci(0), 0);
 }
 #+end_src
@@ -570,7 +677,7 @@ int fibonacci(unsigned n) {
   return 0;
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   CHECK_EQ(fibonacci(0), 0);
   CHECK_EQ(fibonacci(1), 1);
 }
@@ -607,7 +714,7 @@ int fibonacci(unsigned n) {
   }
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   CHECK_EQ(fibonacci(0), 0);
   CHECK_EQ(fibonacci(1), 1);
 }
@@ -635,7 +742,7 @@ int fibonacci(unsigned n) {
   }
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   CHECK_EQ(fibonacci(0), 0);
   CHECK_EQ(fibonacci(1), 1);
   CHECK_EQ(fibonacci(3), 2);
@@ -675,7 +782,7 @@ int fibonacci(unsigned n) {
   }
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   CHECK_EQ(fibonacci(0), 0);
   CHECK_EQ(fibonacci(1), 1);
   CHECK_EQ(fibonacci(3), 2);
@@ -701,7 +808,7 @@ int fibonacci(unsigned n) {
   return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   CHECK_EQ(fibonacci(0), 0);
   CHECK_EQ(fibonacci(1), 1);
   CHECK_EQ(fibonacci(3), 2);
@@ -727,7 +834,7 @@ int fibonacci(unsigned n) {
   return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   SUBCASE("Caso base (n = 0, n = 1)") {
     CHECK_EQ(fibonacci(0), 0);
     CHECK_EQ(fibonacci(1), 1);
@@ -758,7 +865,7 @@ int fibonacci(unsigned n) {
   return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   SUBCASE("Caso base (n = 0, n = 1)") {
     CHECK_EQ(fibonacci(0), 0);
     CHECK_EQ(fibonacci(1), 1);
@@ -797,7 +904,7 @@ int fibonacci(unsigned n) {
   return current;
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   SUBCASE("Caso base (n = 0, n = 1)") {
     CHECK_EQ(fibonacci(0), 0);
     CHECK_EQ(fibonacci(1), 1);
@@ -834,7 +941,7 @@ int fibonacci(unsigned n) {
   return (pow(phi, n) - pow(1 - phi, n)) / sqrt(5);
 }
 
-TEST_CASE("Testando a verificação de palíndromo") {
+TEST_CASE("Testando a sequência de fibonacci") {
   SUBCASE("Caso base (n = 0, n = 1)") {
     CHECK_EQ(fibonacci(0), 0);
     CHECK_EQ(fibonacci(1), 1);
