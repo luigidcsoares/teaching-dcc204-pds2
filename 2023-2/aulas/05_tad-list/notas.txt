@@ -1,0 +1,677 @@
+                  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   NOTAS DE AULA - 05 LISTA ENCADEADA
+
+                           Luigi D. C. Soares
+                  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+TADs (relembrando)
+══════════════════
+
+  • Conjunto de *operações* sobre um conjunto de valores
+  • Importante é o que o TAD faz, não como
+
+
+Coleção de Elementos
+════════════════════
+
+  Como guardar uma sequência de elementos?
+
+  • Arranjos:
+    • Tamanho fixo
+    • Acesso direto pelo índice
+    • Biblioteca padrão C++:
+
+  ┌────
+  │ #include <array>
+  │ std::array<int, 10> xs;
+  └────
+
+  • Arranjos dinâmicos:
+    • Tamanho fixo, novo arranjo criado após esgotar espaço
+    • Acesso direto pelo índice
+    • Biblioteca padrão C++:
+
+  ┌────
+  │ #include<vector>
+  │ std::vector<int>xs;
+  │ std::vector<int>ys(10); // Definindo tamanho inicial
+  └────
+
+  Qual o custo de inserir um elemento na primeira posição de um arranjo?
+
+  Exemplo: inserir o 10 na primeira posição, antes do 0
+
+  [0, 1, 2, 3, ?] → [10, 0, 1, 2, 3]
+
+  É preciso deslocar todos os elementos do arranjo para a direita! (n
+  deslocamentos, sendo n o tamanho pré inserção)
+
+  Se o arranjo não tiver espaço suficiente, é preciso criar um novo
+  arranjo e copiar todos os elementos, deslocando uma posição para a
+  direita. Uma possível implementação seria dobrar o tamanho:
+
+  [0, 1, 2, 3] → [10, 0, 1, 2, 3, ?, ?, ?]
+
+  E para remover o elemento da primeira posição? Novamente, é preciso
+  deslocar os outros para a esquerda:
+
+  [10, 0, 1, 2, 3] → [0, 1, 2, 3, ?, ?, ?, ?]
+
+
+Lista Encadeada
+═══════════════
+
+  Cada nó da lista irá apontar para o próximo:
+
+  0 → 1 → 2 → 3
+
+  Para inserir um elemento no início, basta reorganizar os ponteiros:
+
+  0 → 10 → 1 → 2 → 3
+
+  Note que a lista é naturalmente dinâmica!
+
+  Para inserir no final, o processo é o mesmo, basta que o último
+  elemento aponte para o novo.
+
+  0 → 1 → 2 → 3 → 10
+
+  E para remover o primeiro elemento? Bom, precisamos de alguma maneira
+  nos referir ao primeiro elemento:
+
+  front → 0 → 1 → 2 → 3
+
+  Agora, basta atualizar `front' e apagar o 0:
+
+  front → 1 → 2 → 3
+
+  E para nos referir ao último elemento? Vamos adicionar um ponteiro
+  para ele também:
+
+  front → 0 → 1 → 2 → 3 ← back
+
+  Note que, dado que eu tenha em mãos um nó da lista em qualquer
+  posição, para inserir um novo nó a sua frente ou para remover o nó que
+  está na sua frente é preciso apenas uma operação (não é preciso
+  deslocar ninguém).
+
+  Mas, a partir de um nó, como inserir um novo nó atrás? Como remover o
+  nó de trás?
+
+
+Lista Duplamente Encadeada
+══════════════════════════
+
+  Quais as operações?
+  • Criar a lista
+  • Inserir no início
+  • Inserir no fim
+  • Dado um nó, inserir após ele
+  • Dado um nó, inserir antes dele
+  • Remover do início, fim, antes e depois de um nó
+  • Recuperar o primeiro e o último nó
+  • Percorrer a lista (nas duas direções)
+  • Tamanho da lista
+  • …
+
+  Vamos começar pensando na estrutura interna da lista:
+  • Cada elemento da lista é um nó, com ponteiros para frente e para
+    trás
+  • Vamos declarar o nó dentro da lista. Assim, vamos nos referir a ele
+    (fora da lista) como `IntLinkedList::Node'
+  • Não queremos que o usuário altere as ligações de cada nó
+    diretamente, ele pode apenas acessar. Mas, queremos que a nossa
+    classe IntLinkedList possa manipular os membros privados, porque ela
+    vai controlar os nós. Para isso, definimos LinkedList como uma
+    classe "amiga" (friend class) de Node.
+
+  `linked_list.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ class IntLinkedList {
+  │ public:
+  │   class Node {
+  │     friend class IntLinkedList;
+  │ 
+  │   public:
+  │     int data;
+  │ 
+  │     /// @return Ponteiro para o próximo nó
+  │     Node *next() ;
+  │ 
+  │     /// @return Ponteiro para o nó anterior
+  │     Node *prev() ;
+  │ 
+  │   private:
+  │     Node *_prev = nullptr;
+  │     Node *_next = nullptr;
+  │   };
+  │ 
+  │ private:
+  │ 
+  │ };
+  └────
+
+  Vamos começar pela inserção de elementos *antes* um determinado nó
+
+  `test.cpp'
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ #include "linked_list.hpp"
+  │ 
+  │ <<_test_push_before>>
+  └────
+
+  Temos algumas funções para implementar… mas, vamos pensar na estrutura
+  da lista primeiro:
+  • Na lista encadeada simples, tínhamos dois nós especiais `front' e
+    `back'
+  • Podemos continuar utilizando os mesmos nós
+  • Inicialmente, a lista vazia estaria no seguinte estado:
+
+    null ← `front' ↔ `back' → null
+
+  • Porém, note que podemos tornar a lista "circular", e juntar os dois
+    nós especiais em um só (vamos chamar de `base')
+
+  Além do `push_before', vamos implementar uma função `end'
+  • Esta função servirá para indicar o fim da lista quando estivermos
+    caminhando nela (independente da direção)
+  • O fim é uma posição após o último nó válido. Ou seja, é o nó
+    especial `base'!
+
+  Além destas funções, precisamos inicializar os ponteiros do nó base
+  • Inicialmente, o nó base aponta para ele mesmo
+  • Vamos fazer isso em uma função especial, que chamamos de construtor
+
+  `linked_list.hpp'
+
+  ┌────
+  │ class IntLinkedList {
+  │ public:
+  │   // ...
+  │ 
+  │   /// @brief Inicializa a lista encadeada
+  │   IntLinkedList();
+  │ 
+  │   /// @return Nó que corresponde ao final da lista
+  │   Node &end();
+  │ 
+  │   /// @brief Insere um elemento antes de um determinado nó.
+  │   ///
+  │   /// @param data   Elemento a ser inserido na lista.
+  │   /// @param before Nó de referência para a inserção.
+  │   /// @return O novo nó armazenando @p data
+  │   Node &push_before(int data, Node &before);
+  │ 
+  │ private:
+  │   Node _base;
+  │ };
+  └────
+
+  `linked_list.cpp'
+
+  ┌────
+  │ IntLinkedList::Node *IntLinkedList::Node::prev() {
+  │   return _prev;
+  │ }
+  │ 
+  │ IntLinkedList::Node *IntLinkedList::Node::next() {
+  │   return _next;
+  │ }
+  │ 
+  │ IntLinkedList::IntLinkedList() {
+  │   _base._next = &_base;
+  │   _base._prev = &_base;
+  │ }
+  │ 
+  │ IntLinkedList::Node &IntLinkedList::end() {
+  │   return _base;
+  │ }
+  │ 
+  │ IntLinkedList::Node &IntLinkedList::push_before(int data, Node &before) {
+  │   Node *node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = before._prev;
+  │   node->_next = &before;
+  │ 
+  │   before._prev->_next = node;
+  │   before._prev = node;
+  │ 
+  │   return *node;
+  │ }
+  └────
+
+  ┌────
+  │ #include "linked_list.hpp"
+  │ 
+  │ IntLinkedList::Node *IntLinkedList::Node::prev() {
+  │   return _prev;
+  │ }
+  │ 
+  │ IntLinkedList::Node *IntLinkedList::Node::next() {
+  │   return _next;
+  │ }
+  │ 
+  │ IntLinkedList::IntLinkedList() {
+  │   _base._next = &_base;
+  │   _base._prev = &_base;
+  │ }
+  │ 
+  │ IntLinkedList::Node &IntLinkedList::end() {
+  │   return _base;
+  │ }
+  │ 
+  │ IntLinkedList::Node &IntLinkedList::push_before(int data, Node &before) {
+  │   Node *node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = before._prev;
+  │   node->_next = &before;
+  │ 
+  │   before._prev->_next = node;
+  │   before._prev = node;
+  │ 
+  │   return *node;
+  │ }
+  └────
+
+  Resultado do caso de teste, após a implementação:
+
+  Agora, vamos passar para a inserção *após* um determinado nó
+
+  ┌────
+  │ TEST_CASE("IntLinkedList::push_after") {
+  │   IntLinkedList list;
+  │ 
+  │   IntLinkedList::Node &front = list.front();
+  │   IntLinkedList::Node &node1 = list.push_after(1, front);
+  │   IntLinkedList::Node &node2 = list.push_after(2, node1);
+  │   IntLinkedList::Node &node3 = list.push_after(3, front);
+  │ 
+  │   CHECK_EQ(node1.data, 1);
+  │   CHECK_EQ(node1.prev(), &node3);
+  │   CHECK_EQ(node1.next(), &node2);
+  │ 
+  │   CHECK_EQ(node2.data, 2);
+  │   CHECK_EQ(node2.prev(), &node1);
+  │   CHECK_EQ(node2.next(), &list.end());
+  │ 
+  │   CHECK_EQ(node3.data, 3);
+  │   CHECK_EQ(node3.prev(), &list.end());
+  │   CHECK_EQ(node3.next(), &node1);
+  │ }
+  └────
+
+  Precisaremos implementar a função `front', que retorna o primeiro nó
+  válido (diferente de `end', que retorna um nó "inválido"), e, claro, a
+  função `push_after' (bem parecida com `push_before'):
+
+  `linked_list.hpp'
+
+  ┌────
+  │ class IntLinkedList {
+  │ public:
+  │   // ...
+  │ 
+  │   /// @return Nó que corresponde ao início da lista (primeiro elemento)
+  │   Node &front();
+  │ 
+  │   /// @brief Insere um elemento após um determinado nó.
+  │   ///
+  │   /// @param data   Elemento a ser inserido na lista.
+  │   /// @param before Nó de referência para a inserção.
+  │   /// @return O novo nó armazenando @p data
+  │   Node &push_after(int data, Node &before);
+  │ 
+  │   // ...
+  │ };
+  └────
+
+  `linked_list.cpp'
+
+  ┌────
+  │ IntLinkedList::Node &IntLinkedList::front() {
+  │   return *_base._prev;
+  │ }
+  │ 
+  │ IntLinkedList::Node &IntLinkedList::push_after(int data, Node &after) {
+  │   Node *node = new Node;
+  │   node->data = data;
+  │ 
+  │   node->_prev = &after;
+  │   node->_next = after._next;
+  │ 
+  │   after._next->_prev = node;
+  │   after._next = node;
+  │ 
+  │   return *node;
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 9 | 9 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  E a inserção no início?
+
+  ┌────
+  │ TEST_CASE("IntLinkedList::push_front") {
+  │   IntLinkedList list;
+  │ 
+  │   IntLinkedList::Node &node1 = list.push_front(1);
+  │   IntLinkedList::Node &node2 = list.push_front(2);
+  │   IntLinkedList::Node &node3 = list.push_front(3);
+  │ 
+  │   CHECK_EQ(node1.data, 1);
+  │   CHECK_EQ(node1.prev(), &node2);
+  │   CHECK_EQ(node1.next(), &list.end());
+  │ 
+  │   CHECK_EQ(node2.data, 2);
+  │   CHECK_EQ(node2.prev(), &node3);
+  │   CHECK_EQ(node2.next(), &node1);
+  │ 
+  │   CHECK_EQ(node3.data, 3);
+  │   CHECK_EQ(node3.prev(), &list.end());
+  │   CHECK_EQ(node3.next(), &node2);
+  │ }
+  └────
+
+  `linked_list.hpp'
+
+  ┌────
+  │ class IntLinkedList {
+  │ public:
+  │   // ...
+  │ 
+  │   /// @brief Insere um elemento no início da lista.
+  │   ///
+  │   /// @param data   Elemento a ser inserido.
+  │   /// @return O novo nó armazenando @p data
+  │   Node &push_front(int data);
+  │ 
+  │   // ...
+  │ };
+  └────
+
+  `linked_list.cpp'
+
+  ┌────
+  │ IntLinkedList::Node &IntLinkedList::push_front(int data) {
+  │   return push_after(data, _base);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 18 | 18 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  A inserção no final segue a mesma ideia:
+
+  ┌────
+  │ TEST_CASE("IntLinkedList::push_back") {
+  │   IntLinkedList list;
+  │ 
+  │   IntLinkedList::Node &node1 = list.push_back(1);
+  │   IntLinkedList::Node &node2 = list.push_back(2);
+  │   IntLinkedList::Node &node3 = list.push_back(3);
+  │ 
+  │   CHECK_EQ(node1.data, 1);
+  │   CHECK_EQ(node1.prev(), &list.end());
+  │   CHECK_EQ(node1.next(), &node2);
+  │ 
+  │   CHECK_EQ(node2.data, 2);
+  │   CHECK_EQ(node2.prev(), &node1);
+  │   CHECK_EQ(node2.next(), &node3);
+  │ 
+  │   CHECK_EQ(node3.data, 3);
+  │   CHECK_EQ(node3.prev(), &node2);
+  │   CHECK_EQ(node3.next(), &list.end());
+  │ }
+  └────
+
+  `linked_list.hpp'
+
+  ┌────
+  │ class IntLinkedList { 
+  │ public:
+  │   // ...
+  │ 
+  │   /// @brief Insere um elemento no final da lista.
+  │   ///
+  │   /// @param data   Elemento a ser inserido.
+  │   /// @return O novo nó armazenando @p data
+  │   Node &push_back(int data);
+  │ 
+  │   // ...
+  │ };
+  └────
+
+  `linked_list.cpp'
+
+  ┌────
+  │ IntLinkedList::Node &IntLinkedList::push_back(int data) {
+  │   return push_before(data, _base);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  3 |  3 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 27 | 27 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  Até o momento, temos as seguintes operações:
+
+  • Inserir antes de um determinado nó (`push_before')
+  • Inserir após um determinado nó (`push_after')
+  • Inserir no início (`push_front')
+  • Inserir no final (`push_back')
+  • Indicador do fim da lista (`end')
+  • Recuperar o primeiro nó da lista (`front')
+
+  Precisamos também ser capazes de acessar o último nó da lista, para
+  percorrê-la na direção reversa (vamos pular qualquer teste, a função é
+  muito simples…):
+
+  `linked_list.hpp'
+
+  ┌────
+  │ class IntLinkedList {
+  │ public:
+  │   // ...
+  │ 
+  │   /// @brief Insere um elemento no final da lista.
+  │   ///
+  │   /// @param data   Elemento a ser inserido.
+  │   /// @return O novo nó armazenando @p data
+  │   Node &push_back(int data);
+  │ 
+  │   // ...
+  │ };
+  └────
+
+  `linked_list.cpp'
+
+  ┌────
+  │ IntLinkedList::Node &IntLinkedList::back() {
+  │   return *_base._next;
+  │ }
+  └────
+
+  Será que conseguimos copiar dados de um nó para outro?
+  • O que deveria acontecer com os dados, ao atribuir um nó a outro?
+    (exemplo, para fazer a troca de dois nós)
+  • O que deveria acontecer com os ponteiros?
+
+  ┌────
+  │ TEST_CASE("IntLinkedList::Node => Copiando um nó para outro") {
+  │   IntLinkedList list;
+  │ 
+  │   IntLinkedList::Node &node1 = list.push_back(1);
+  │   IntLinkedList::Node &node2 = list.push_back(2);
+  │ 
+  │   REQUIRE_EQ(node1.data, 1);
+  │   REQUIRE_EQ(node1.prev(), &list.end());
+  │   REQUIRE_EQ(node1.next(), &node2);
+  │ 
+  │   REQUIRE_EQ(node2.data, 2);
+  │   REQUIRE_EQ(node2.prev(), &node1);
+  │   REQUIRE_EQ(node2.next(), &list.end());
+  │ 
+  │   node1 = node2;
+  │ 
+  │   CHECK_EQ(node1.data, 2);
+  │   CHECK_EQ(node1.prev(), &list.end());
+  │   CHECK_EQ(node1.next(), &node2);
+  │ 
+  │   CHECK_EQ(node2.data, 2);
+  │   CHECK_EQ(node2.prev(), &node1);
+  │   CHECK_EQ(node2.next(), &list.end());
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-leVvwe/C-src-ksyHzA.cpp:71:
+  │ TEST CASE:  IntLinkedList::Node => Copiando um nó para outro
+  │ 
+  │ /tmp/babel-leVvwe/C-src-ksyHzA.cpp:88: ERROR: CHECK_EQ( node1.prev(), &list.end() ) is NOT correct!
+  │   values: CHECK_EQ( 0x8a1840, 0x7fffef13d3d0 )
+  │ 
+  │ /tmp/babel-leVvwe/C-src-ksyHzA.cpp:89: ERROR: CHECK_EQ( node1.next(), &node2 ) is NOT correct!
+  │   values: CHECK_EQ( 0x7fffef13d3d0, 0x8a1860 )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases:  4 |  3 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 39 | 37 passed | 2 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  O que aconteceu? Como ficou a lista?
+  • Inicialmente, a lista era:
+
+  ┌────
+  │ ⬐ base ⬎
+  │ 1   ↔   2
+  └────
+
+  • Após a atribuição: =base ↔ 1
+
+  ┌────
+  │ ⬐→ base ⬎
+  │ 1↺   ←   2
+  └────
+
+  Temos que impedir que os ponteiros sejam, também, copiados. Podemos
+  definir um `operador' de atribuição:
+
+  `linked_list.hpp'
+
+  ┌────
+  │ class IntLinkedList {
+  │ public:
+  │   class Node {
+  │     friend class IntLinkedList;
+  │ 
+  │   public:
+  │     // ...
+  │ 
+  │     /// @brief Operador de atribuição, copiando apenas o dado.
+  │     Node &operator=(Node const &rhs);
+  │ 
+  │   private:
+  │     Node *_prev = nullptr;
+  │     Node *_next = nullptr;
+  │   };
+  │   // ...
+  │ };
+  └────
+
+  `linked_list.cpp'
+
+  ┌────
+  │ IntLinkedList::Node &IntLinkedList::Node::operator=(Node const &rhs) {
+  │   data = rhs.data;
+  │   return *this; // Ponteiro para o objeto atual (lado esquerdo da atribuição)
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases:  5 |  5 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 48 | 48 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  E as operações de remoção? Dado um nó, como removê-lo?
+
+  ┌────
+  │ ⬐    base    ⬎
+  │ 0 ↔ 1 ↔ 2 ↔ 3
+  └────
+
+  Exemplo: remover o 2
+
+  Basta rearranjar os links entre o nó anterior e o posterior e liberar
+  o nó que será removido:
+
+  ┌────
+  │ ⬐  base ⬎
+  │ 0 ↔ 1 ↔ 3
+  └────
+
+  *Tente implementar!*
+
+
+(Breve) Discussão: Vetor vs Lista
+═════════════════════════════════
+
+  • Em teoria, analisando cada estrutura:
+    • Vetores são eficiente em relação a acesso a elementos (por índice)
+    • Mas, são ineficientes para operações de inserção/remoção em
+      posições aleatórias (especialmente na primeira posição)
+    • Listas são ineficientes para acessos a nós aleatórios (precisa
+      percorrer)
+    • Mas, são eficientes para operações de inserção/remoção (dado que
+      você já tem o nó de referência)
+
+  • Na prática, levando em consideração quesitos como hardware:
+    • Vimos que o funcionamento da memória cache segue o princípio de
+      localidade espacial
+    • Vetores se beneficiam bastante deste princípio, já que são
+      alocados de forma contígua na memória
+    • Listas não se beneficiam deste princípio
+    • Em muitos casos (poucos elementos ou elementos de tipo não muito
+      custosos), vetores serão melhores que listas
+    • Ainda assim, há casos (como inserção no início) em que listas se
+      sobressaem
+    • Na dúvida, opte por vetores (ou comece com vetores, e troque se
+      necessário)
