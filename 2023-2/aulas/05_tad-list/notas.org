@@ -102,7 +102,7 @@ Vamos começar pensando na estrutura interna da lista:
 
 =linked_list.hpp=
 
-#+begin_src C++ :tangle include/linked_list.hpp :noweb strip-export
+#+begin_src C++ :exports none :tangle include/linked_list.hpp :noweb yes
 #pragma once
 
 class IntLinkedList {
@@ -129,12 +129,39 @@ private:
 };
 #+end_src
 
+#+begin_src C++ :exports code 
+#pragma once
+
+class IntLinkedList {
+public:
+  class Node {
+    friend class IntLinkedList;
+    
+  public:
+    int data;
+
+    /// @return Ponteiro para o próximo nó
+    Node *next() ;
+    
+    /// @return Ponteiro para o nó anterior
+    Node *prev() ;
+    
+  private:
+    Node *_prev = nullptr;
+    Node *_next = nullptr;
+  };
+};
+#+end_src
+
 Vamos começar pela inserção de elementos *antes* um determinado nó
 
 =test.cpp=
 
-#+name: _test_push_before
-#+begin_src C++ :exports none
+#+begin_src C++ :exports code
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include "linked_list.hpp"
+
 TEST_CASE("IntLinkedList::push_before") {
   IntLinkedList list;
   
@@ -157,16 +184,35 @@ TEST_CASE("IntLinkedList::push_before") {
 }
 #+end_src
 
-#+name: test_push_before
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ :exports code
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.hpp"
-#include "linked_list.hpp"
+#+begin_src C++ :exports none :noweb-ref test_push_before_ref
+TEST_CASE("IntLinkedList::push_before") {
+  IntLinkedList list;
+  
+  IntLinkedList::Node &end = list.end();
+  IntLinkedList::Node &node1 = list.push_before(1, end);
+  IntLinkedList::Node &node2 = list.push_before(2, node1);
+  IntLinkedList::Node &node3 = list.push_before(3, end);
 
-<<_test_push_before>>
+  CHECK_EQ(node1.data, 1);
+  CHECK_EQ(node1.prev(), &node2);
+  CHECK_EQ(node1.next(), &node3);
+
+  CHECK_EQ(node2.data, 2);
+  CHECK_EQ(node2.prev(), &end);
+  CHECK_EQ(node2.next(), &node1);
+
+  CHECK_EQ(node3.data, 3);
+  CHECK_EQ(node3.prev(), &node1);
+  CHECK_EQ(node3.next(), &end);
+}
 #+end_src
 
-#+RESULTS: test1
+#+begin_src C++ :exports none :noweb-ref test_header_v1_ref
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+#include "doctest.hpp"
+#include "linked_list.hpp"
+#+end_src
 
 Temos algumas funções para implementar... mas, vamos pensar na estrutura da lista primeiro:
 - Na lista encadeada simples, tínhamos dois nós especiais ~front~ e ~back~
@@ -187,7 +233,6 @@ Além destas funções, precisamos inicializar os ponteiros do nó base
 
 =linked_list.hpp=
 
-#+name: decl_push_before
 #+begin_src C++ :exports none :noweb-ref list_interface_public
 /// @brief Inicializa a lista encadeada
 IntLinkedList();
@@ -203,7 +248,6 @@ Node &end();
 Node &push_before(int data, Node &before);
 #+end_src
 
-#+name: decl_base
 #+begin_src C++ :exports none :noweb-ref list_interface_private
 Node _base;
 #+end_src
@@ -213,17 +257,29 @@ class IntLinkedList {
 public:
   // ...
   
-  <<decl_push_before>>
+  /// @brief Inicializa a lista encadeada
+  IntLinkedList();
+
+  /// @return Nó que corresponde ao final da lista
+  Node &end();
+
+  /// @brief Insere um elemento antes de um determinado nó.
+  ///
+  /// @param data   Elemento a ser inserido na lista.
+  /// @param before Nó de referência para a inserção.
+  /// @return O novo nó armazenando @p data
+  Node &push_before(int data, Node &before);
   
 private:
-  <<decl_base>>
+  Node _base;
 };
 #+end_src
 
 =linked_list.cpp=
 
-#+name: src_list_push_before
-#+begin_src C++ :exports code :noweb-ref src_list
+#+begin_src C++ :exports code :tangle src/linked_list.cpp
+#include "linked_list.hpp"
+
 IntLinkedList::Node *IntLinkedList::Node::prev() {
   return _prev;
 }
@@ -255,20 +311,60 @@ IntLinkedList::Node &IntLinkedList::push_before(int data, Node &before) {
 }
 #+end_src
 
-#+begin_src C++ :exports code :tangle src/linked_list.cpp :noweb yes
+#+begin_src C++ :exports none :noweb-ref src_header_v1_ref
 #include "linked_list.hpp"
+#+end_src
 
-<<src_list_push_before>>
+#+begin_src C++ :exports none :noweb-ref src_ref
+IntLinkedList::Node *IntLinkedList::Node::prev() {
+  return _prev;
+}
+
+IntLinkedList::Node *IntLinkedList::Node::next() {
+  return _next;
+}
+
+IntLinkedList::IntLinkedList() {
+  _base._next = &_base;
+  _base._prev = &_base;
+}
+
+IntLinkedList::Node &IntLinkedList::end() {
+  return _base;
+}
+
+IntLinkedList::Node &IntLinkedList::push_before(int data, Node &before) {
+  Node *node = new Node;
+  node->data = data;
+
+  node->_prev = before._prev;
+  node->_next = &before;
+
+  before._prev->_next = node;
+  before._prev = node;
+
+  return *node;
+}
 #+end_src
 
 Resultado do caso de teste, após a implementação:
 
-#+call: test_push_before() :exports both :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+#+begin_src C++ :exports results :noweb yes :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+<<test_header_v1_ref>>
+<<test_push_before_ref>>
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+: [doctest] assertions: 9 | 9 passed | 0 failed |
+: [doctest] Status: SUCCESS!
 
 Agora, vamos passar para a inserção *após* um determinado nó
 
-#+name: _test_push_after
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :exports code
+#+begin_src C++ :exports code :noweb-ref test_push_after_ref
 TEST_CASE("IntLinkedList::push_after") {
   IntLinkedList list;
 
@@ -291,17 +387,10 @@ TEST_CASE("IntLinkedList::push_after") {
 }
 #+end_src
 
-#+name: test_push_after
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :noweb yes :exports none
-<<test_push_before>>
-<<_test_push_after>>
-#+end_src
-
 Precisaremos implementar a função ~front~, que retorna o primeiro nó válido (diferente de ~end~, que retorna um nó "inválido"), e, claro, a função ~push_after~ (bem parecida com ~push_before~):
 
 =linked_list.hpp=
 
-#+name: decl_push_after
 #+begin_src C++ :exports none :noweb-ref list_interface_public
 /// @return Nó que corresponde ao início da lista (primeiro elemento)
 Node &front();
@@ -319,7 +408,15 @@ class IntLinkedList {
 public:
   // ...
   
-  <<decl_push_after>>
+  /// @return Nó que corresponde ao início da lista (primeiro elemento)
+  Node &front();
+
+  /// @brief Insere um elemento após um determinado nó.
+  ///
+  /// @param data   Elemento a ser inserido na lista.
+  /// @param before Nó de referência para a inserção.
+  /// @return O novo nó armazenando @p data
+  Node &push_after(int data, Node &before);
   
   // ...
 };
@@ -327,7 +424,7 @@ public:
 
 =linked_list.cpp=
 
-#+begin_src C++ :exports code :tangle src/linked_list.cpp :noweb-ref src_list
+#+begin_src C++ :exports code :noweb-ref src_ref :tangle src/linked_list.cpp
 IntLinkedList::Node &IntLinkedList::front() {
   return *_base._prev;
 }
@@ -346,12 +443,23 @@ IntLinkedList::Node &IntLinkedList::push_after(int data, Node &after) {
 }
 #+end_src
 
-#+call: test_push_after() :exports both :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+#+begin_src C++ :exports results :noweb yes :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+<<test_header_v1_ref>>
+<<test_push_before_ref>>
+<<test_push_after_ref>>
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+: [doctest] assertions: 18 | 18 passed | 0 failed |
+: [doctest] Status: SUCCESS!
 
 E a inserção no início?
 
-#+name: _test_push_front
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :exports code
+#+begin_src C++ :exports code :noweb-ref test_push_front_ref
 TEST_CASE("IntLinkedList::push_front") {
   IntLinkedList list;
 
@@ -373,16 +481,8 @@ TEST_CASE("IntLinkedList::push_front") {
 }
 #+end_src
 
-#+name: test_push_front
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :noweb yes :exports none
-<<test_push_before>>
-<<_test_push_after>>
-<<_test_push_front>>
-#+end_src
-
 =linked_list.hpp=
 
-#+name: decl_push_front
 #+begin_src C++ :exports none :noweb-ref list_interface_public
 /// @brief Insere um elemento no início da lista.
 ///
@@ -396,7 +496,11 @@ class IntLinkedList {
 public:
   // ...
   
-  <<decl_push_front>>
+  /// @brief Insere um elemento no início da lista.
+  ///
+  /// @param data   Elemento a ser inserido.
+  /// @return O novo nó armazenando @p data
+  Node &push_front(int data);
   
   // ...
 };
@@ -404,18 +508,30 @@ public:
 
 =linked_list.cpp=
 
-#+begin_src C++ :exports code :tangle src/linked_list.cpp :noweb-ref src_list
+#+begin_src C++ :exports code :noweb-ref src_ref :tangle src/linked_list.cpp
 IntLinkedList::Node &IntLinkedList::push_front(int data) {
   return push_after(data, _base);
 }
 #+end_src
 
-#+call: test_push_front() :exports both :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+#+begin_src C++ :exports results :noweb yes :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+<<test_header_v1_ref>>
+<<test_push_before_ref>>
+<<test_push_after_ref>>
+<<test_push_front_ref>>
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases:  3 |  3 passed | 0 failed | 0 skipped
+: [doctest] assertions: 27 | 27 passed | 0 failed |
+: [doctest] Status: SUCCESS!
 
 A inserção no final segue a mesma ideia:
 
-#+name: _test_push_back
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :exports code
+#+begin_src C++ :exports code :noweb-ref test_push_back_ref
 TEST_CASE("IntLinkedList::push_back") {
   IntLinkedList list;
 
@@ -437,17 +553,8 @@ TEST_CASE("IntLinkedList::push_back") {
 }
 #+end_src
 
-#+name: test_push_back
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :noweb yes :exports none
-<<test_push_before>>
-<<_test_push_after>>
-<<_test_push_front>>
-<<_test_push_back>>
-#+end_src
-
 =linked_list.hpp=
 
-#+name: decl_push_back
 #+begin_src C++ :exports none :noweb-ref list_interface_public
 /// @brief Insere um elemento no final da lista.
 ///
@@ -461,7 +568,11 @@ class IntLinkedList {
 public:
   // ...
   
-  <<decl_push_back>>
+  /// @brief Insere um elemento no final da lista.
+  ///
+  /// @param data   Elemento a ser inserido.
+  /// @return O novo nó armazenando @p data
+  Node &push_back(int data);
   
   // ...
 };
@@ -469,13 +580,27 @@ public:
 
 =linked_list.cpp=
 
-#+begin_src C++ :exports code :tangle src/linked_list.cpp :noweb-ref src_list
+#+begin_src C++ :exports code :noweb-ref src_ref :tangle src/linked_list.cpp
 IntLinkedList::Node &IntLinkedList::push_back(int data) {
   return push_before(data, _base);
 }
 #+end_src
 
-#+call: test_push_back() :exports both :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+#+begin_src C++ :exports results :noweb yes :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+<<test_header_v1_ref>>
+<<test_push_before_ref>>
+<<test_push_after_ref>>
+<<test_push_front_ref>>
+<<test_push_back_ref>>
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases:  4 |  4 passed | 0 failed | 0 skipped
+: [doctest] assertions: 36 | 36 passed | 0 failed |
+: [doctest] Status: SUCCESS!
 
 Até o momento, temos as seguintes operações:
 
@@ -490,7 +615,6 @@ Precisamos também ser capazes de acessar o último nó da lista, para percorrê
 
 =linked_list.hpp=
 
-#+name: decl_back
 #+begin_src C++ :exports none :noweb-ref list_interface_public
 /// @return Nó que corresponde ao último elemento da lista
 ///         (ou primeiro, no sentido reverso)
@@ -502,7 +626,9 @@ class IntLinkedList {
 public:
   // ...
   
-  <<decl_push_back>>
+  /// @return Nó que corresponde ao último elemento da lista
+  ///         (ou primeiro, no sentido reverso)
+  Node &back();
   
   // ...
 };
@@ -510,7 +636,7 @@ public:
 
 =linked_list.cpp=
 
-#+begin_src C++ :exports code :tangle src/linked_list.cpp :noweb-ref src_list
+#+begin_src C++ :exports code :noweb-ref src_ref :tangle src/linked_list.cpp
 IntLinkedList::Node &IntLinkedList::back() {
   return *_base._next;
 }
@@ -520,8 +646,7 @@ Será que conseguimos copiar dados de um nó para outro?
 - O que deveria acontecer com os dados, ao atribuir um nó a outro? (exemplo, para fazer a troca de dois nós)
 - O que deveria acontecer com os ponteiros?
 
-#+name: _test_assign
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :exports code
+#+begin_src C++ :exports code :noweb-ref test_assign_ref
 TEST_CASE("IntLinkedList::Node => Copiando um nó para outro") {
   IntLinkedList list;
 
@@ -548,28 +673,28 @@ TEST_CASE("IntLinkedList::Node => Copiando um nó para outro") {
 }
 #+end_src
 
-#+name: test_assign
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list.cpp :noweb yes :exports results :results scalar
-<<test_push_before>>
-<<_test_push_after>>
-<<_test_push_front>>
-<<_test_push_back>>
-<<_test_assign>>
+#+begin_src C++ :exports results :noweb yes :flags -std=c++17 -I ../ -I include src/linked_list.cpp :results scalar
+<<test_header_v1_ref>>
+<<test_push_before_ref>>
+<<test_push_after_ref>>
+<<test_push_front_ref>>
+<<test_push_back_ref>>
+<<test_assign_ref>>
 #+end_src
 
-#+RESULTS: test_assign
+#+RESULTS:
 #+begin_example
 [doctest] doctest version is "2.4.11"
 [doctest] run with "--help" for options
 ===============================================================================
-/tmp/babel-leVvwe/C-src-koqRdo.cpp:90:
+/tmp/babel-leVvwe/C-src-g9eIwX.cpp:94:
 TEST CASE:  IntLinkedList::Node => Copiando um nó para outro
 
-/tmp/babel-leVvwe/C-src-koqRdo.cpp:107: ERROR: CHECK_EQ( node1.prev(), &list.end() ) is NOT correct!
-  values: CHECK_EQ( 0x134a9e0, 0x7fffe8baf760 )
+/tmp/babel-leVvwe/C-src-g9eIwX.cpp:111: ERROR: CHECK_EQ( node1.prev(), &list.end() ) is NOT correct!
+  values: CHECK_EQ( 0x219a9e0, 0x7ffc56b57870 )
 
-/tmp/babel-leVvwe/C-src-koqRdo.cpp:108: ERROR: CHECK_EQ( node1.next(), &node2 ) is NOT correct!
-  values: CHECK_EQ( 0x7fffe8baf760, 0x134aa00 )
+/tmp/babel-leVvwe/C-src-g9eIwX.cpp:112: ERROR: CHECK_EQ( node1.next(), &node2 ) is NOT correct!
+  values: CHECK_EQ( 0x7ffc56b57870, 0x219aa00 )
 
 ===============================================================================
 [doctest] test cases:  5 |  4 passed | 1 failed | 0 skipped
@@ -596,13 +721,12 @@ Temos que impedir que os ponteiros sejam, também, copiados. Podemos definir um 
 
 =linked_list.hpp=
 
-#+name: decl_assign
 #+begin_src C++ :exports none :noweb-ref node_interface_public
 /// @brief Operador de atribuição, copiando apenas o dado.
 Node &operator=(Node const &rhs);
 #+end_src
 
-#+begin_src C++ :tangle include/linked_list_v2.hpp :noweb yes :exports none
+#+begin_src C++ :exports none :tangle include/linked_list_v2.hpp :noweb yes
 #pragma once
 
 class IntLinkedList {
@@ -626,7 +750,7 @@ public:
     Node *_next = nullptr;
   };
   <<list_interface_public>>
-  private:
+private:
   <<list_interface_private>>
 };
 #+end_src
@@ -640,41 +764,44 @@ public:
   public:
     // ...
 
-    <<decl_assign>>
+    /// @brief Operador de atribuição, copiando apenas o dado.
+    Node &operator=(Node const &rhs);
     
   private:
     Node *_prev = nullptr;
     Node *_next = nullptr;
   };
+  
   // ...
 };
 #+end_src
 
 =linked_list.cpp=
 
-#+begin_src C++ :exports code :noweb-ref src_list
+#+begin_src C++ :exports code :noweb-ref src_ref
 IntLinkedList::Node &IntLinkedList::Node::operator=(Node const &rhs) {
   data = rhs.data;
   return *this; // Ponteiro para o objeto atual (lado esquerdo da atribuição)
 }
 #+end_src
 
-#+begin_src C++ :exports none :tangle src/linked_list_v2.cpp :noweb yes
+#+begin_src C++ :exports none :noweb yes :tangle src/linked_list_v2.cpp
 #include "linked_list_v2.hpp"
 
-<<src_list>>
+<<src_ref>>
 #+end_src
 
 #+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/linked_list_v2.cpp :exports results :noweb yes :results scalar
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include "doctest.hpp"
 #include "linked_list_v2.hpp"
 
-<<_test_push_before>>
-<<_test_push_after>>
-<<_test_push_front>>
-<<_test_push_back>>
-<<_test_assign>>
+<<test_push_before_ref>>
+<<test_push_after_ref>>
+<<test_push_front_ref>>
+<<test_push_back_ref>>
+<<test_assign_ref>>
 #+end_src
 
 #+RESULTS:
