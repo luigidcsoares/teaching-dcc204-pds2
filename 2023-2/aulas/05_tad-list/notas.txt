@@ -549,14 +549,14 @@ Lista Duplamente Encadeada
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-leVvwe/C-src-HM8bCy.cpp:90:
+  │ /tmp/babel-leVvwe/C-src-TVpdLb.cpp:90:
   │ TEST CASE:  IntLinkedList::Node => Copiando um nó para outro
   │ 
-  │ /tmp/babel-leVvwe/C-src-HM8bCy.cpp:107: ERROR: CHECK_EQ( node1.prev(), &list.end() ) is NOT correct!
-  │   values: CHECK_EQ( 0xcb79e0, 0x7ffc54fca070 )
+  │ /tmp/babel-leVvwe/C-src-TVpdLb.cpp:107: ERROR: CHECK_EQ( node1.prev(), &list.end() ) is NOT correct!
+  │   values: CHECK_EQ( 0x1e0e9e0, 0x7ffdf44f47f0 )
   │ 
-  │ /tmp/babel-leVvwe/C-src-HM8bCy.cpp:108: ERROR: CHECK_EQ( node1.next(), &node2 ) is NOT correct!
-  │   values: CHECK_EQ( 0x7ffc54fca070, 0xcb7a00 )
+  │ /tmp/babel-leVvwe/C-src-TVpdLb.cpp:108: ERROR: CHECK_EQ( node1.next(), &node2 ) is NOT correct!
+  │   values: CHECK_EQ( 0x7ffdf44f47f0, 0x1e0ea00 )
   │ 
   │ ===============================================================================
   │ [doctest] test cases:  5 |  4 passed | 1 failed | 0 skipped
@@ -569,14 +569,15 @@ Lista Duplamente Encadeada
 
   ┌────
   │ ⬐ base ⬎
-  │ 1   ↔   2
+  │ 1  ←→  2
   └────
 
   • Após a atribuição: =base ↔ 1
 
   ┌────
   │ ⬐→ base ⬎
-  │ 1↺   ←   2
+  │ 1     ←   2
+  │ ↺
   └────
 
   Temos que impedir que os ponteiros sejam, também, copiados. Podemos
@@ -627,8 +628,8 @@ Lista Duplamente Encadeada
   E as operações de remoção? Dado um nó, como removê-lo?
 
   ┌────
-  │ ⬐    base    ⬎
-  │ 0 ↔ 1 ↔ 2 ↔ 3
+  │ ⬐       base       ⬎
+  │ 0 ←→ 1 ←→ 2 ←→ 3
   └────
 
   Exemplo: remover o 2
@@ -637,8 +638,8 @@ Lista Duplamente Encadeada
   o nó que será removido:
 
   ┌────
-  │ ⬐  base ⬎
-  │ 0 ↔ 1 ↔ 3
+  │ ⬐   base    ⬎
+  │ 0 ←→ 1 ←→ 3
   └────
 
   *Tente implementar!*
