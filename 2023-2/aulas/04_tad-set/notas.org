@@ -525,7 +525,7 @@ private:
 - Não testaremos as funções ~_hash~ e ~_rehash~ explicitamente, pois são detalhes de implementação
 - Vamos começar com a inserção (que depende tanto da operação de ~hash~ quanto da operação ~rehash~)
 
-#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v1.cpp :exports none
+#+begin_src C++ :flags -std=c++17 -I. -Wall :main no :tangle src/int_hashset_v1.cpp :exports code
 #include "int_hashset.hpp"
 #include <cmath>
 

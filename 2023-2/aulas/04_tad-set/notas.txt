@@ -445,6 +445,54 @@ Exemplo 2: Conjunto de inteiros (hash)
     `hash' quanto da operação `rehash')
 
   ┌────
+  │ #include "int_hashset.hpp"
+  │ #include <cmath>
+  │ 
+  │ bool IntSet::insert(int x) {
+  │   int i = _hash(x);
+  │ 
+  │   // Se não há espaço disponível, aplica-se a operação de rehash
+  │   if (i == -1) {
+  │     _rehash();
+  │     i = _hash(x);
+  │   }
+  │ 
+  │   // Se o nó já está em uso, com certeza o valor armazenado já é o x
+  │   else if (_set[i].second) {
+  │     return false;
+  │   }
+  │ 
+  │   _set[i] = {x, true};
+  │   return true;
+  │ }
+  │ 
+  │ int IntSet::_hash(int x) {
+  │   int i = std::abs(x) % _set.size();
+  │   int j = i;
+  │ 
+  │   do {
+  │     if (!_set[j].second || _set[j].first == x) return j;
+  │     j = (j + 1) % _set.size();
+  │   } while (j != i);
+  │ 
+  │   return -1;
+  │ }
+  │ 
+  │ void IntSet::_rehash() {
+  │   std::size_t n = _set.size();
+  │   _set.resize(n * 2);
+  │ 
+  │   for (std::size_t i = 0; i < n; i++) {
+  │     int x = _set[i].first;
+  │     _set[i].second = false;
+  │ 
+  │     unsigned j = _hash(x);
+  │     _set[j] = {x, true};
+  │   }
+  │ }
+  └────
+
+  ┌────
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
@@ -516,11 +564,11 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-GdDwhv.cpp:26:
+  │ /tmp/babel-6hih7O/C-src-Q9mMwE.cpp:26:
   │ TEST CASE:  IntSet (versão hash) => contains
   │   Conjunto vazio
   │ 
-  │ /tmp/babel-XD6C2f/C-src-GdDwhv.cpp:31: ERROR: CHECK_FALSE( contains ) is NOT correct!
+  │ /tmp/babel-6hih7O/C-src-Q9mMwE.cpp:31: ERROR: CHECK_FALSE( contains ) is NOT correct!
   │   values: CHECK_FALSE( true )
   │ 
   │ ===============================================================================
@@ -621,11 +669,11 @@ Exemplo 2: Conjunto de inteiros (hash)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-XD6C2f/C-src-nTXWgf.cpp:47:
+  │ /tmp/babel-6hih7O/C-src-dNABJg.cpp:47:
   │ TEST CASE:  IntSet (versão hash) => remove
   │   Remoção após colisão
   │ 
-  │ /tmp/babel-XD6C2f/C-src-nTXWgf.cpp:72: ERROR: CHECK( set.contains(5) ) is NOT correct!
+  │ /tmp/babel-6hih7O/C-src-dNABJg.cpp:72: ERROR: CHECK( set.contains(5) ) is NOT correct!
   │   values: CHECK( false )
   │ 
   │ ===============================================================================
