@@ -47,7 +47,7 @@ Se o arranjo não tiver espaço suficiente, é preciso criar um novo arranjo e c
 
 E para remover o elemento da primeira posição? Novamente, é preciso deslocar os outros para a esquerda:
 
-[10, 0, 1, 2, 3] \rarr [0, 1, 2, 3, ?, ?, ?, ?]
+[10, 0, 1, 2, 3, ?, ?, ?] \rarr [0, 1, 2, 3, ?, ?, ?, ?]
 
 * Lista Encadeada
 
@@ -55,7 +55,7 @@ Cada nó da lista irá apontar para o próximo:
 
 0 \rarr 1 \rarr 2 \rarr 3
 
-Para inserir um elemento no início, basta reorganizar os ponteiros:
+Para inserir um elemento, basta reorganizar os ponteiros:
 
 0 \rarr 10 \rarr 1 \rarr 2 \rarr 3
 
