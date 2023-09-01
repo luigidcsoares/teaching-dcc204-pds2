@@ -332,7 +332,7 @@ Lista Duplamente Encadeada
 
   ┌────
   │ IntLinkedList::Node &IntLinkedList::front() {
-  │   return *_base._prev;
+  │   return *_base._next;
   │ }
   │ 
   │ IntLinkedList::Node &IntLinkedList::push_after(int data, Node &after) {
@@ -509,7 +509,7 @@ Lista Duplamente Encadeada
 
   ┌────
   │ IntLinkedList::Node &IntLinkedList::back() {
-  │   return *_base._next;
+  │   return *_base._prev;
   │ }
   └────
 
@@ -549,14 +549,14 @@ Lista Duplamente Encadeada
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-GsavmL/C-src-VmQDjw.cpp:90:
+  │ /tmp/babel-CYhyIG/C-src-2oLMfk.cpp:90:
   │ TEST CASE:  IntLinkedList::Node => Copiando um nó para outro
   │ 
-  │ /tmp/babel-GsavmL/C-src-VmQDjw.cpp:107: ERROR: CHECK_EQ( node1.prev(), &list.end() ) is NOT correct!
-  │   values: CHECK_EQ( 0x1fda9e0, 0x7ffd3bb9c3b0 )
+  │ /tmp/babel-CYhyIG/C-src-2oLMfk.cpp:107: ERROR: CHECK_EQ( node1.prev(), &list.end() ) is NOT correct!
+  │   values: CHECK_EQ( 0x1ca69e0, 0x7ffc2f42b6c0 )
   │ 
-  │ /tmp/babel-GsavmL/C-src-VmQDjw.cpp:108: ERROR: CHECK_EQ( node1.next(), &node2 ) is NOT correct!
-  │   values: CHECK_EQ( 0x7ffd3bb9c3b0, 0x1fdaa00 )
+  │ /tmp/babel-CYhyIG/C-src-2oLMfk.cpp:108: ERROR: CHECK_EQ( node1.next(), &node2 ) is NOT correct!
+  │   values: CHECK_EQ( 0x7ffc2f42b6c0, 0x1ca6a00 )
   │ 
   │ ===============================================================================
   │ [doctest] test cases:  5 |  4 passed | 1 failed | 0 skipped

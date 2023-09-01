@@ -426,7 +426,7 @@ public:
 
 #+begin_src C++ :exports code :noweb-ref src_ref :tangle src/linked_list.cpp
 IntLinkedList::Node &IntLinkedList::front() {
-  return *_base._prev;
+  return *_base._next;
 }
 
 IntLinkedList::Node &IntLinkedList::push_after(int data, Node &after) {
@@ -638,7 +638,7 @@ public:
 
 #+begin_src C++ :exports code :noweb-ref src_ref :tangle src/linked_list.cpp
 IntLinkedList::Node &IntLinkedList::back() {
-  return *_base._next;
+  return *_base._prev;
 }
 #+end_src
 
