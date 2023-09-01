@@ -1,0 +1,498 @@
+                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                  NOTAS DE AULA - 06 BIBLIOTECA PADRÃO
+
+                           Luigi D. C. Soares
+                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Recapitulando
+═════════════
+
+  • Nas aulas anteriores, vimos formas diferentes de armazenar coleções
+    de valores
+  • Em particular, implementamos conjunto e lista (duplamente)
+    encadeada.
+
+  • Será que precisamos implementar essas estruturas sempre?
+  • Não: biblioteca padrão!
+    • std::vector
+    • std::list
+    • std::set
+    • std::map
+    • …
+    • Note o nome de espaço `std' (standard, padrão)
+
+  • Quais tipos não fazem sentido estar na biblioteca padrão?
+    • AlunoUFMG
+    • Livro
+    • ContaCorrente
+    • …
+
+
+Bibliotecas
+═══════════
+
+  Quase nenhum programa é escrito completamente do zero
+  • Por que reiventar a roda?
+  • Tempo é dinheiro!
+  • Produtividade
+  • Qualidade (componentes já bem testados)
+
+  Uma biblioteca disponibiliza funcionalidades por meio de um conjunto
+  de funções, classes, etc
+  • Biblioteca padrão C++
+  • Boost
+  • Adiciona funcionalidades ao seu sistema
+
+  O que é um framework?
+  • Diferente de biblioteca
+  • É um guia para a construção de algo (tanto real quanto conceitual)
+  • Um esqueleto de uma aplicação
+  • Aplicações gráficas C++: [QT] ([wiki])
+
+  O que tem na biblioteca padrão C++?
+  • Strings
+  • Ponteiros inteligentes (unique_ptr, shared_ptr)
+  • Entrada/saída
+  • Funcionalidades numéricas
+  • Containers (`STL', Standard Template Library)
+
+
+[QT] <https://www.qt.io/>
+
+[wiki] <https://wiki.qt.io/Qt_for_Beginners>
+
+
+Containers
+══════════
+
+  • Sequenciais: array, vector, deque, list
+  • Associativos: set, map, multiset, multimap (por quê o `multi'?)
+  • Adaptadores: stack, queue, priority queue
+
+
+Containers Sequenciais
+──────────────────────
+
+Array
+╌╌╌╌╌
+
+  • Armazenamento: contíguo
+  • Basicamente um wrapper (embrulho? invólucro?) para arrays no estilo
+    C
+  • Um array em C geralmente vira um ponteiro (exemplo: como argumento
+    de função)
+  • Conveniência:
+    • std::array funciona como outros tipos: por padrão, passagem por
+      valor
+    • Mais fácil de copiar
+    • Retornar como resultado de função
+    • Atribuição (não é possível como array em C)
+    • Acessar o tamanho
+    • Mesmo desempenho que um array no estilo C
+  • Documentação:
+    • <https://en.cppreference.com/w/cpp/container/array>
+    • <https://cplusplus.com/reference/array/array/>
+
+  ┌────
+  │ #include <iostream>
+  │ #include <array>
+  │ 
+  │ std::array<int, 2> f(int x, int y) {
+  │   return {x, y};
+  │ }
+  │ 
+  │ int main() {
+  │   // Não funciona:
+  │   // int xs[2] = {1, 2};
+  │   // int ys[2] = xs;
+  │ 
+  │   // Funciona:
+  │   std::array<int, 2> xs = f(1, 2);
+  │   std::array<int, 2> ys = xs;
+  │ 
+  │   std::cout << xs.size() << std::endl;
+  │   std::cout << xs[0] << " " << xs[1] << std::endl;
+  │   std::cout << ys[0] << " " << ys[1] << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━━━
+   2    
+   1  2 
+   1  2 
+  ━━━━━━
+
+
+Vector
+╌╌╌╌╌╌
+
+  • Armazenamento: contíguo
+  • Array genérico e dinamicamente redimensionável
+  • Acesso aleatório (índice)
+  • Inserir no/remover do final é relativamente barato (a depender da
+    necessidade de redimensionar)
+  • Inserir no/remover do meio/início é caro!
+  • Documentação:
+    • <https://en.cppreference.com/w/cpp/container/vector>
+    • <https://cplusplus.com/reference/vector/vector/>
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {7, 5, 16, 8};
+  │ 
+  │   xs.pop_back();
+  │   std::cout << xs.back() << std::endl;
+  │ 
+  │   xs.push_back(13);
+  │   xs.push_back(10);
+  │ 
+  │   // for-each:
+  │   for (int n : xs) {
+  │     std::cout << n << std::endl;
+  │   }
+  │ 
+  │   // Equivalente a:
+  │   // for (int i = 0; i < xs.size(); i++) {
+  │   //   int n = xs[i];
+  │   //   std::cout << n << std::endl;
+  │   // }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━
+   16 
+    7 
+    5 
+   16 
+   13 
+   10 
+  ━━━━
+
+  E se quiséssemos um vetor de Pessoas? O que uma pessoa tem?
+
+  Obs.: Note que o construtor pode receber argumentos
+
+  ┌────
+  │ #include <iostream>
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ struct Pessoa {
+  │   std::string nome;
+  │   unsigned short idade;
+  │   std::string cpf;
+  │ };
+  │ 
+  │ int main() {
+  │   std::vector<Pessoa> pessoas;
+  │   pessoas.push_back({ "Ana", 18, "12345678910" });
+  │   pessoas.push_back({ "Pedro", 19, "98765432101" });
+  │ 
+  │   // Primeira forma de acesso
+  │   std::cout << pessoas[0].nome << std::endl;
+  │   std::cout << pessoas[1].nome << std::endl;
+  │ 
+  │   // Segunda forma, com at
+  │   std::cout << pessoas.at(0).nome << std::endl;
+  │   std::cout << pessoas.at(1).nome << std::endl;
+  │ 
+  │   // .at verifica se o índice é válido:
+  │   // Nenhum erro:
+  │   std::cout << pessoas[2].idade << std::endl; 
+  │   // terminate called after throwing an instance of 'std::out_of_range'
+  │   // what():  vector::_M_range_check: __n (which is 2) >= this->size() (which is 2):
+  │   std::cout << pessoas.at(2).idade << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━━━━
+   Ana   
+   Pedro 
+   Ana   
+   Pedro 
+   0     
+  ━━━━━━━
+
+
+List
+╌╌╌╌
+
+  • Lista duplamente encadeada
+  • Armazenamento: nós (alocados dinamicamente)
+  • Inserção/remoção (dado que você tem o nó em mãos) é mais eficiente
+  • Não provê acesso via índice, mas sim via iterador
+  • Iterador se comporta como um ponteiro
+  • Documentação:
+    • <https://en.cppreference.com/w/cpp/container/list>
+    • <https://cplusplus.com/reference/list/list/>
+
+  ┌────
+  │ #include <iostream>
+  │ #include <algorithm>
+  │ #include <list>
+  │ 
+  │ int main() {
+  │   std::list<int> xs = {7, 5, 16, 8};
+  │ 
+  │   xs.push_front(13);
+  │   xs.push_back(10);
+  │ 
+  │   for (auto it = xs.begin(); it != xs.end(); ++it) {
+  │     std::cout << *it << " ";
+  │   }
+  │ 
+  │   std::cout << std::endl;
+  │ 
+  │   // Equivalente a:
+  │   for (std::list<int>::iterator it = xs.begin(); it != xs.end(); ++it) {
+  │     std::cout << *it <<  " ";
+  │   }
+  │ 
+  │   std::cout << std::endl;
+  │ 
+  │   // Ou:
+  │   for (auto it = xs.begin(); it != xs.end(); it = std::next(it)) {
+  │     std::cout << *it << " ";
+  │   }
+  │ 
+  │   std::cout << std::endl;
+  │ 
+  │   // for-each também funciona:
+  │   for (int x : xs) {
+  │     std::cout << x << " ";
+  │   }
+  │ 
+  │   std::cout << std::endl;
+  │ 
+  │   // Ordem reversa:
+  │   for (auto it = xs.rbegin(); it != xs.rend(); it = std::next(it)) {
+  │     std::cout << *it << " ";
+  │   }
+  │ 
+  │   std::cout << std::endl;
+  │ 
+  │   // Pesquisando um elemento:
+  │   std::list<int>::iterator e;
+  │   for (auto it = xs.begin(); it != xs.end(); it = std::next(it)) {
+  │     if (*it == 5) {
+  │       e = it;
+  │       break;
+  │     }
+  │   }
+  │ 
+  │   std::cout << *e << std::endl;
+  │ 
+  │   // Usando a biblioteca de algoritmos:
+  │   e = std::find(xs.begin(), xs.end(), 7);
+  │   std::cout << *e << std::endl;
+  │ 
+  │   // Inserindo, usando nó como referência:
+  │   xs.insert(e, 99); // Insere antes de `e`
+  │   xs.insert(std::next(e), 100);
+  │ 
+  │   for (int x : xs) {
+  │     std::cout << x << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   13   7   5   16  8  10        
+   13   7   5   16  8  10        
+   13   7   5   16  8  10        
+   13   7   5   16  8  10        
+   10   8  16    5  7  13        
+    5                            
+    7                            
+   13  99   7  100  5  16  8  10 
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  • Obs. 1: Todo container tem um `begin()' (iterador para o 1º
+    elemento) e `end()' (fim do container)
+  • Obs. 2: Note o uso do tipo `auto' para facilitar. Só funciona se o
+    compilador sabe o tipo de antemão:
+
+  ┌────
+  │ int main() {
+  │   auto var;
+  │   return 0;
+  │ }
+  └────
+
+
+Containers Associativos
+───────────────────────
+
+Set
+╌╌╌
+
+  • Armazenamento: árvore binária de pesquisa
+  • Coleção de elementos *distintos*
+  • Elementos *comparáveis* de acordo com algum critério
+  • Documentação:
+    • <https://en.cppreference.com/w/cpp/container/set>
+    • <https://cplusplus.com/reference/set/set/>
+
+  ┌────
+  │ #include <iostream>
+  │ #include <set>
+  │ 
+  │ int main() {
+  │   std::set<int> s;
+  │   for (int i = 10; i >= 1; i--) s.insert(i);
+  │ 
+  │   auto [e, inserted] = s.insert(7);
+  │   std::cout << *e << ": new? " << inserted << std::endl;
+  │ 
+  │   // De novo o "auto"... equivalente a:
+  │   std::pair<std::set<int>::iterator, bool> p = s.insert(7);
+  │   std::cout << *p.first << ": new? " << p.second << std::endl;
+  │ 
+  │   auto e2 = s.find(5);
+  │   if (e2 != s.end()) std::cout << "find: " << *e2 << std::endl;
+  │ 
+  │   // 0 ou 1, já que não podemos ter elementos repetidos:
+  │   std::cout << "count(5): " << s.count(5) << std::endl;
+  │   std::cout << "count(13): " << s.count(13) << std::endl;
+  │ 
+  │   // Elementos são percorridos de forma ordenada (padrão: <)
+  │   for (int x : s) std::cout << x << " ";
+  │   std::cout << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           7:  new?  0                       
+           7:  new?  0                       
+        find:     5                          
+    count(5):     1                          
+   count(13):     0                          
+            1     2  3  4  5  6  7  8  9  10 
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Qual a diferença para o `multiset'?
+  • multiset permite elementos repetidos
+
+  Um pouco sobre árvores binárias de pesquisa:
+  • Binária porque cada nó tem no máximo dois filhos
+  • Pesquisa porque é estruturada de forma a tornar a busca eficiente
+  • Exemplo com inteiros: seja n um nó, todo mundo na subárvore a
+    esquerda de n é < n e todo mundo à direita é >= n
+
+  Inserindo 4, 2, 1, 3, 6, 5, 7
+
+  ┌────
+  │         ( 4 )
+  │        /     \
+  │    ( 2 )      ( 6 )
+  │    /   \      /   \
+  │ ( 1 ) ( 3 ) ( 5 ) ( 7 )
+  └────
+
+  • Se quisermos buscar pelo 1, 1 <= 4 então só pode estar na subárvore
+    da esquerda
+  • Sempre dividimos o espaço de busco no meio
+  • Logo, na média log_2 n comparações, onde n é a quantidade de
+    elementos na árvore
+
+  Mas no pior caso ainda precisa passar por todos os elementos
+
+  Inserindo 1, 2, 3, 4, 5, 6, 7
+
+  ┌────
+  │ ( 1 )
+  │    \
+  │    ( 2 )
+  │       \
+  │       ( 3 )
+  │          \
+  │          ( 4 )
+  │             \
+  │             ( 5 )
+  │                \
+  │                ( 6 )
+  │                   \
+  │                   ( 7 )
+  └────
+
+  Por isso, a implementação na verdade é um pouco mais sofisticada: a
+  árvore é rebalanceada de alguma forma
+  • Árvore AVL
+  • Árvore red-black (usada na implementação do std::set)
+  • Você pode visualizar o funcionamento da árvore red-black aqui:
+    <https://www.cs.usfca.edu/~galles/visualization/RedBlack.html>
+
+
+Map
+───
+
+  • Armazenamento: árvore binária de pesquisa
+  • Coleção de elementos pares chave e valor, com chaves *distintas*
+  • Documentação:
+    • <https://en.cppreference.com/w/cpp/container/map>
+    • <https://cplusplus.com/reference/map/map/>
+
+  ┌────
+  │ #include <iostream>
+  │ #include <map>
+  │ 
+  │ int main() {
+  │   std::map<unsigned, std::string> alunos;
+  │ 
+  │   // uma forma de inserir
+  │   alunos.insert({1, "João"});
+  │ 
+  │   // outras formas
+  │   alunos[23] = "Maria";       
+  │   alunos[10] = "Carlos";
+  │   alunos[99] = "Jose";
+  │   alunos[253] = "Joana";
+  │ 
+  │   // Elementos ordenados, da mesma forma que num set
+  │   for (auto [mat, nome] : alunos) {
+  │     std::cout << mat << ": " << nome << std::endl;
+  │   }
+  │ 
+  │   // Equivalente:
+  │   // for (auto it = alunos.begin(); it != alunos.end(); ++it) {
+  │   //   std::cout << it->first << ": " << it->second << std::endl;
+  │   // }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━━━━━━━━━━━
+     1:  João   
+    10:  Carlos 
+    23:  Maria  
+    99:  Jose   
+   253:  Joana  
+  ━━━━━━━━━━━━━━
+
+  Qual a diferença para o `multimap'?
+
+
+Containers não ordenados
+────────────────────────
+
+  Se você não precisa de uma garantia da ordem dos elementos (ao
+  percorrê-los), existem versões potencialmente mais eficientes:
+  • `std::unordered_map'
+  • `std::unordered_set'
+  • Implementados com tabela Hash (lembram?)
