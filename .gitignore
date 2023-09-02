@@ -16,13 +16,13 @@
 !/*/aulas/**/notas*.txt
 !/*/aulas/01_apresentacao/slides.pdf
 
-# Projects & exams (use this for private content, with submodule)
+# Labs & exams (use this for private content, with submodule)
 !/*/atividades/
 
 # Code
 !doctest.hpp
 
-# Schedule, syllabus
+# Schedule, syllabus, projects
 !header.tex
 !cronograma*.org
 !cronograma*.tex
@@ -30,4 +30,7 @@
 !plano-ensino.org
 !plano-ensino.tex
 !plano-ensino.pdf
+!projeto.org
+!projeto.tex
+!projeto.pdf
 !*.bib

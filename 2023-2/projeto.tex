@@ -1,0 +1,222 @@
+% Created 2023-09-01 Fri 23:06
+% Intended LaTeX compiler: lualatex
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage{xurl}
+\input{header.tex}
+\author{Prof. Luigi D. C. Soares}
+\date{\today}
+\title{Projeto Prático}
+\hypersetup{
+ pdfauthor={Prof. Luigi D. C. Soares},
+ pdftitle={Projeto Prático},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 30.0.50 (Org mode 9.7-pre)}, 
+ pdflang={Portuges}}
+\begin{document}
+
+\begin{center}
+    \Large\bfseries\thetitle{}
+\end{center}
+
+\setlist[1]{itemsep=-5pt}
+\section{Introdução}
+\label{sec:orgb5aeea8}
+
+O grupo deve escolher um problema de seu interesse e realizar todo o
+processo de desenvolvimento (análise, projeto e implementação) de uma
+solução. Espera-se, ao final, um sistema de porte médio, que utiliza
+os conceitos e técnicas vistos durante o curso (modelagem, conceitos
+de POO, testes unitários, boas práticas, etc). O programa deve ser
+feito baseado na linguagem C++17. Uma lista não exaustiva de \emph{sugestões}
+de temas é apresentada abaixo. O tema é aberto à negociação e os
+alunos também podem sugerir outros temas de seu interesse.
+
+\begin{itemize}
+\item Twitter (tweet, retweet, follow, etc)
+\item Gerenciador de tarefas/compromissos (adicionar, remover, listar, histórico, etc)
+\item Sistema para biblioteca (busca, reserva, empréstimo, etc)
+\item Sistema de gerência de e-commerce
+\item Mini rede social (timeline, adicionar/listar amigos, post, etc)
+\item UFMG: Carona, Eventos, Bandejão, Gamefication, Oportunidades, \ldots{}
+\item Biblioteca de grafos
+\item Indexador/organizador de arquivos
+\item Outros (Magic, RPG, Reserva de Passagens/Hotel, Netflix, Spotify, Trello/Notion, \ldots{})
+\end{itemize}
+
+\textbf{ATENÇÃO: Temas similares poderão ser escolhidos por no máximo 3 grupos!}
+
+O desenvolvimento e a entrega deverão ser feitos utilizando o sistema
+de controle de versão GitHub. Sugere-se que commits/pushs sejam feitos
+de maneira frequente, por todos os membros do grupo, sempre que houver
+alterações.
+
+Lembre-se, o objetivo não é apenas escrever um programa funcional, mas
+desenvolver um sistema confiável, reutilizável e de fácil manutenção e
+extensão! Logo, tente aplicar todos os conceitos de POO, modularidade
+e corretude vistos em sala de aula. Também serão avaliados critérios
+como criatividade na solução, assim como a possível implementação de
+funcionalidades extras
+
+Durante o desenvolvimento, o grupo deverá utilizar o framework doctest
+(\url{https://github.com/onqtam/doctest}) para implementar os testes de
+unidade (o mesmo utilizado na sala de aula). Deve haver pelo menos uma
+classe de testes para cada uma das principais classes do sistema (por
+exemplo, as classes de entidades).
+
+A interface de interação com a aplicação poderá ser feita via terminal
+de comando. (A implementação de aplicações gráficas entra como ponto
+extra, mas não se sinta pressionado a fazer, tendo em vista que não
+faz parte da ementa da disciplina.) Possíveis arquivos necessários
+durante a etapa de inicialização do sistema deverão ser fornecidos
+pelo grupo.
+\section{Modelagem}
+\label{sec:org587998b}
+
+As histórias de usuário são uma forma simples de apresentar os requisitos
+funcionais desejados para um determinado sistema. São artefatos de
+desenvolvimento utilizados principalmente em processos baseados em
+metodologias ágeis. As descrições são intencionalmente genéricas,
+dando liberdade ao grupo para decidir detalhes da implementação.
+
+Nesta etapa, o grupo deverá identificar possíveis funcionalidades
+interessantes de serem incorporadas ao sistema e propor pelo menos
+CINCO histórias de usuário. Para cada uma, deverá ser feita uma
+descrição sucinta. Tente apresentar histórias de usuário para
+diferentes tipos de usuário do sistema (ou considerando papeis
+específicos em certos contextos). Cada história de usuário deve
+apresentar entre três e cinco critérios de aceitação.
+
+\textbf{Entrega}: o grupo deverá utilizar a ferramenta de \emph{issues} do GitHub para
+criação e controle das histórias de usuário. Cada história
+corresponderá a uma issue. O título da issue será a história de
+usuário, e o corpo da issue deve conter a lista de critérios de
+aceitação como checkboxes. Critérios de aceitação muito complexos
+talvez devem se tornar uma história por si só (a depender do
+julgamento do grupo); é possível converter uma tarefa da lista pelo
+próprio GitHub, passando o mouse sobre o item da lista.
+
+Em seguida, faça pelo menos CINCO cartões CRC para as classes que você
+julga como sendo as mais importantes. Cada cartão deve
+apresentar pelo menos quatro responsabilidades \emph{coesas} (considerando
+conhecimento e realização) e mencionar pelo menos duas
+colaborações. Você pode usar esse site para lhe auxiliar a fazer o
+cartão: \url{https://echeung.me/crcmaker/}
+\section{Documentação}
+\label{sec:org1539532}
+
+Durante toda a implementação, quaisquer declarações de classes e
+funções (apenas nos arquivos de cabeçalho!) devem ser documentadas
+utilizando-se a ferramenta Doxygen (\url{http://www.doxygen.org/}). A
+sintaxe dos comentários pode ser encontrada nas notas de aula (os
+comentários com três barras, seguido de notações especiais como
+@brief, @param, e @return).
+
+Além disso, o grupo deve utilizar o arquivo README.md
+(\url{https://docs.github.com/pt/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes})
+do GitHub para documentar o projeto em si. O arquivo README.md deve
+conter (pelo menos!):
+
+\begin{itemize}
+\item Uma breve apresentação do projeto/problema
+\item Menções a quaisquer dependências que sejam necessárias para
+o correto funcionamento
+\item Instruções de compilação e execução (incluindo, caso aplicável, a
+necessidade de um sistema operacional específico; se possível, para
+facilitar a correção, peço que garantam o funcionamento no ambiente
+linux/wsl)
+\end{itemize}
+\section{Comentários Gerais}
+\label{sec:orgd5622c3}
+
+\begin{itemize}
+\item O trabalho deverá ser feito em grupos com quatro ou cinco alunos
+\item Trabalhos copiados serão, obviamente, zerados!!!
+\item Na entrega final, será considerado o último commit na branch principal do projeto
+\item O arquivo deve conter um arquivo Makefile com as opções make e make run
+\end{itemize}
+\section{Critérios de Avaliação}
+\label{sec:org47ee3d4}
+
+\subsection{Entrega Parcial (Modelagem)}
+\label{sec:org0537b08}
+
+\subsubsection{Histórias de Usuário (3 pontos):}
+\label{sec:org17de6d6}
+\begin{itemize}
+\item \(-0.6\) pontos por cada história não entregue (considerando o mínimo de cinco)
+\item \(-0.1\) ponto por cada critério de aceitação não entregue,
+incoerente com a história, ou superficial (mínimo três por história)
+\item \(-0.3\) pontos por cada história muito simples / pouco expressiva
+\item Em caso de mais de cinco histórias, a nota corresponderá as cinco
+mais bem availadas
+\end{itemize}
+\subsubsection{Cartões CRC (3 pontos):}
+\label{sec:orgc1a6439}
+\begin{itemize}
+\item \(-0.6\) pontos por cada cartão CRC não entregue (considerando o mínimo de cinco)
+\item \(-0.1\) ponto por cada responsabilidade não entregue (mínimo  quatro por cartão)
+\item \(-0.1\) ponto por cada colaboração não entregue (mínimo dois por cartão)
+\item Em caso de mais de cinco cartões, a nota corresponderá aos cinco
+mais bem avaliados
+\end{itemize}
+\subsection{Entrega Final (Implementação)}
+\label{sec:org2becadf}
+
+\subsubsection{Documentação e Estilo (4 pontos):}
+\label{sec:orge52f97f}
+\begin{itemize}
+\item \(-2\) pontos se README incompleto/pouco detalhado
+\item \(-2\) pontos se não utiizou/utilizou incorretamente o Doxygen
+\item \(-1\) ponto se descrição das classes/funções pouco detalhadas
+\item \(-1\) ponto se nomes de atributos e funções não padronizados
+\item \(-1\) ponto se indentação não padronizada
+\end{itemize}
+\subsubsection{Funcionamento (6 pontos):}
+\label{sec:org39bdced}
+\begin{itemize}
+\item \(-6\) pontos se sequer compila
+\item \(-4\) pontos se compila, mas não executa
+\item \(-0.5\) \textasciitilde{} \(1\) ponto por cada erro durante a execução, a depender do erro
+\end{itemize}
+\subsubsection{Boas Práticas e POO (6 pontos):}
+\label{sec:org7372a1f}
+\begin{itemize}
+\item \(-1\) pontos se não utilizou o conceito de encapsulamento corretamente
+\item \(-1\) pontos se não utilizou composição/herança/interfaces corretamente
+\item \(-1\) pontos se não utilizou polimorfismo corretamente
+\item \(-1\) ponto se não modularizou o código (arquivos hpp e cpp)
+\item \(-1\) ponto se não modularizou o projeto (diferentes diretórios)
+\item \(-2\) pontos se não criou o Makefile
+\end{itemize}
+\subsubsection{Programação Defensiva / Tratamento de Exceções (4 pontos)}
+\label{sec:org91ddf1d}
+\begin{itemize}
+\item \(-4\) pontos se não fez nenhum tratamento/sanitização das entradas
+\item \(-2\) pontos se não fez tratamento de exceções corretamente
+\end{itemize}
+\subsubsection{Testes de Unidade (4 pontos)}
+\label{sec:org4a266fb}
+\begin{itemize}
+\item \(-4\) pontos se não fez nenhum teste de unidade
+\item \(-2\) pontos se faltaram testes para classes importantes/principais
+\end{itemize}
+\subsubsection{Criatividade (2 pontos extras)}
+\label{sec:org7f99acd}
+\subsection{Nota Final}
+\label{sec:orgbe45012}
+
+Será avaliada a partipação individual de cada membro do grupo, como um
+valor entre \(0\) e \(1\), baseado na proporção de commits no GitHub e
+interação durante as aulas de acompanhemento do projeto, por email,
+mensagens, etc.
+\end{document}
