@@ -39,6 +39,13 @@ alunos também podem sugerir outros temas de seu interesse.
 
 *ATENÇÃO: Temas similares poderão ser escolhidos por no máximo 3 grupos!*
 
+*ATENÇÃO: Dois temas estão ``proibidos'', pois são temas que iremos*
+*utilizar ao longo do semestre. Serão dois (mini) projetos, um sistema*
+*de emails e um sistema para agendamento de consultas. Se o grupo já*
+*estiver escolhido algum destes temas e não tiver nenhuma outra ideia,*
+*poderá ser liberado, desde que haja uma conversa prévia para entender*
+*o que será feito de diferente do que iremos ver em sala.*
+
 O desenvolvimento e a entrega deverão ser feitos utilizando o sistema
 de controle de versão GitHub. Sugere-se que commits/pushs sejam feitos
 de maneira frequente, por todos os membros do grupo, sempre que houver
@@ -182,4 +189,7 @@ menos!):
 Será avaliada a partipação individual de cada membro do grupo, como um
 valor entre $0$ e $1$, baseado na proporção de commits no GitHub e
 interação durante as aulas de acompanhemento do projeto, por email,
-mensagens, etc.
+mensagens, etc. Sendo $P$ a nota de participação e $N_i$ a nota de cada
+item descrito acima, a nota final será dada por
+
+\[\mathit{NotaFinal} = P \sum_i N_i\]

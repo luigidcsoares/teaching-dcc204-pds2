@@ -1,4 +1,4 @@
-% Created 2023-09-01 Fri 23:06
+% Created 2023-09-05 Tue 18:24
 % Intended LaTeX compiler: lualatex
 \documentclass[11pt]{article}
 \usepackage{graphicx}
@@ -30,7 +30,7 @@
 
 \setlist[1]{itemsep=-5pt}
 \section{Introdução}
-\label{sec:orgb5aeea8}
+\label{sec:org0cb1c6c}
 
 O grupo deve escolher um problema de seu interesse e realizar todo o
 processo de desenvolvimento (análise, projeto e implementação) de uma
@@ -54,6 +54,13 @@ alunos também podem sugerir outros temas de seu interesse.
 \end{itemize}
 
 \textbf{ATENÇÃO: Temas similares poderão ser escolhidos por no máximo 3 grupos!}
+
+\textbf{ATENÇÃO: Dois temas estão ``proibidos'', pois são temas que iremos}
+\textbf{utilizar ao longo do semestre. Serão dois (mini) projetos, um sistema}
+\textbf{de emails e um sistema para agendamento de consultas. Se o grupo já}
+\textbf{estiver escolhido algum destes temas e não tiver nenhuma outra ideia,}
+\textbf{poderá ser liberado, desde que haja uma conversa prévia para entender}
+\textbf{o que será feito de diferente do que iremos ver em sala.}
 
 O desenvolvimento e a entrega deverão ser feitos utilizando o sistema
 de controle de versão GitHub. Sugere-se que commits/pushs sejam feitos
@@ -80,7 +87,7 @@ faz parte da ementa da disciplina.) Possíveis arquivos necessários
 durante a etapa de inicialização do sistema deverão ser fornecidos
 pelo grupo.
 \section{Modelagem}
-\label{sec:org587998b}
+\label{sec:orgdcc72df}
 
 As histórias de usuário são uma forma simples de apresentar os requisitos
 funcionais desejados para um determinado sistema. São artefatos de
@@ -112,19 +119,20 @@ conhecimento e realização) e mencionar pelo menos duas
 colaborações. Você pode usar esse site para lhe auxiliar a fazer o
 cartão: \url{https://echeung.me/crcmaker/}
 \section{Documentação}
-\label{sec:org1539532}
+\label{sec:orga328f33}
 
-Durante toda a implementação, quaisquer declarações de classes e
-funções (apenas nos arquivos de cabeçalho!) devem ser documentadas
-utilizando-se a ferramenta Doxygen (\url{http://www.doxygen.org/}). A
-sintaxe dos comentários pode ser encontrada nas notas de aula (os
+Durante toda a implementação, quaisquer declarações de
+classes e funções (apenas nos arquivos de cabeçalho!) devem ser
+documentadas utilizando-se a ferramenta Doxygen
+(\url{http://www.doxygen.org/}) e o arquivo README
+(\url{https://docs.github.com/pt/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes}).
+A sintaxe dos comentários pode ser encontrada nas notas de aula (os
 comentários com três barras, seguido de notações especiais como
 @brief, @param, e @return).
 
-Além disso, o grupo deve utilizar o arquivo README.md
-(\url{https://docs.github.com/pt/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes})
-do GitHub para documentar o projeto em si. O arquivo README.md deve
-conter (pelo menos!):
+Além disso, o grupo deve utilizar o arquivo README.md do GitHub para
+documentar o projeto em si. O arquivo README.md deve conter (pelo
+menos!):
 
 \begin{itemize}
 \item Uma breve apresentação do projeto/problema
@@ -136,22 +144,22 @@ facilitar a correção, peço que garantam o funcionamento no ambiente
 linux/wsl)
 \end{itemize}
 \section{Comentários Gerais}
-\label{sec:orgd5622c3}
+\label{sec:org1370881}
 
 \begin{itemize}
 \item O trabalho deverá ser feito em grupos com quatro ou cinco alunos
 \item Trabalhos copiados serão, obviamente, zerados!!!
 \item Na entrega final, será considerado o último commit na branch principal do projeto
-\item O arquivo deve conter um arquivo Makefile com as opções make e make run
+\item O arquivo deve conter um arquivo Makefile com as opções make e make run.
 \end{itemize}
 \section{Critérios de Avaliação}
-\label{sec:org47ee3d4}
+\label{sec:orgad8dce4}
 
 \subsection{Entrega Parcial (Modelagem)}
-\label{sec:org0537b08}
+\label{sec:org3f1337d}
 
 \subsubsection{Histórias de Usuário (3 pontos):}
-\label{sec:org17de6d6}
+\label{sec:org6cee8c5}
 \begin{itemize}
 \item \(-0.6\) pontos por cada história não entregue (considerando o mínimo de cinco)
 \item \(-0.1\) ponto por cada critério de aceitação não entregue,
@@ -161,7 +169,7 @@ incoerente com a história, ou superficial (mínimo três por história)
 mais bem availadas
 \end{itemize}
 \subsubsection{Cartões CRC (3 pontos):}
-\label{sec:orgc1a6439}
+\label{sec:org3ac1486}
 \begin{itemize}
 \item \(-0.6\) pontos por cada cartão CRC não entregue (considerando o mínimo de cinco)
 \item \(-0.1\) ponto por cada responsabilidade não entregue (mínimo  quatro por cartão)
@@ -170,10 +178,10 @@ mais bem availadas
 mais bem avaliados
 \end{itemize}
 \subsection{Entrega Final (Implementação)}
-\label{sec:org2becadf}
+\label{sec:orga9422b7}
 
 \subsubsection{Documentação e Estilo (4 pontos):}
-\label{sec:orge52f97f}
+\label{sec:org9f00ffe}
 \begin{itemize}
 \item \(-2\) pontos se README incompleto/pouco detalhado
 \item \(-2\) pontos se não utiizou/utilizou incorretamente o Doxygen
@@ -182,14 +190,14 @@ mais bem avaliados
 \item \(-1\) ponto se indentação não padronizada
 \end{itemize}
 \subsubsection{Funcionamento (6 pontos):}
-\label{sec:org39bdced}
+\label{sec:org660f59b}
 \begin{itemize}
 \item \(-6\) pontos se sequer compila
 \item \(-4\) pontos se compila, mas não executa
 \item \(-0.5\) \textasciitilde{} \(1\) ponto por cada erro durante a execução, a depender do erro
 \end{itemize}
 \subsubsection{Boas Práticas e POO (6 pontos):}
-\label{sec:org7372a1f}
+\label{sec:orgfa87fd2}
 \begin{itemize}
 \item \(-1\) pontos se não utilizou o conceito de encapsulamento corretamente
 \item \(-1\) pontos se não utilizou composição/herança/interfaces corretamente
@@ -199,24 +207,27 @@ mais bem avaliados
 \item \(-2\) pontos se não criou o Makefile
 \end{itemize}
 \subsubsection{Programação Defensiva / Tratamento de Exceções (4 pontos)}
-\label{sec:org91ddf1d}
+\label{sec:org8e50124}
 \begin{itemize}
 \item \(-4\) pontos se não fez nenhum tratamento/sanitização das entradas
 \item \(-2\) pontos se não fez tratamento de exceções corretamente
 \end{itemize}
 \subsubsection{Testes de Unidade (4 pontos)}
-\label{sec:org4a266fb}
+\label{sec:org67b3027}
 \begin{itemize}
 \item \(-4\) pontos se não fez nenhum teste de unidade
 \item \(-2\) pontos se faltaram testes para classes importantes/principais
 \end{itemize}
 \subsubsection{Criatividade (2 pontos extras)}
-\label{sec:org7f99acd}
+\label{sec:org472588a}
 \subsection{Nota Final}
-\label{sec:orgbe45012}
+\label{sec:orgcae9fcf}
 
 Será avaliada a partipação individual de cada membro do grupo, como um
 valor entre \(0\) e \(1\), baseado na proporção de commits no GitHub e
 interação durante as aulas de acompanhemento do projeto, por email,
-mensagens, etc.
+mensagens, etc. Sendo \(P\) a nota de participação e \(N_i\) a nota de cada
+item descrito acima, a nota final será dada por
+
+\[\mathit{NotaFinal} = P \sum_i N_i.\]
 \end{document}
