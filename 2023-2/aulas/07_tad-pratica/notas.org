@@ -376,7 +376,7 @@ int main () {
 : Existe algum Flávio de matrícula 512345? Sim
 : Existe alguma Liz de matrícula 783124? Não
 
-* Problema 2 - Processando solicitações de matrículas em determinada disciplina
+* Problema 2 - Processando solicitações de matrículas
 
 Agora, desejamos processar as solicitações de matrículas de um conjunto de disciplinas.
 - Gostaríamos de processar as disciplinas em ordem lexicográfica.
