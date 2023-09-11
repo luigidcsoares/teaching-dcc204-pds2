@@ -1,0 +1,792 @@
+#+title: Notas de Aula - 07 Prática de TADs
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+* Problema 1 - Verificando se um aluno existe
+
+- TAD Aluno: nome e matrícula
+- Ler da entrada padrão
+- Dica: ~std::istringstream~ transforma uma string em stream (fluxo) de entrada, nos permitindo ler partes da string separadamente
+
+=Entrada=
+
+#+begin_src nil :exports code :tangle input/in1.txt
+Flávio 512345
+Flávio 134679
+Ana 123456
+sair
+#+end_src
+
+=aluno.hpp=
+
+#+begin_src C++ :exports code :main no :tangle include/aluno.hpp
+#pragma once
+
+#include <string>
+
+struct Aluno {
+  std::string nome;
+  std::string matricula;
+};
+#+end_src
+
+=main.cpp=
+
+#+begin_src C++ :exports both :flags -std=c++17 -I include/ :cmdline < input/in1.txt
+#include <iostream>
+#include <sstream>
+#include <string>
+
+#include "aluno.hpp"
+
+int main () {
+  std::string linha;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    std::string matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // stream >> nome;
+    // stream >> matricula;
+
+    Aluno aluno = {nome, matricula};
+    std::cout << aluno.nome << " " << aluno.matricula << std::endl;
+  }
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| Flávio | 512345 |
+| Flávio | 134679 |
+| Ana    | 123456 |
+
+** Buscando pelo nome
+
+Desejamos organizar os alunos de modo que sejamos capazes de buscá-los por seus nomes.
+- Não há necessidade de uma ordem específica
+- Desejamos apenas verificar se um aluno com determinado nome existe
+
+Qual a estrutura mais adequada? Por quê?
+- ~std::array~
+- ~std::vector~
+- ~std::list~
+- ~std::set~ / ~std::unordered_set~ 
+- ~std::map~ / ~std::unordered_map~ 
+- outra?
+
+Para este caso, o mais adequado seria utilizar o ~std::unordered_set~. Podemos criar um conjunto a partir dos nomes dos alunos:
+
+#+begin_src C++ :exports both :flags -std=c++17 -I include/ :cmdline < input/in1.txt :results scalar
+#include <iostream>
+#include <unordered_set>
+#include <sstream>
+#include <string>
+
+#include "aluno.hpp"
+
+int main () {
+  std::string linha;
+  std::unordered_set<std::string> nomes;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    std::string matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome;
+    // stream >> matricula;
+
+    Aluno aluno = {nome, matricula};
+    nomes.insert(aluno.nome);
+  }
+
+  std::cout << "Existe algum Flávio? "
+	    << (nomes.count("Flávio") ? "Sim" : "Não")
+	    << std::endl;
+
+  std::cout << "Existe alguma Ana? "
+	    << (nomes.count("Ana") ? "Sim" : "Não")
+	    << std::endl;
+
+  std::cout << "Existe alguma Liz? "
+	    << (nomes.count("Liz") ? "Sim" : "Não")
+	    << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Existe algum Flávio? Sim
+: Existe alguma Ana? Sim
+: Existe alguma Liz? Não
+
+** Buscando pela matrícula
+
+De forma similar, podemos organizar os alunos pela matrícula:
+
+#+begin_src C++ :exports both :flags -std=c++17 -I include/ :cmdline < input/in1.txt :results scalar
+#include <iostream>
+#include <unordered_set>
+#include <sstream>
+#include <string>
+
+#include "aluno.hpp"
+
+int main () {
+  std::string linha;
+  std::unordered_set<std::string> matriculas;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    std::string matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome;
+    // stream >> matricula;
+
+    Aluno aluno = {nome, matricula};
+    matriculas.insert(aluno.matricula);
+  }
+
+  std::cout << "Existe alguma matrícula 512345? "
+	    << (matriculas.count("512345") ? "Sim" : "Não")
+	    << std::endl;
+
+  std::cout << "Existe alguma matrícula 783124? "
+	    << (matriculas.count("783124") ? "Sim" : "Não")
+	    << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Existe alguma matrícula 512345? Sim
+: Existe alguma matrícula 783124? Não
+
+** Generalizando a busca
+
+Será que precisamos criar um ~unordered_set~ para cada campo de Aluno? Ou será que é possível generalizar a estrutura?
+
+O que será que acontece ao criar um ~unordered_set~ de Alunos?
+
+#+begin_src C++ :exports code :flags -std=c++17 -I include/ :cmdline < input/in1.txt :results none
+#include <iostream>
+#include <unordered_set>
+#include <string>
+
+#include "aluno.hpp"
+
+int main () {
+  std::unordered_set<Aluno> alunos;
+  return 0;
+}
+#+end_src
+
+Bom, não compila... Por quê?
+- Internamente, ~unordered_set~ é uma tabela hash (como a que implementamos há algumas aulas)
+- Mas, não existe nenhuma implementação de uma função ~hash~ para ~Aluno~...
+- Como cálcular o índice de um Aluno?
+- Felizmente, o tipo ~unordered_set~ aceita um segundo parâmetro, algo que chamamos de "functor"
+- Um functor é um objeto que age como uma função
+- Como assim?
+
+#+begin_src C++ :exports both :flags -std=c++17 -I include/ :cmdline < input/in1.txt :results scalar
+#include <iostream>
+#include <string>
+#include <unordered_set>
+
+#include "aluno.hpp"
+
+class HashAluno {
+public:
+  unsigned long operator()(Aluno const &aluno) const {
+    std::hash<std::string> hasher;
+    std::size_t hash_nome = hasher(aluno.nome);
+    std::size_t hash_matricula = hasher(aluno.matricula);
+    return (hash_nome << 7) ^ hash_matricula;
+  }
+};
+
+int main () {
+  HashAluno h;
+  std::cout << h({ "Ana", "123456" }) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: 14029862571311352658
+
+- Note que usamos ~h~ como se fosse uma função (acontece com ~hasher~ também)
+- Obs.: usamos o tipo ~std::size_t~, pois é um tipo garantidamente grande o suficiente para representar qualquer índice
+
+Agora, podemos criar um conjunto de Alunos:
+
+#+begin_src C++ :exports code :flags -std=c++17 -I include/ :cmdline < input/in1.txt :results none
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <unordered_set>
+
+#include "aluno.hpp"
+
+class HashAluno {
+public:
+  unsigned long operator()(Aluno const &aluno) const {
+    std::hash<std::string> hasher;
+    std::size_t hash_nome = hasher(aluno.nome);
+    std::size_t hash_matricula = hasher(aluno.matricula);
+    return (hash_nome << 7) ^ hash_matricula;
+  }
+};
+
+int main () {
+  std::string linha;
+  std::unordered_set<Aluno, HashAluno> alunos;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    std::string matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome;
+    // stream >> matricula;
+
+    Aluno aluno = {nome, matricula};
+    alunos.insert(aluno);
+  }
+
+  std::cout << "Existe algum Flávio de matrícula 512345? "
+	    << (alunos.count({ "Flávio", "512345" }) ? "Sim" : "Não")
+	    << std::endl;
+
+  std::cout << "Existe alguma Liz de matrícula 783124? "
+	    << (alunos.count({ "Liz", "783124" }) ? "Sim" : "Não")
+	    << std::endl;
+  
+  return 0;
+}
+#+end_src
+
+Oops, ainda não! O que houve?
+- Definimos o cálculo do índice de um Aluno, mas e se houverem colisões?
+- É preciso percorrer alguns elementos, comparando-os com o Aluno que estamos buscando
+- Mas, como comparar dois alunos?
+
+=aluno_v2.hpp=
+
+#+begin_src C++ :exports code :main no :tangle include/aluno_v2.hpp
+#pragma once
+
+#include <string>
+
+class Aluno {
+public:
+  std::string nome;
+  std::string matricula;
+
+  bool operator==(Aluno const &other) const;
+};
+#+end_src
+
+=aluno_v2.cpp=
+
+#+begin_src C++ :exports code :main no :tangle src/aluno_v2.cpp
+#include "aluno_v2.hpp"
+#include <string>
+
+bool Aluno::operator==(Aluno const &other) const {
+  return this->nome == other.nome && this->matricula == other.matricula;
+}
+#+end_src
+
+Alterando o cabeçalho para =aluno_v2.cpp= e executando novamente:
+
+#+begin_src C++ :exports results :flags -std=c++17 src/aluno_v2.cpp -I include/ :cmdline < input/in1.txt :results scalar
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <unordered_set>
+
+#include "aluno_v2.hpp"
+
+class HashAluno {
+public:
+  unsigned long operator()(Aluno const &aluno) const {
+    std::hash<std::string> hasher;
+    std::size_t hash_nome = hasher(aluno.nome);
+    std::size_t hash_matricula = hasher(aluno.matricula);
+    return (hash_nome << 7) ^ hash_matricula;
+  }
+};
+
+int main () {
+  std::string linha;
+  std::unordered_set<Aluno, HashAluno> alunos;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    std::string matricula;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula;
+    // Equivalente:
+    // stream >> nome;
+    // stream >> matricula;
+
+    Aluno aluno = {nome, matricula};
+    alunos.insert(aluno);
+  }
+
+  std::cout << "Existe algum Flávio de matrícula 512345? "
+	    << (alunos.count({ "Flávio", "512345" }) ? "Sim" : "Não")
+	    << std::endl;
+
+  std::cout << "Existe alguma Liz de matrícula 783124? "
+	    << (alunos.count({ "Liz", "783124" }) ? "Sim" : "Não")
+	    << std::endl;
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Existe algum Flávio de matrícula 512345? Sim
+: Existe alguma Liz de matrícula 783124? Não
+
+* Problema 2 - Processando solicitações de matrículas em determinada disciplina
+
+Agora, desejamos processar as solicitações de matrículas de um conjunto de disciplinas.
+- Gostaríamos de processar as disciplinas em ordem lexicográfica.
+- Para cada disciplina, os alunos devem estar organizados de acordo com a ordem das solicitações (quem solicitou primeiro)
+
+Por exemplo, para as disciplinas "PDS 2" e "Cálculo Numérico" poderíamos ter a seguinte sequência de alunos:
+
+#+begin_example
+Cálculo Numérico: (Flávio 512345) (Ana 123456)
+PDS 2: (Flávio 512345) (Ana 123456) (Flávio 134679)
+#+end_example
+
+Quais as estruturas devemos escolher? Por quê? Como utilizá-las?
+- ~std::array~
+- ~std::vector~
+- ~std::list~
+- ~std::set~ / ~std::unordered_set~ 
+- ~std::map~ / ~std::unordered_map~ 
+- outra?
+
+1. Precisamos manter um mapeamento entre disciplina (vamos assumir que os nomes são únicos) e alunos. Além disso, precisamos manter as disciplinas em uma certa ordem: ~std::map~.
+
+2. Para cada disciplina, precisamos manter a sequência de alunos de tal forma que o primeiro a ter a solicitação de matrícula processada seja o primeiro a ter solicitado. Qual estrutura você utilizaria?
+
+Note que, para o item (2), precisamos implementar uma espécie de "fila" (como uma fila de banco). Existe uma estrutura que cumpre exatamente este papel: ~std::queue~.
+
+-----
+Uma fila é uma estrutura que segue a política conhecida como FIFO (first in, first out). Isto é, as inserções são sempre no final, e as remoções são sempre do início.
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <queue>
+
+int main() {
+  std::queue<int> q;
+  q.push(1);
+  q.push(2);
+  q.push(3);
+
+  std::cout << q.front() << ", ";
+  q.pop();
+  
+  std::cout << q.front() << ", ";
+  q.pop();
+
+  std::cout << q.front() << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 |
+-----
+
+Para resolver este problema, vamos então implementar um mapeamento entre disciplinas e suas respectivas filas de solicitações.
+
+=Entrada=
+
+#+begin_src nil :exports code :tangle input/in2.txt
+Flávio 512345 Cálculo Numérico
+Flávio 512345 PDS 2
+Flávio 134679 PDS 2
+Ana 123456 Cálculo Numérico
+Ana 123456 PDS 2
+sair
+#+end_src
+
+#+name: prob2_wrong
+#+begin_src C++ :exports both :flags -std=c++17 src/aluno_v2.cpp -I include/ :cmdline < input/in2.txt :results scalar
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <map>
+#include <queue>
+
+#include "aluno_v2.hpp"
+
+int main () {
+  std::string linha;
+  std::map<std::string, std::queue<Aluno>> solicitacoes;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    std::string matricula;
+    std::string disciplina;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula >> disciplina;
+
+    Aluno aluno = {nome, matricula};
+    solicitacoes.insert({ disciplina, {} });
+    solicitacoes[disciplina].push(aluno);
+  }
+
+  for (auto [disciplina, alunos] : solicitacoes) {
+    std::cout << disciplina << ": ";
+    while (!alunos.empty()) {
+      Aluno aluno = alunos.front();
+      std::cout << "(" << aluno.nome << ", " << aluno.matricula << ") ";
+      alunos.pop();
+    }
+    std::cout << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS: prob2_wrong
+: Cálculo: (Flávio, 512345) (Ana, 123456) 
+: PDS: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
+
+Você consegue ver algum problema com esta implementação? E se tentarmos inserir uma solicitação duplicada de um aluno?
+
+#+begin_src nil :exports code :tangle input/in3.txt
+Flávio 512345 Cálculo Numérico
+Flávio 512345 PDS 2
+Flávio 134679 PDS 2
+Ana 123456 Cálculo Numérico
+Ana 123456 PDS 2
+Ana 123456 PDS 2
+sair
+#+end_src
+
+#+call: prob2_wrong[:cmdline < input/in3.txt]()
+
+#+RESULTS:
+: Cálculo: (Flávio, 512345) (Ana, 123456) 
+: PDS: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) (Ana, 123456)
+
+Como solucionar este problema?
+
+#+begin_src C++ :exports both :flags -std=c++17 src/aluno_v2.cpp -I include/ :cmdline < input/in3.txt :results scalar
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <map>
+#include <queue>
+#include <unordered_set>
+#include <utility>
+
+#include "aluno_v2.hpp"
+
+class HashAluno {
+public:
+  unsigned long operator()(Aluno const &aluno) const {
+    std::hash<std::string> hasher;
+    std::size_t hash_nome = hasher(aluno.nome);
+    std::size_t hash_matricula = hasher(aluno.matricula);
+    return (hash_nome << 7) ^ hash_matricula;
+  }
+};
+
+
+int main () {
+  std::string linha;
+  
+  std::map<std::string, std::pair<
+    std::queue<Aluno>, std::unordered_set<Aluno, HashAluno>
+    >> solicitacoes;
+
+  while (std::getline(std::cin, linha)) {
+    if (linha == "sair") break;
+    
+    std::string nome;
+    std::string matricula;
+    std::string disciplina;
+    
+    std::istringstream stream(linha);
+    stream >> nome >> matricula >> disciplina;
+
+    Aluno aluno = {nome, matricula};
+    solicitacoes.insert({ disciplina, {} });
+
+    if (!solicitacoes[disciplina].second.count(aluno)) {
+      solicitacoes[disciplina].first.push(aluno);
+      solicitacoes[disciplina].second.insert(aluno);
+    }
+  }
+
+  for (auto [disciplina, pair] : solicitacoes) {
+    std::cout << disciplina << ": ";
+    std::queue<Aluno> alunos = pair.first;
+    while (!alunos.empty()) {
+      Aluno aluno = alunos.front();
+      std::cout << "(" << aluno.nome << ", " << aluno.matricula << ") ";
+      alunos.pop();
+    }
+    std::cout << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Cálculo: (Flávio, 512345) (Ana, 123456) 
+: PDS: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
+
+* Problema 3 - Convertendo notação infixa para pósfixa (+ arquivos)
+
+Nosso objetivo, agora, é converter uma expressão infixa para a notação pósfixa. Por exemplo, a expressão
+
+3 * 2 + 5 * 4
+
+corresponde, na notação pósfixa, a expressão
+
+3 2 * 5 4 * +
+
+enquanto que a expressão
+
+3 * (2 + 5 * 4)
+
+é equivalente a
+
+3 2 5 4 * + *
+
+Para fazer esta conversão, vamos usar como estrutura auxiliar uma pilha.
+
+-----
+Uma pilha é uma estrutura que segue a política FILO (first in, last out), em que as inserções são sempre no início (topo) e as remoções são, também, sempre do início.
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <stack>
+
+int main() {
+  std::stack<int> s;
+  s.push(1);
+  s.push(2);
+  s.push(3);
+
+  std::cout << s.top() << ", ";
+  s.pop();
+  
+  std::cout << s.top() << ", ";
+  s.pop();
+
+  std::cout << s.top() << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+| 3 | 2 | 1 |
+-----
+
+Vamos usar um exemplo para entender a conversão. Considere a expressão 3 * (2 + 5 - 4):
+
+1. Inicializamos a saída ~postfix~ como a string vazia "" e a pilha ~s~ vazia {}
+2. Lemos o operando 3 e inserimos na saída: ~postfix = "3"~ e ~s = {}~
+3. Lemos o operador *: ~postfix = "3"~ e ~s = {\ast}~
+4. Lemos "(": ~postfix = "3"~ e ~s={(, \ast}~
+5. Lemos o operando 2: ~postfix = "3 2"~ e ~s = {(, \ast}~
+6. Lemos o operador +: ~postfix = "3 2"~ e ~s = {\plus, (, \ast}~
+7. Lemos o operando 5: ~postfix = "3 2 5"~ e ~s = {\plus, (, \ast}~
+8. Lemos o operador -: ~postfix = "3 2 5 +"~ e ~s = {-, (, \ast}~
+9. Lemos o operando 4: ~postfix = "3 2 5 + 4"~ e ~s = {-, (, \ast}~
+10. Lemos o ")": ~postfix = "3 2 5 + 4 - *"~ e ~s = {}~
+
+=expression.hpp=
+
+#+begin_src C++ :exports code :main no :tangle include/expression.hpp
+#pragma once
+
+#include <string>
+#include <unordered_map>
+
+class Expression {
+public:
+  /// @brief Inicializa a expressão no formato infixo.
+  Expression(std::string infix);
+
+  /// @brief Converte expressão do formato infixo para pósfixos
+  ///        (assume que a notação infixa é válida).
+  /// @return Expressão no formato pósfixo.
+  std::string to_postfix();
+  
+private:
+  std::string _infix;
+  std::unordered_map<char, unsigned> _precedence = {
+    {'+', 1},
+    {'-', 1},
+    {'*', 2},
+    {'/', 2},
+  };
+};
+#+end_src
+
+=expression.cpp=
+
+#+begin_src C++ :exports code :main no :tangle src/expression.cpp
+#include "expression.hpp"
+#include <string>
+#include <stack>
+#include <unordered_map>
+
+Expression::Expression(std::string infix) {
+  _infix = infix;
+}
+
+std::string Expression::to_postfix() {
+  std::stack<char> operators;
+  std::string postfix = "";
+
+  for (char c : _infix) {
+    if (std::isdigit(c)) {
+      postfix += c;
+    } else if (c == '(') {
+      operators.push(c);
+    } else if (c == ')') {
+      // Move operadores da pilha para a expressão até achar ')'
+      while (operators.top() != '(') {
+	postfix += " ";
+	postfix += operators.top();
+	operators.pop();
+      }
+
+      operators.pop(); // Descarta ')'
+    } else if (_precedence.count(c)) {
+      // Move operadores de precedência >= ao atual
+      while (!operators.empty() && operators.top() != '(' &&
+	     _precedence[operators.top()] >= _precedence[c]) {
+	postfix += " ";
+	postfix += operators.top();
+	operators.pop();
+      }
+      
+      postfix += " ";
+      operators.push(c); // Empilha o operador que acabou de ser visto.
+    }
+  }
+
+  // Move os operadores que sobraram para a expressão pósfixa
+  while (!operators.empty()) {
+    postfix += " ";
+    postfix += operators.top();
+    operators.pop();
+  }
+  
+  return postfix;
+}
+#+end_src
+
+Agora, vamos ler e converter diversas expressões armazenadas em um arquivo. A primeira linha do arquivo indica quantas expressões existem nele, uma expressão por linha.
+
+=infix.txt=
+
+#+begin_src nil :exports code :tangle input/infix.txt
+6
+10 + 2
+3 * 2 + 5 * 4
+3 * (2 + 5 * 4)
+(3 * 2 + 5) * 4
+(3 * (2 + 5)) * 4
+3 * (2 + 5 - 4)
+#+end_src
+
+#+begin_src C++ :exports both :flags -std=c++17 src/expression.cpp -I include/ :results scalar
+#include <iostream>
+#include <fstream>
+#include <string>
+
+#include "expression.hpp"
+
+int main() {
+  // "i" vem de input, estamos abrindo o arquivo para leitura.
+  std::ifstream arquivo("input/infix.txt");
+
+  unsigned num_exps;
+  arquivo >> num_exps; // Semelhante ao uso de std::cin
+  arquivo.ignore(); // Descarta o \n da primeira linha
+
+  for (unsigned i = 0; i < num_exps; i++) {
+    std::string linha;
+    std::getline(arquivo, linha);
+    
+    Expression exp(linha);
+
+    std::cout << "Notação infixa: " << linha << std::endl;
+    std::cout << "Notação pósfixa: " << exp.to_postfix()
+	      << std::endl << std::endl;
+  }
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Notação infixa: 10 + 2
+Notação pósfixa: 10 2 +
+
+Notação infixa: 3 * 2 + 5 * 4
+Notação pósfixa: 3 2 * 5 4 * +
+
+Notação infixa: 3 * (2 + 5 * 4)
+Notação pósfixa: 3 2 5 4 * + *
+
+Notação infixa: (3 * 2 + 5) * 4
+Notação pósfixa: 3 2 * 5 + 4 *
+
+Notação infixa: (3 * (2 + 5)) * 4
+Notação pósfixa: 3 2 5 + * 4 *
+
+Notação infixa: 3 * (2 + 5 - 4)
+Notação pósfixa: 3 2 5 + 4 - *
+
+#+end_example
+
+*Para pensar: como avaliar expressões na notação pósfixa?*
