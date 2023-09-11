@@ -355,8 +355,8 @@ Generalizando a busca
   └────
 
 
-Problema 2 - Processando solicitações de matrículas em determinada disciplina
-═════════════════════════════════════════════════════════════════════════════
+Problema 2 - Processando solicitações de matrículas
+═══════════════════════════════════════════════════
 
   Agora, desejamos processar as solicitações de matrículas de um
   conjunto de disciplinas.
@@ -418,6 +418,10 @@ Problema 2 - Processando solicitações de matrículas em determinada disciplina
   │   return 0;
   │ }
   └────
+
+  ━━━━━━━━━
+   1  2  3 
+  ━━━━━━━━━
   ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 
   Para resolver este problema, vamos então implementar um mapeamento
@@ -620,6 +624,10 @@ Problema 3 - Convertendo notação infixa para pósfixa (+ arquivos)
   │   return 0;
   │ }
   └────
+
+  ━━━━━━━━━
+   3  2  1 
+  ━━━━━━━━━
   ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 
   Vamos usar um exemplo para entender a conversão. Considere a expressão
@@ -627,15 +635,15 @@ Problema 3 - Convertendo notação infixa para pósfixa (+ arquivos)
 
   1. Inicializamos a saída `postfix' como a string vazia "" e a pilha
      `s' vazia {}
-  2. Lemos o operando 3 e inserimos na saída: `postfix = "3"' e `s = {}'
-  3. Lemos o operador *: `postfix = "3"' e `s = {\ast}'
-  4. Lemos "(": `postfix = "3"' e `s={(, \ast}'
-  5. Lemos o operando 2: `postfix = "3 2"' e `s = {(, \ast}'
-  6. Lemos o operador +: `postfix = "3 2"' e `s = {\plus, (, \ast}'
-  7. Lemos o operando 5: `postfix = "3 2 5"' e `s = {\plus, (, \ast}'
-  8. Lemos o operador -: `postfix = "3 2 5 +"' e `s = {-, (, \ast}'
-  9. Lemos o operando 4: `postfix = "3 2 5 + 4"' e `s = {-, (, \ast}'
-  10. Lemos o ")": `postfix = "3 2 5 + 4 - *"' e `s = {}'
+  2. Lemos o operando 3 e inserimos na saída: postfix = "3"; s = {}
+  3. Lemos o operador *: postfix = "3"; s = { * }
+  4. Lemos '(': postfix = "3"; s={ (, * }
+  5. Lemos o operando 2: postfix = "3 2"; s = { (, * }
+  6. Lemos o operador +: postfix = "3 2"; s = { +, (, * }
+  7. Lemos o operando 5: postfix = "3 2 5"; s = { +, (, * }
+  8. Lemos o operador -: postfix = "3 2 5 +"; s = { -, (, * }
+  9. Lemos o operando 4: postfix = "3 2 5 + 4"; s = { -, (, * }
+  10. Lemos o ')': postfix = "3 2 5 + 4 - *"; s = {}
 
   `expression.hpp'
 
