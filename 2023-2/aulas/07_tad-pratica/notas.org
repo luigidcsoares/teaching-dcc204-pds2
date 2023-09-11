@@ -406,7 +406,7 @@ Note que, para o item (2), precisamos implementar uma espécie de "fila" (como u
 -----
 Uma fila é uma estrutura que segue a política conhecida como FIFO (first in, first out). Isto é, as inserções são sempre no final, e as remoções são sempre do início.
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src :exports both C++ :flags -std=c++17
 #include <iostream>
 #include <queue>
 
@@ -601,7 +601,7 @@ Para fazer esta conversão, vamos usar como estrutura auxiliar uma pilha.
 -----
 Uma pilha é uma estrutura que segue a política FILO (first in, last out), em que as inserções são sempre no início (topo) e as remoções são, também, sempre do início.
 
-#+begin_src C++ :flags -std=c++17
+#+begin_src :exports both C++ :flags -std=c++17
 #include <iostream>
 #include <stack>
 
