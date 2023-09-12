@@ -385,8 +385,8 @@ Agora, desejamos processar as solicitações de matrículas de um conjunto de di
 Por exemplo, para as disciplinas "PDS 2" e "Cálculo Numérico" poderíamos ter a seguinte sequência de alunos:
 
 #+begin_example
-Cálculo Numérico: (Flávio 512345) (Ana 123456)
-PDS 2: (Flávio 512345) (Ana 123456) (Flávio 134679)
+Cálculo_Numérico: (Flávio 512345) (Ana 123456)
+PDS_2: (Flávio 512345) (Ana 123456) (Flávio 134679)
 #+end_example
 
 Quais as estruturas devemos escolher? Por quê? Como utilizá-las?
@@ -436,11 +436,11 @@ Para resolver este problema, vamos então implementar um mapeamento entre discip
 =Entrada=
 
 #+begin_src nil :exports code :tangle input/in2.txt
-Flávio 512345 Cálculo Numérico
-Flávio 512345 PDS 2
-Flávio 134679 PDS 2
-Ana 123456 Cálculo Numérico
-Ana 123456 PDS 2
+Flávio 512345 Cálculo_Numérico
+Flávio 512345 PDS_2
+Flávio 134679 PDS_2
+Ana 123456 Cálculo_Numérico
+Ana 123456 PDS_2
 sair
 #+end_src
 
@@ -488,18 +488,18 @@ int main () {
 #+end_src
 
 #+RESULTS: prob2_wrong
-: Cálculo: (Flávio, 512345) (Ana, 123456) 
-: PDS: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
+: Cálculo_Numérico: (Flávio, 512345) (Ana, 123456) 
+: PDS_2: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
 
 Você consegue ver algum problema com esta implementação? E se tentarmos inserir uma solicitação duplicada de um aluno?
 
 #+begin_src nil :exports code :tangle input/in3.txt
-Flávio 512345 Cálculo Numérico
-Flávio 512345 PDS 2
-Flávio 134679 PDS 2
-Ana 123456 Cálculo Numérico
-Ana 123456 PDS 2
-Ana 123456 PDS 2
+Flávio 512345 Cálculo_Numérico
+Flávio 512345 PDS_2
+Flávio 134679 PDS_2
+Ana 123456 Cálculo_Numérico
+Ana 123456 PDS_2
+Ana 123456 PDS_2
 sair
 #+end_src
 

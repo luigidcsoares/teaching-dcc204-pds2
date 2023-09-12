@@ -368,8 +368,8 @@ Problema 2 - Processando solicitações de matrículas
   poderíamos ter a seguinte sequência de alunos:
 
   ┌────
-  │ Cálculo Numérico: (Flávio 512345) (Ana 123456)
-  │ PDS 2: (Flávio 512345) (Ana 123456) (Flávio 134679)
+  │ Cálculo_Numérico: (Flávio 512345) (Ana 123456)
+  │ PDS_2: (Flávio 512345) (Ana 123456) (Flávio 134679)
   └────
 
   Quais as estruturas devemos escolher? Por quê? Como utilizá-las?
@@ -430,11 +430,11 @@ Problema 2 - Processando solicitações de matrículas
   `Entrada'
 
   ┌────
-  │ Flávio 512345 Cálculo Numérico
-  │ Flávio 512345 PDS 2
-  │ Flávio 134679 PDS 2
-  │ Ana 123456 Cálculo Numérico
-  │ Ana 123456 PDS 2
+  │ Flávio 512345 Cálculo_Numérico
+  │ Flávio 512345 PDS_2
+  │ Flávio 134679 PDS_2
+  │ Ana 123456 Cálculo_Numérico
+  │ Ana 123456 PDS_2
   │ sair
   └────
 
@@ -481,8 +481,8 @@ Problema 2 - Processando solicitações de matrículas
   └────
 
   ┌────
-  │ Cálculo: (Flávio, 512345) (Ana, 123456) 
-  │ PDS: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
+  │ Cálculo_Numérico: (Flávio, 512345) (Ana, 123456) 
+  │ PDS_2: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
   └────
 
 
@@ -490,18 +490,18 @@ Problema 2 - Processando solicitações de matrículas
   tentarmos inserir uma solicitação duplicada de um aluno?
 
   ┌────
-  │ Flávio 512345 Cálculo Numérico
-  │ Flávio 512345 PDS 2
-  │ Flávio 134679 PDS 2
-  │ Ana 123456 Cálculo Numérico
-  │ Ana 123456 PDS 2
-  │ Ana 123456 PDS 2
+  │ Flávio 512345 Cálculo_Numérico
+  │ Flávio 512345 PDS_2
+  │ Flávio 134679 PDS_2
+  │ Ana 123456 Cálculo_Numérico
+  │ Ana 123456 PDS_2
+  │ Ana 123456 PDS_2
   │ sair
   └────
 
   ┌────
-  │ Cálculo: (Flávio, 512345) (Ana, 123456) 
-  │ PDS: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) (Ana, 123456) 
+  │ Cálculo_Numérico: (Flávio, 512345) (Ana, 123456) 
+  │ PDS_2: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) (Ana, 123456) 
   └────
 
 
@@ -571,8 +571,8 @@ Problema 2 - Processando solicitações de matrículas
   └────
 
   ┌────
-  │ Cálculo: (Flávio, 512345) (Ana, 123456) 
-  │ PDS: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
+  │ Cálculo_Numérico: (Flávio, 512345) (Ana, 123456) 
+  │ PDS_2: (Flávio, 512345) (Flávio, 134679) (Ana, 123456) 
   └────
 
 
