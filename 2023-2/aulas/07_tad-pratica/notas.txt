@@ -236,7 +236,7 @@ Generalizando a busca
   │ 
   │ class HashAluno {
   │ public:
-  │   unsigned long operator()(Aluno const &aluno) const {
+  │   std::size_t operator()(Aluno const &aluno) const {
   │     std::hash<std::string> hasher;
   │     std::size_t hash_nome = hasher(aluno.nome);
   │     std::size_t hash_matricula = hasher(aluno.matricula);
@@ -273,7 +273,7 @@ Generalizando a busca
   │ 
   │ class HashAluno {
   │ public:
-  │   unsigned long operator()(Aluno const &aluno) const {
+  │   std::size_t operator()(Aluno const &aluno) const {
   │     std::hash<std::string> hasher;
   │     std::size_t hash_nome = hasher(aluno.nome);
   │     std::size_t hash_matricula = hasher(aluno.matricula);
@@ -520,7 +520,7 @@ Problema 2 - Processando solicitações de matrículas
   │ 
   │ class HashAluno {
   │ public:
-  │   unsigned long operator()(Aluno const &aluno) const {
+  │   std::size_t operator()(Aluno const &aluno) const {
   │     std::hash<std::string> hasher;
   │     std::size_t hash_nome = hasher(aluno.nome);
   │     std::size_t hash_matricula = hasher(aluno.matricula);

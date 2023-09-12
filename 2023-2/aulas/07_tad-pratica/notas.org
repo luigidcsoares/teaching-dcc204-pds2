@@ -215,7 +215,7 @@ Bom, não compila... Por quê?
 
 class HashAluno {
 public:
-  unsigned long operator()(Aluno const &aluno) const {
+  std::size_t operator()(Aluno const &aluno) const {
     std::hash<std::string> hasher;
     std::size_t hash_nome = hasher(aluno.nome);
     std::size_t hash_matricula = hasher(aluno.matricula);
@@ -248,7 +248,7 @@ Agora, podemos criar um conjunto de Alunos:
 
 class HashAluno {
 public:
-  unsigned long operator()(Aluno const &aluno) const {
+  std::size_t operator()(Aluno const &aluno) const {
     std::hash<std::string> hasher;
     std::size_t hash_nome = hasher(aluno.nome);
     std::size_t hash_matricula = hasher(aluno.matricula);
@@ -332,7 +332,7 @@ Alterando o cabeçalho para =aluno_v2.cpp= e executando novamente:
 
 class HashAluno {
 public:
-  unsigned long operator()(Aluno const &aluno) const {
+  std::size_t operator()(Aluno const &aluno) const {
     std::hash<std::string> hasher;
     std::size_t hash_nome = hasher(aluno.nome);
     std::size_t hash_matricula = hasher(aluno.matricula);
@@ -524,7 +524,7 @@ Como solucionar este problema?
 
 class HashAluno {
 public:
-  unsigned long operator()(Aluno const &aluno) const {
+  std::size_t operator()(Aluno const &aluno) const {
     std::hash<std::string> hasher;
     std::size_t hash_nome = hasher(aluno.nome);
     std::size_t hash_matricula = hasher(aluno.matricula);
