@@ -1,0 +1,507 @@
+#+title: Notas de Aula - 08 Boas Práticas
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+
+Características de um bom código:
+- *Compreensível* por quem escreveu e por quem irá utilizar
+- *Confiável*: funciona conforme o esperado
+- *Eficiente*:
+  - Utiliza os recursos disponíveis da melhor maneira possível
+  - Escolha das estruturas mais adequadas
+- *Extensível / Fácil manutenção*: fácil de ser modificado/corrigido no futuro
+
+O que dificulta a escrita de códigos limpos?
+- Prazos apertados = foco nas funcionalidades
+- Projetos longos: acúmulo de problemas (deixados para depois)
+
+Dicas:
+- Seja consistente com as convenções adotadas (nomes, formatação, organização, ...)
+- Modele antes de implementar (CRC, UML) --> iremos ver mais à frente
+
+- Definir tipos específicos para o problema (código mais legível)
+- Tratar situações excepcionais (tratamento de exceções, final do semestre)
+  - Robustez
+  - Tolerância a falhas
+
+* Compreensível
+
+** Nomenclatura
+
+- Structs/classes: substantivo singular
+- Atributos: substantivo singular ou plural se coleção
+- Métodos: primeira palavra = verbo no infinitivo
+  - Não precisa ser sempre, o importante é: *seja consistente*!
+  - No exemplo a seguir, não há necessidade de um verbo, embora alguns utilizem o prefixo "get"
+
+#+begin_src C++ :exports code
+class Foo {
+public:
+  int campo() const { return campo; }
+private:
+  int _campo;
+}
+#+end_src
+
+- Utilize nomes significativos/pronunciáveis
+  - Auxilia na compreensão e até na busca pela variável/função!
+  - Ruim:
+    
+#+begin_src C++ :exports code
+struct DtaRcrd {
+  time_t c;
+  time_t m;
+  int i = 102;
+};
+#+end_src
+
+  - Bom:
+    
+#+begin_src C++ :exports code
+struct Cliente {
+  time_t data_hora_criacao;
+  time_t data_hora_modificacao;
+  int id_registro = 102;
+};
+#+end_src
+
+- Convenções:
+  - snake\under{}case (underline):
+    - int num\under{}clientes;
+    - std::vector<int> cliente\under{}ids;
+      
+  - camelCase:
+    - int numClientes;
+    - std::vector<int> clienteIds;
+    - ou mesmo std::vector<int> clienteIDs;
+      
+  - PascalCase = camelCase, iniciando com maiúsculo
+  - Você pode até misturar (eu uso snake para variáveis, Pascal para classes)
+  - Novamente, o importante é *escolha um padrão e atenha-se a ele!*
+    
+  - Utilize constantes quando necessário
+    - Evite escrever números/strings diretamente
+    - Devem ter nomes significativos (como qualquer outra variável/função/classe)
+    - Possíveis padrões: nomes em caps lock ou precedidos por k
+      - COR\under{}DA\under{}FONTE
+      - kCorDaFonte
+
+** Formatação
+
+Escolha um padrão e use
+- Tabs vs Espaço (guerra)
+- Indente com 2, 4 ou 8 espaços, ou até 3, mas seja *consistente*!
+- Tamanho máximo da linha de código: 80, 100, 120 caracteres, defina um padrão (nunca scroll para direita)
+  
+Código deve ser lido de cima para baixo
+- Funções/métodos mais gerais (nível alto de abstração) em cima, seguidos por outros métodos que implementem detalhes específicos
+
+** Funções/Métodos
+
+- Métodos pequenos (aproximadamente 20 linhas, quando possível)
+- Poucos argumentos (como reescrever? talvez agrupar argumentos em structs?)
+
+** IFs Aninhados
+
+O que o código a seguir faz? (arq = arquivo, arq\under{}cam = caminho do arquivo)
+  
+#+begin_src C++ :exports code
+bool exemplo(std::ifstream &arq, std::string arq_cam) {
+  std::string linha;
+  if (valido(arq_cam)) {
+    if (arq.is_open()) {
+      if (std::getline(arq, linha)) {
+        if (linha.find("importante")) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+}
+#+end_src
+
+Para começar, nenhum dos elses é necessário:
+
+#+begin_src C++ :exports code
+bool exemplo(std::ifstream &arq, std::string arq_cam) {
+  std::string linha;
+  
+  if (valido(arq_cam)) {
+    if (arq.is_open()) {
+      if (std::getline(arq, linha)) {
+        if (linha.find("importante")) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+#+end_src
+  
+Mas os ifs ainda estão aninhados. O que fazer?
+
+#+begin_src C++ :exports code
+bool exemplo(std::ifstream &arq, std::string arq_cam) {
+  std::string linha;
+  if (!valido(arq_cam))
+    return false;
+
+  if(!arq.is_open())
+    return false;
+
+  bool encontrou = false;
+  if (std::getline(arq, linha)) {
+    if (linha.find("importante")) {
+      encontrou = true;
+    }
+  }
+
+  return encontrou;
+}
+#+end_src
+
+Será que dá para melhorar?
+
+#+begin_src C++ :exports code
+bool exemplo(std::ifstream& arq, std::string arq_cam) {
+  if (valido(arq_cam) && arq.is_open()) {
+    std::string linha;
+    return std::getline(arq, linha) && linha.find("importante");
+  }
+
+  return false;
+}
+#+end_src
+
+** Comentários/Documentação
+
+ Quando um comentário deve ser utilizado?
+ - Informar sobre o funcionamento
+ - Alertar sobre possíveis consequências
+
+ E quando não deve?
+ - Redundância, comentário inútil
+ - Dizer algo que *deveria* estar clar pelo próprio código (ex: extrair pedaço de código para uma função)
+
+ Documentação
+ - Existem ferramentas que, dado comentários escritos num formato adequado, geram arquivos de documentação
+ - C++: Doxygen
+
+Exemplo de comentários seguindo o formato do Doxygen (um pedacinho do nosso mini-projeto de sistema de emails):
+
+#+begin_src C++ :exports code
+#pragma once
+
+#include "message.hpp"
+
+#include <string>
+#include <vector>
+
+namespace mail_lib {
+class Mailbox {
+public:
+  /// @brief Inicializa a caixa com um determinado nome, mas vazia
+  /// @param name Nome da caixa de mensagens (e.g., inbox)
+  Mailbox(std::string name);
+
+  /// @brief Inicializa a caixa com mensagens previamente lidas
+  /// @param name Nome da caixa de mensagens (e.g., inbox)
+  /// @param msgs Vetor de mensagens, onde a **última** deve ser
+  ///             a mais recente (idealmente teria um timestamp...)
+  Mailbox(std::string name, std::vector<Message> const &msgs);
+
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa, para chamadas consecutivas
+  Mailbox &add(Message msg);
+
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
+  
+private:
+  std::string _name;
+  std::vector<Message> _msgs;
+};
+};
+#+end_src
+
+Primeiro, precisamos gerar um arquivo de configuração do Doxygen. O arquivo se chama Doxyfile, e é gerado pelo comando ~doxygen -g~.
+
+Agora, vamos alterar o arquivo Doxyfile para configurá-lo. Existem diversas opções de configurações, como:
+- =PROJECT_NAME=: aqui, configuramos um nome para o nosso projeto
+- =PROJECT_BRIEF=: uma breve descrição do que é o projeto
+- =GENERATE_HTML=: configuramos como =YES= para gerar uma página HTML para a documentação
+- =GENERATE_LATEX=: vamos focar apenas na página HTML, então basta configurar este como =NO=
+- =OUTPUT_DIRECTORY=: a pasta em que será armazenada a documentação. Por exemplo, =OUTPUT_DIRECTORY = doc/=
+- =INPUT=: aqui, listamos arquivos e diretórios que devem ser processados. Vamos focar só nos arquivos de cabeçalho, então ficaria algo como =INPUT = include/=
+
+Após alterar e salvar o arquivo Doxyfile, basta rodar o comando ~doxygen~. Será gerada uma pasta =doc/html= com os arquivos da página HTML. Basta abrir (no navegador) o arquivo =index.html= para visualizar a documentação.
+  
+Leitura adicional: https://opensource.com/article/22/5/document-source-code-doxygen-linux
+
+* Extensível / Fácil manutenção
+
+Cada módulo/classe/método/função possui _uma única_ responsabilidade (single responsibility principle, SRP)
+- "The Single Responsibility Principle (SRP) states that a class or module should have one, and only one, reason to change" (Clean code, "Uncle Bob")
+- Note que uma classe com única responsabilidade não necessariamente significa uma classe com uma única função!
+
+Exemplo: imagine um pedido em uma compra (retirado daqui: https://www.youtube.com/watch?v=pTB30aXS77U)
+
+Versão inicial:
+
+=item.hpp=
+
+#+begin_src C++ :exports code :tangle include/item.hpp :main no
+#pragma once
+
+#include <string>
+
+class Item {
+public:
+  unsigned code;
+  std::string name;
+  float price;
+
+  bool operator==(Item const &other) const {
+    return code == other.code;
+  }
+};
+#+end_src
+
+=order.hpp=
+
+#+begin_src C++ :exports code :tangle include/order.hpp :main no
+#pragma once
+
+#include <unordered_map>
+#include "item.hpp"
+
+class Order {
+public:
+  enum class Status { open, paid };
+  Status status = Status::open;
+
+  void add_item(Item item);
+  float total_price() const;
+  void pay(std::string payment_type);
+
+private:
+  class _HashItem {
+  public:
+    std::size_t operator()(Item const &item) const {
+      std::hash<unsigned> hasher;
+      return hasher(item.code);
+    }
+  };
+
+  std::unordered_map<Item, unsigned, _HashItem> _items_quantities;
+};
+#+end_src
+
+=order.cpp=
+
+#+begin_src C++ :exports code :tangle src/order.cpp :main no
+#include "order.hpp"
+#include <iostream>
+
+void Order::add_item(Item item) {
+  _items_quantities.insert({item, 0});
+  _items_quantities[item]++;
+}
+
+float Order::total_price() const {
+  float total = 0.0;
+  for (auto [item, quantity] : _items_quantities) {
+    total += item.price * quantity;
+  }
+  return total;
+}
+
+void Order::pay(std::string payment_type) {
+  if (payment_type == "debit") {
+    std::cout << "Processing debit payment type" << std::endl;
+    // Outras coisas...
+    status = Status::paid;
+  } else if (payment_type == "credit") {
+    std::cout << "Processing credit payment type" << std::endl;
+    // Outras coisas...
+    status = Status::paid;
+  }
+}
+#+end_src
+
+#+begin_src C++ :exports both :flags -std=c++17 src/order.cpp -I include/ :results scalar
+#include <iostream>
+#include "order.hpp"
+
+int main() {
+  Order order;
+
+  order.add_item({0, "Notebook", 5000.50});
+  order.add_item({1, "TV 4K", 8764.50});
+
+  std::cout << order.total_price() << std::endl;
+  order.pay("credit");
+
+  return 0;
+}
+#+end_src
+  
+#+RESULTS:
+: 13765
+: Processing credit payment type
+
+A pergunta é: o pedido (Order) deveria ser responsável pelo processamento do pagamento?
+- O que constitui um pedido? A coleção de itens!
+- Imagine que vamos precisar alterar a classe Order: que motivo poderia nos levar a fazer uma alteração? Alteração na forma de inserção ou no cálculo do preço total. Forma de pagamento *não deveria ser um motivo para alterar a classe Order*
+
+Versão que obedece ao SRP:
+
+=order_v2.hpp=
+
+#+begin_src C++ :exports code :tangle include/order_v2.hpp :main no
+#pragma once
+
+#include <unordered_map>
+#include "item.hpp"
+
+class Order {
+public:
+  enum class Status { open, paid };
+  Status status = Status::open;
+
+  void add_item(Item item);
+  float total_price() const;
+
+private:
+  class _HashItem {
+  public:
+    std::size_t operator()(Item const &item) const {
+      std::hash<unsigned> hasher;
+      return hasher(item.code);
+    }
+  };
+
+  std::unordered_map<Item, unsigned, _HashItem> _items_quantities;
+};
+#+end_src
+
+=order_v2.cpp=
+
+#+begin_src C++ :exports code :tangle src/order_v2.cpp :main no
+#include "order_v2.hpp"
+#include <iostream>
+
+void Order::add_item(Item item) {
+  _items_quantities.insert({item, 0});
+  _items_quantities[item]++;
+}
+
+float Order::total_price() const {
+  float total = 0.0;
+  for (auto [item, quantity] : _items_quantities) {
+    total += item.price * quantity;
+  }
+  return total;
+}
+#+end_src
+
+=payment_processor.hpp=
+
+#+begin_src C++ :exports code :tangle include/payment_processor.hpp :main no
+#pragma once
+
+#include <string>
+#include "order_v2.hpp"
+
+class PaymentProcessor {
+public:
+  void pay(std::string payment_type, Order &order);
+};
+#+end_src
+
+=payment_processor.cpp=
+
+#+begin_src C++ :exports code :tangle src/payment_processor.cpp :main no
+#include "payment_processor.hpp"
+
+#include <iostream>
+#include <string>
+
+void PaymentProcessor::pay(std::string payment_type, Order &order) {
+  if (payment_type == "debit") {
+    std::cout << "Processing debit payment type" << std::endl;
+    // Outras coisas...
+    order.status = Order::Status::paid;
+  } else if (payment_type == "credit") {
+    std::cout << "Processing credit payment type" << std::endl;
+    // Outras coisas...
+    order.status = Order::Status::paid;
+  }
+}
+#+end_src
+
+#+begin_src C++ :exports both :flags -std=c++17 -I include/ src/order_v2.cpp src/payment_processor.cpp :results scalar
+#include <iostream>
+#include <map>
+#include <vector>
+
+#include "order_v2.hpp"
+#include "payment_processor.hpp"
+
+int main() {
+  Order order;
+
+  order.add_item({0, "Notebook", 5000.50});
+  order.add_item({1, "TV 4K", 8764.50});
+
+  std::cout << order.total_price() << std::endl;
+
+  PaymentProcessor processor;
+  processor.pay("credit", order);
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: 13765
+: Processing credit payment type
+  
+- SRP faz parte de um conjunto de cinco princípios: SOLID (vale pesquisar; o vídeo acima exemplifica os cinco)
+- Veremos alguns deles mais tarde
+
+* Eficiente
+
+O que acontece na passagem do vector para uma função?
+
+#+begin_src C++
+void foo(std::vector<int> xs) {
+  // ...
+}
+#+end_src
+
+A passagem é feita por valor! Ou seja, o vetor é *copiado*! E se o vetor for muito grande?
+
+#+begin_src C++
+void foo(std::vector<int> const &xs) {
+  // ...
+}
+#+end_src
+
+- Use referências (&) sempre que possível, e ponteiros (*) somente quando necessário
+- Use const para evitar que a variável referenciada seja modificada
