@@ -176,46 +176,14 @@ Organização do Projeto
   ┌────
   │ #pragma once
   │ 
-  │ #include "mailbox.hpp"
-  │ #include "message.hpp"
-  │ #include "yaml.hpp"
+  │ #include <string>
   │ 
   │ namespace mail_lib::core {
-  │ class Mailapp {
-  │ public:
-  │   /// @brief Inicialização das caixas de entrada e saída
-  │   ///
-  │   /// Busca as mensagens lidas e enviadas pelo usuário,
-  │   /// para inicializar as caixas de mensagens.
-  │   ///
-  │   /// FIXME: obviamente, aqui (ou em algum passo antes)
-  │   ///        deveria ter alguma etapa de autenticação...
-  │   ///
-  │   /// @param user Usuário (email) que está logado
-  │   Mailapp(std::string user);
-  │ 
-  │   /// @brief Realiza o flush das caixas de mensagem
-  │   ~Mailapp();
-  │ 
-  │   /// @return A caixa de entrada, para leitura de emails recebidos
-  │   Mailbox inbox() const;
-  │ 
-  │   /// @return A caixa de saída, para leitura de emails enviados
-  │   Mailbox sent() const;
-  │ 
-  │   /// @brief Adiciona nova mensagem à caixa de saída
-  │   Mailapp &send_message(std::string to, std::string subject, std::string content);
-  │ 
-  │ private:
-  │   std::string _user;
-  │ 
-  │   Mailbox _inbox = Mailbox("inbox");
-  │   Mailbox _sent = Mailbox("sent");
-  │ 
-  │   unsigned _start_new_inbox = 0;
-  │   unsigned _start_new_sent = 0;
-  │ 
-  │   storage::YAML _user_storage;
+  │ struct Message {
+  │   std::string from;
+  │   std::string to;
+  │   std::string subject;
+  │   std::string content;
   │ };
   │ }
   └────
@@ -663,3 +631,223 @@ Organização do Projeto
   │   CHECK_EQ(inbox_msgs[1].content, "received1");
   │ }
   └────
+
+
+Do Código Fonte ao Executável
+═════════════════════════════
+
+  A transformação do código que escrevemos em uma linguagem de
+  programação para um programa executável envolve várias fases. No caso
+  de C++, estas etapas são:
+
+  1. *Pré-processamento*: nesta fase, todas aquelas macros prefixadas
+      com o caractere *#* são processadas. Por exemplo, quando o
+      pré-processador encontra o comando `#include <iostream>', ele o
+      substitui por todo o conteúdo do cabeçalho `iostream'.
+
+  Considere o seguinte programa:
+
+  `include/header.hpp'
+
+  ┌────
+  │ #pragma once
+  │ int sum(int x, int y);
+  └────
+
+  `src/header.cpp'
+
+  ┌────
+  │ #include "header.hpp"
+  │ int sum(int x, int y) {
+  │   return x + y;
+  │ }
+  └────
+
+  `src/main.cpp'
+
+  ┌────
+  │ #include "header.hpp"
+  │ int main() {
+  │   return sum(1, 2);
+  │ }
+  └────
+
+  Para observamos a saída da fase de pré-processamento, executamos o
+  comando
+
+  ┌────
+  │ g++ -std=c++17 -I include/ -E src/main.cpp
+  └────
+
+  ┌────
+  │ # 0 "src/main.cpp"
+  │ # 0 "<built-in>"
+  │ # 0 "<command-line>"
+  │ # 1 "/nix/store/hkj250rjsvxcbr31fr1v81cv88cdfp4l-glibc-2.37-8-dev/include/stdc-predef.h" 1 3 4
+  │ # 0 "<command-line>" 2
+  │ # 1 "src/main.cpp"
+  │ # 1 "include/header.hpp" 1
+  │        
+  │ int sum(int x, int y);
+  │ # 2 "src/main.cpp" 2
+  │ int main() {
+  │   return sum(1, 2);
+  │ }
+  └────
+
+  1. *Compilação*: o processo de compilação por si só envolve várias
+      etapas, como análises sintáticas e semânticas. O resultado final é
+      o código assembly correspondente ao código de entrada. Assembly é
+      uma representação humanamente legível do código de máquina (o
+      formato final). Podemos produzir o assembly com o seguinte
+      comando:
+
+  ┌────
+  │ g++ -std=c++17 -I include/ -S src/main.cpp -o build/main.s
+  │ cat build/main.s # Para ler o conteúdo do arquivo
+  └────
+
+  ┌────
+  │ 	.file	"main.cpp"
+  │ 	.text
+  │ 	.globl	main
+  │ 	.type	main, @function
+  │ main:
+  │ .LFB0:
+  │ 	.cfi_startproc
+  │ 	pushq	%rbp
+  │ 	.cfi_def_cfa_offset 16
+  │ 	.cfi_offset 6, -16
+  │ 	movq	%rsp, %rbp
+  │ 	.cfi_def_cfa_register 6
+  │ 	movl	$2, %esi
+  │ 	movl	$1, %edi
+  │ 	call	_Z3sumii
+  │ 	nop
+  │ 	popq	%rbp
+  │ 	.cfi_def_cfa 7, 8
+  │ 	ret
+  │ 	.cfi_endproc
+  │ .LFE0:
+  │ 	.size	main, .-main
+  │ 	.ident	"GCC: (GNU) 12.2.0"
+  │ 	.section	.note.GNU-stack,"",@progbits
+  └────
+
+  1. *Assembly*: o código no formato assembly é entregue para um
+      programa conhecido como /assembler/, que traduz esta representação
+      humanamente legível para o código de máquina. Em C++, chamamos o
+      resultado deste processo de arquivo /objeto/. Este ainda não é o
+      arquivo final, executável. Podemos gerar o arquivo objeto com o
+      seguinte comando:
+
+  ┌────
+  │ g++ -std=c++17 -I include/ -c src/main.cpp -o build/main.o
+  └────
+
+  1. *Ligação*: você deve ter reparado que em nenhuma das três etapas
+      acima o arquivo de código `src/header.cpp' foi referenciado. Isto,
+      porque as três etapas anteriores são sempre realizadas
+      individualmente para cada /unidade de tradução/. Uma unidade de
+      tradução corresponde ao conteúdo de único arquivo de código
+      (`.cpp') após este ter passado pela etapa de pré-processamento.
+
+     Quando executamos o comando `g++ -std=c++17 -I include/
+     src/main.cpp src/header.cpp -o bin/main.cpp', implicitamente dois
+     comandos são executados separadamente:
+
+     • `g++ -std=c++17 -I include -c src/main.cpp -o build/main.o'
+     • `g++ -std=c++17 -I include -c src/header.cpp -o build/header.o'
+
+     Este dois arquivos objetos gerados ainda precisam serem conectados,
+     o que é feito com o comando
+
+  ┌────
+  │ g++ build/main.o build/header.o -o bin/main
+  └────
+
+
+A Importância do Arquivo de Cabeçalho em C/C++
+──────────────────────────────────────────────
+
+  Vimos que é uma boa prática separar declarações (em um arquivo de
+  cabeçalho) dos detalhes de implementação (em arquivos de código
+  propriamente ditos). Mas, a importância desta separação não é
+  meramente organizacional!
+
+  Considere que, ao invés de separar a implementação da função `sum' em
+  um arquivo de cabeçalho e outro de código, a tivéssemos implementado
+  diretamente no arquivo de cabeçalho:
+
+  `include/header_impl.hpp'
+
+  ┌────
+  │ #pragma once
+  │ int sum(int x, int y) {
+  │   return x + y;
+  │ }
+  └────
+
+  Além disso, agora temos dois outros arquivo que usam esta mesma
+  função:
+
+  `include/inc.hpp'
+
+  ┌────
+  │ #pragma once
+  │ #include "header_impl.hpp"
+  │ int inc(int x);
+  └────
+
+  `src/inc.cpp'
+
+  ┌────
+  │ #include "inc.hpp"
+  │ int inc(int x) {
+  │   return sum(x, 1);
+  │ }
+  └────
+
+  `include/triple.hpp'
+
+  ┌────
+  │ #pragma once
+  │ #include "header_impl.hpp"
+  │ int triple(int x);
+  └────
+
+  `src/triple.cpp'
+
+  ┌────
+  │ #include "triple.hpp"
+  │ int triple(int x) {
+  │   return sum(x, sum(x, x));
+  │ }
+  └────
+
+  E, estivéssemos utilizando ambas as funções `inc' e `triple':
+
+  `main.cpp'
+
+  ┌────
+  │ #include "inc.hpp"
+  │ #include "triple.hpp"
+  │ int main() {
+  │   return inc(triple(3));
+  │ }
+  └────
+
+  Tente compilar este programa… você não vai conseguir! Por quê?
+
+  Como vimos, os arquivos de código são compilados separadamente, e só
+  depois ligados uns aos outros. Além disso, na primeira etapa de
+  pré-processamento, todo o conteúdo de arquivos incluídos com o comando
+  `#include' é copiado diretamente no arquivo que está sendo
+  processado. Ou seja, ao final desta etapa existirá uma definição para
+  a função `sum' no arquivo `inc.cpp' e uma segunda definição da mesma
+  função no arquivo `triple.cpp', e o editor de ligação não se dá bem
+  com isso!
+
+
+TODO Automatizando o Processo de Compilação
+═══════════════════════════════════════════

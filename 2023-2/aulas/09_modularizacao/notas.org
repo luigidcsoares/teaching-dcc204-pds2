@@ -648,3 +648,183 @@ TEST_CASE("YAML") {
 }
 #+end_src
 #+html: </details>
+
+* Do Código Fonte ao Executável
+
+A transformação do código que escrevemos em uma linguagem de programação para um programa executável envolve várias fases. No caso de C++, estas etapas são:
+
+1. *Pré-processamento*: nesta fase, todas aquelas macros prefixadas com o caractere *#* são processadas. Por exemplo, quando o pré-processador encontra o comando ~#include <iostream>~, ele o substitui por todo o conteúdo do cabeçalho ~iostream~.
+
+Considere o seguinte programa:
+
+=include/header.hpp=
+
+#+begin_src C++ :exports code :tangle include/header.hpp :main no
+#pragma once
+int sum(int x, int y);
+#+end_src
+
+=src/header.cpp=
+
+#+begin_src C++ :exports code :tangle src/header.cpp :main no
+#include "header.hpp"
+int sum(int x, int y) {
+  return x + y;
+}
+#+end_src
+
+=src/main.cpp=
+
+#+begin_src C++ :exports code :tangle src/main.cpp
+#include "header.hpp"
+int main() {
+  return sum(1, 2);
+}
+#+end_src
+
+Para observamos a saída da fase de pré-processamento, executamos o comando
+
+#+begin_src sh :exports both :results scalar
+g++ -std=c++17 -I include/ -E src/main.cpp
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# 0 "src/main.cpp"
+# 0 "<built-in>"
+# 0 "<command-line>"
+# 1 "/nix/store/hkj250rjsvxcbr31fr1v81cv88cdfp4l-glibc-2.37-8-dev/include/stdc-predef.h" 1 3 4
+# 0 "<command-line>" 2
+# 1 "src/main.cpp"
+# 1 "include/header.hpp" 1
+       
+int sum(int x, int y);
+# 2 "src/main.cpp" 2
+int main() {
+  return sum(1, 2);
+}
+#+end_example
+
+2. *Compilação*: o processo de compilação por si só envolve várias etapas, como análises sintáticas e semânticas. O resultado final é o código assembly correspondente ao código de entrada. Assembly é uma representação humanamente legível do código de máquina (o formato final). Podemos produzir o assembly com o seguinte comando:
+
+#+begin_src sh :exports both :results scalar
+g++ -std=c++17 -I include/ -S src/main.cpp -o build/main.s
+cat build/main.s # Para ler o conteúdo do arquivo
+#+end_src
+
+#+RESULTS:
+#+begin_example
+	.file	"main.cpp"
+	.text
+	.globl	main
+	.type	main, @function
+main:
+.LFB0:
+	.cfi_startproc
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register 6
+	movl	$2, %esi
+	movl	$1, %edi
+	call	_Z3sumii
+	nop
+	popq	%rbp
+	.cfi_def_cfa 7, 8
+	ret
+	.cfi_endproc
+.LFE0:
+	.size	main, .-main
+	.ident	"GCC: (GNU) 12.2.0"
+	.section	.note.GNU-stack,"",@progbits
+#+end_example
+
+3. *Assembly*: o código no formato assembly é entregue para um programa conhecido como /assembler/, que traduz esta representação humanamente legível para o código de máquina. Em C++, chamamos o resultado deste processo de arquivo /objeto/. Este ainda não é o arquivo final, executável. Podemos gerar o arquivo objeto com o seguinte comando:
+
+#+begin_src sh :exports code :results none
+g++ -std=c++17 -I include/ -c src/main.cpp -o build/main.o
+#+end_src
+
+4. *Ligação*: você deve ter reparado que em nenhuma das três etapas acima o arquivo de código =src/header.cpp= foi referenciado. Isto, porque as três etapas anteriores são sempre realizadas individualmente para cada /unidade de tradução/. Uma unidade de tradução corresponde ao conteúdo de único arquivo de código (=.cpp=) após este ter passado pela etapa de pré-processamento.
+
+   Quando executamos o comando =g++ -std=c++17 -I include/ src/main.cpp src/header.cpp -o bin/main.cpp=, implicitamente dois comandos são executados separadamente:
+
+   - src_sh[:exports code :results none]{g++ -std=c++17 -I include -c src/main.cpp -o build/main.o}
+   - src_sh[:exports code :results none]{g++ -std=c++17 -I include -c src/header.cpp -o build/header.o}
+
+   Este dois arquivos objetos gerados ainda precisam serem conectados, o que é feito com o comando
+
+#+begin_src sh :exports code :results none
+g++ build/main.o build/header.o -o bin/main
+#+end_src
+
+** A Importância do Arquivo de Cabeçalho em C/C++
+
+Vimos que é uma boa prática separar declarações (em um arquivo de cabeçalho) dos detalhes de implementação (em arquivos de código propriamente ditos). Mas, a importância desta separação não é meramente organizacional!
+
+Considere que, ao invés de separar a implementação da função ~sum~ em um arquivo de cabeçalho e outro de código, a tivéssemos implementado diretamente no arquivo de cabeçalho:
+
+=include/header_impl.hpp=
+
+#+begin_src C++ :exports code :tangle include/header_impl.hpp :main no
+#pragma once
+int sum(int x, int y) {
+  return x + y;
+}
+#+end_src
+
+Além disso, agora temos dois outros arquivo que usam esta mesma função:
+
+=include/inc.hpp=
+
+#+begin_src C++ :exports code :tangle include/inc.hpp :main no
+#pragma once
+#include "header_impl.hpp"
+int inc(int x);
+#+end_src
+
+=src/inc.cpp=
+
+#+begin_src C++ :exports code :tangle src/inc.cpp :main no
+#include "inc.hpp"
+int inc(int x) {
+  return sum(x, 1);
+}
+#+end_src
+
+=include/triple.hpp=
+
+#+begin_src C++ :exports code :tangle include/triple.hpp :main no
+#pragma once
+#include "header_impl.hpp"
+int triple(int x);
+#+end_src
+
+=src/triple.cpp=
+
+#+begin_src C++ :exports code :tangle src/triple.cpp :main no
+#include "triple.hpp"
+int triple(int x) {
+  return sum(x, sum(x, x));
+}
+#+end_src
+
+E, estivéssemos utilizando ambas as funções ~inc~ e ~triple~:
+
+=main.cpp=
+
+#+begin_src C++ :exports code :flags -I include/ src/inc.cpp src/triple.cpp :results none
+#include "inc.hpp"
+#include "triple.hpp"
+int main() {
+  return inc(triple(3));
+}
+#+end_src
+
+Tente compilar este programa... você não vai conseguir! Por quê?
+
+Como vimos, os arquivos de código são compilados separadamente, e só depois ligados uns aos outros. Além disso, na primeira etapa de pré-processamento, todo o conteúdo de arquivos incluídos com o comando ~#include~ é copiado diretamente no arquivo que está sendo processado. Ou seja, ao final desta etapa existirá uma definição para a função ~sum~ no arquivo ~inc.cpp~ e uma segunda definição da mesma função no arquivo ~triple.cpp~, e o editor de ligação não se dá bem com isso!
+
+* TODO Automatizando o Processo de Compilação
+
