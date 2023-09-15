@@ -828,3 +828,211 @@ Como vimos, os arquivos de código são compilados separadamente, e só depois l
 
 * TODO Automatizando o Processo de Compilação
 
+Vimos que ao executar um comando como ~g++ -std=c++17 src0.cpp src1.cpp src2.cpp ... -o main~ cada um dos arquivos de código são compilados individualmente, resultando em arquivos objeto que só então serão ligados para formar o executável final. O que acontecerá caso seja realizada alguma alteração em *um* destes arquivos?
+
+Ao rodar o mesmo comando novamente, *todos* os arquivos serão compilados novamente, independente se foram alterados ou não. Não queremos isso...
+
+Poderíamos compilar manualmente cada um destes arquivos em seus respectivos objetos, e recompilar apenas os que foram alterados, mas seria bastante trabalhoso. Vamos automatizar este processo usando uma ferramenta chamada =make=.
+
+Para tanto, vamos precisar criar um arquivo =Makefile=. Iremos implementar neste arquivo todo o processo de compilação.
+
+** Conceitos Básicos do Makefile
+
+O =Makefile= é composto de /alvos/, cada alvo contendo comandos a serem executados:
+
+#+begin_src makefile :tangle Makefile
+alvo:
+	echo "Meu primeiro alvo"
+	echo "Meu segundo comando"
+#+end_src
+
+Utilizamos a ferramenta =make= da seguinte forma:
+
+#+begin_src sh :exports both :results scalar
+make alvo
+#+end_src
+
+#+RESULTS:
+: echo "Meu primeiro alvo"
+: Meu primeiro alvo
+: echo "Meu segundo comando"
+: Meu segundo comando
+
+Por padrão, o make produz como saída não somente as saídas dos comandos executados como também os próprios comandos. Podemos esconder os comandos com um @:
+
+#+begin_src makefile :tangle Makefile
+alvo_sem_echo:
+	@echo "Meu segundo alvo"
+#+end_src
+
+#+begin_src sh :exports both :results scalar
+make alvo_sem_echo
+#+end_src
+
+#+RESULTS:
+: Meu segundo alvo
+
+Além de comandos, um alvo pode ter /dependências/. Por exemplo, ao executar o alvo ~alvo_dependente~ a seguir, o alvo ~say_hello~ irá executar primeiro:
+
+#+begin_src makefile :tangle Makefile
+say_hello:
+	@echo "Hello"
+
+alvo_dependente: say_hello
+	@echo "Dependente - Sorriso Maroto"
+#+end_src
+
+#+begin_src sh :exports both :results scalar
+make alvo_dependente
+#+end_src
+
+#+RESULTS:
+: Hello
+: Dependente - Sorriso Maroto
+
+Por fim, podemos definir /variáveis/:
+
+#+begin_src makefile :tangle Makefile
+minha_variavel := "variável"
+echo_variavel:
+	@echo "O valor da minha variável é: $(minha_variavel)"
+#+end_src
+
+#+begin_src sh :exports both :results scalar
+make echo_variavel
+#+end_src
+
+#+RESULTS:
+: O valor da minha variável é: variável
+
+** Construindo o Makefile da Biblioteca Mail-Lib
+
+Vamos começar com a definição de algumas variáveis:
+
+#+begin_src makefile
+# O compilador que vamos utilizar 
+CXX := g++
+# Algumas flags de compilação
+CXXFLAGS := -std=c++17 -Wall -fPIC 
+# Flags de inclusão de cabeçalho	
+INCLUDE := -I include/
+# Caminho para o doctest
+DOCTEST += -I ../
+# Nome da pasta onde estão os códigos fonte
+SRC_DIR := src
+# Nome da pasta onde estão os códigos de teste
+TEST_DIR := test
+# Nome da pasta onde serão armazenados arquivos binários
+BIN_DIR := bin
+# Nome da pasta onde serão armazenados arquivos de compilação
+BUILD_DIR := build
+# Nome da pasta em que serão armazenadas as caixas de mensagens de cada usuário.
+STORAGE_DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))users
+#+end_src
+
+Agora, vamos definir um alvo para limpar os arquivos de compilação do projeto, caso necessário:
+
+#+begin_src makefile
+clean:
+	@echo "🧹 Cleaning ..."
+	@rm -rf $(BUILD_DIR) $(BIN_DIR)
+#+end_src
+
+E o nosso primeiro alvo para a compilação de um dos arquivos de código em objeto:
+
+#+begin_src makefile
+$(BUILD_DIR)/$(SRC_DIR)/core/mailbox.o: $(SRC_DIR)/core/mailbox.cpp
+	@echo "🏛️ Building $(SRC_DIR)/core/mailbox.cpp ..."
+	@mkdir -p $(BUILD_DIR)/$(SRC_DIR)/core/
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -D STORAGE_DIR=\"$(STORAGE_DIR)\" \
+		-c $(SRC_DIR)/core/mailbox.cpp \
+		-o $(BUILD_DIR)/$(SRC_DIR)/core/mailbox.o
+#+end_src
+
+Este alvo já é funcional, podemo executá-lo com o comando ~make build/src/core/mailbox.o~. Mas, ainda podemos melhorá-lo bastante.
+
+Note que o nome do alvo é exatamente o nome do caminho para o arquivo objeto. Isto não é coincidência! Podemos acessar o nome do alvo dentro da lista de comandos utilizando uma variável especial ~$@~:
+
+#+begin_src makefile
+$(BUILD_DIR)/$(SRC_DIR)/core/mailbox.o: $(SRC_DIR)/core/mailbox.cpp
+	@echo "🏛️ Building $(SRC_DIR)/core/mailbox.cpp ..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -D STORAGE_DIR=\"$(STORAGE_DIR)\" \
+		-c $(SRC_DIR)/core/mailbox.cpp \
+		-o $@
+#+end_src
+
+De maneira similar, podemos nos referir a *primeira* dependência do alvo através da variável ~$<~:
+
+
+#+begin_src makefile
+$(BUILD_DIR)/$(SRC_DIR)/core/mailbox.o: $(SRC_DIR)/core/mailbox.cpp
+	@echo "🏛️ Building $(SRC_DIR)/core/mailbox.cpp ..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -D STORAGE_DIR=\"$(STORAGE_DIR)\" -c $< -o $@
+#+end_src
+
+Bem melhor! Temos o nosso primeiro alvo de compilação!
+
+Mas, e para compilarmos os arquivos restantes? Será que precisamos de um alvo para cada arquivo? Não!
+
+#+begin_src makefile
+$(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@echo "🏛️ Building $< ..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -D STORAGE_DIR=\"$(STORAGE_DIR)\" -c $< -o $@
+#+end_src
+
+O padrão =%.cpp= irá casar com =core/mailapp.cpp=, =core/mailbox.cpp=, e também com =storage/yaml.cpp=. Agora, conseguimos compilar cada um dos três arquivos separadamente.
+
+Mas, não queremos compilar separadamente... queremos compilar a biblioteca inteira com um único comando! Neste caso em específico, o resultado da compilação não será um executável, mas sim um arquivo ".so" (shared object, uma biblioteca).
+
+Vamos criar um alvo para gerar este arquivo, mas antes precisamos coletar todos os arquivos objetos que serão utilizados:
+
+#+begin_src makefile
+SRC_FILES := $(wildcard $(SRC_DIR)/*/*.cpp)
+OBJ_SRC_FILES := $(SRC_FILES:.cpp=.o)
+#+end_src
+
+Agora, podemos criar um alvo para gerar o arquivo da biblioteca (este arquivo sempre começa com o prefixo =lib=):
+
+#+begin_src makefile
+$(BUILD_DIR)/libmail.so: $(addprefix $(BUILD_DIR)/,$(OBJ_SRC_FILES))
+	@echo "🔧 Preparing library ..."
+	@mkdir -p $(BUILD_DIR)
+	@$(CXX) -shared $^ -o $(BUILD_DIR)/libmail.so
+#+end_src
+
+Por fim, vamos criar um alvo =build=, que depende do arquivo =libmail.so=:
+
+#+begin_src makefile
+build: $(BUILD_DIR)/libmail.so
+#+end_src
+
+Assim, para compilar o projeto basta utilizar o comando =make build=. A ferramenta =make= ainda possui um alvo padrão, caso nenhum seja informado: o primeiro alvo no arquivo. Ou seja, assumindo que o alvo =build= é o primeiro que aparece no =Makefile=, basta rodar o comando =make=.
+
+Se executarmos o comando =make build= novamente, veremos que nada será realizado, pois já está tudo atualizado. E, caso façamos alguma alteração em algum arquivo, apenas este arquivo será recompilado.
+
+No entando, na configuração atual do nosso =Makefile= apenas alterações nos arquivos =.cpp= são levadas em consideração. Gostaríamos, também, que alterações nos arquivos =.hpp= fossem consideradas (por exemplo, se alterarmos um parâmetro de alguma função).
+
+Precisaríamos incluir os arquivos de cabeçalho como dependências do alvo de compilação. Porém, cada arquivo =.cpp= depende de cabeçalhos específicos, e não gostaríamos que uma alteração em um cabeçalho que não é uma dependência forçasse recompilações desnecessária.
+
+Alvos sem nenhum comando podem ser utilizados para adicionar dependências a um alvo existente. Podemos usar isso para adicionar dependências específicas de cada arquivo. Por exemplo, para o arquivo =src/core/mailbox.cpp=:
+
+#+begin_src makefile
+$(BUILD_DIR)/$(SRC_DIR)/core/mailbox.o: include/core/mailapp.hpp include/core/message.hpp
+#+end_src
+
+Porém, ter que adicionar dependências manualmente vai contra a ideia de um único alvo para múltiplos arquivos...
+
+Felizmente, podemos utilizar o compilador g++ para gerar arquivos de dependências (como acima), e incluí-los no makefile. Basta adicionar as opções =-MMD -MP= ao comando de compilação, e incluir os arquivos =.d= gerados no Makefile:
+
+#+begin_src makefile
+DEP_FILES := $(SRC_FILES:.cpp=.d)
+-include $(addprefix $(BUILD_DIR)/,$(DEP_FILES))
+
+$(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@echo "🏛️ Building $< ..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -D STORAGE_DIR=\"$(STORAGE_DIR)\" -MMD -MP -c $< -o $@
+#+end_src
