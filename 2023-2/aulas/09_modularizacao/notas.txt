@@ -760,7 +760,7 @@ Do Código Fonte ao Executável
   │ g++ -std=c++17 -I include -c src/header.cpp -o build/header.o
   └────
 
-  Este dois arquivos objetos gerados ainda precisam serem conectados, o
+  Este dois arquivos objetos gerados ainda precisam ser conectados, o
   que é feito com o comando
 
   ┌────

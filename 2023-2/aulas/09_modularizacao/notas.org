@@ -755,7 +755,7 @@ g++ -std=c++17 -I include -c src/main.cpp -o build/main.o
 g++ -std=c++17 -I include -c src/header.cpp -o build/header.o
 #+end_src
 
-Este dois arquivos objetos gerados ainda precisam serem conectados, o que é feito com o comando
+Este dois arquivos objetos gerados ainda precisam ser conectados, o que é feito com o comando
 
 #+begin_src sh :exports code :results none
 g++ build/main.o build/header.o -o bin/main
