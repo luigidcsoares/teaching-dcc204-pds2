@@ -789,7 +789,7 @@ A Importância do Arquivo de Cabeçalho em C/C++
   │ }
   └────
 
-  Além disso, agora temos dois outros arquivo que usam esta mesma
+  Além disso, agora temos dois outros arquivos que usam esta mesma
   função:
 
   `include/inc.hpp'
@@ -826,7 +826,7 @@ A Importância do Arquivo de Cabeçalho em C/C++
   │ }
   └────
 
-  E, estivéssemos utilizando ambas as funções `inc' e `triple':
+  E, estamos utilizando ambas as funções `inc' e `triple':
 
   `main.cpp'
 
@@ -850,18 +850,18 @@ A Importância do Arquivo de Cabeçalho em C/C++
   com isso!
 
 
-TODO Automatizando o Processo de Compilação
-═══════════════════════════════════════════
+Automatizando o Processo de Compilação
+══════════════════════════════════════
 
   Vimos que ao executar um comando como `g++ -std=c++17 src0.cpp
-  src1.cpp src2.cpp ... -o main' cada um dos arquivos de código são
-  compilados individualmente, resultando em arquivos objeto que só então
+  src1.cpp src2.cpp ... -o main' cada um dos arquivos de código é
+  compilado individualmente, resultando em arquivos objeto que só então
   serão ligados para formar o executável final. O que acontecerá caso
   seja realizada alguma alteração em *um* destes arquivos?
 
   Ao rodar o mesmo comando novamente, *todos* os arquivos serão
-  compilados novamente, independente se foram alterados ou não. Não
-  queremos isso…
+  recompilados, independente se foram alterados ou não. Não queremos
+  isso…
 
   Poderíamos compilar manualmente cada um destes arquivos em seus
   respectivos objetos, e recompilar apenas os que foram alterados, mas
