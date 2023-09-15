@@ -1,0 +1,665 @@
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    NOTAS DE AULA - 09 MODULARIZAÇÃO
+
+                           Luigi D. C. Soares
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Programação Modular
+═══════════════════
+
+  • O que é?
+
+    "software design technique that emphasizes separating the
+    functionality of a program into *independent*, interchangeable
+    modules, such that each contains everything necessary to execute
+    only one aspect of the desired functionality"
+
+    (<https://en.wikipedia.org/wiki/Modular_programming>)
+
+  • Quando/por quê utilizar?
+
+  Queremos agrupar elementos que dizem respeito a uma mesma
+  funcionalidade. Onde já vimos isso?
+
+  • Classes: agrupamento local (campos)
+
+  Ainda assim, classes representam algo bem específico (lembram do
+  princípio de responsabilidade única? SRP), o que não é suficiente a
+  medida que o sistema cresce e se torna mais complexo.
+
+  Classes possuem diversas relações entre si (voltaremos nisso). Algumas
+  classes estão muito "próximas", outras mais distantes. Como
+  organizá-las? Qual o próximo passo?
+
+  Módulos!
+  • Independente (na medida do possível… dependências restritas as
+    interfaces de outros módulos)
+  • Reutilizável e modificável
+  • SRP ainda se aplica
+  • Coesão: grau de dependência entre os elementos do módulo (queremos
+    *alta coesão*)
+  • Acoplamento: grau de dependência entre diferentes módulos (queremos
+    *baixo acoplamento*)
+
+  E como representar módulos em C++? Isto é, como agrupar
+  classes/funcionalidades?
+
+
+Namespaces
+══════════
+
+  • Onde já vimos isso? `std::'
+  • E como podemos criar nossos próprios namespaces?
+
+  `message.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ namespace mail_lib {
+  │ struct Message {
+  │   std::string from;
+  │   std::string to;
+  │   std::string subject;
+  │   std::string content;
+  │ };
+  │ }
+  └────
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ namespace mail_lib {
+  │ class Mailbox { ... };
+  │ }
+  └────
+
+  • E como utilizar?
+
+  ┌────
+  │ mail_lib::Message msg;
+  │ mail_lib::Mailbox mbox;
+  └────
+
+  • Podemos, inclusive, concatenar espaços de nome:
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox { ... };
+  │ }
+  └────
+
+  `yaml.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ namespace mail_lib::storage {
+  │ class YAML { ... };
+  │ }
+  └────
+
+  • E para usar:
+
+  ┌────
+  │ mail_lib::core::Mailbox mbox;
+  │ mail_lib::storage::YAML storage;
+  └────
+
+  • Ou podemos "renomear":
+
+  ┌────
+  │ namespace core = mail_lib::core;
+  │ namespace storage = mail_lib::storage;
+  │ 
+  │ core::Mailbox mbox;
+  │ storage::YAML storage;
+  └────
+
+  • `mail_lib' aqui está servindo como o espaço de nomes da nossa
+    biblioteca como um todo (que veremos a seguir)
+  • `mail_lib::core' é o módulo que agrupa as funcionalidades
+    relacionadas ao sistema de emails
+  • `mail_lib::storage' é o módulo que agrupa as funcionalidades
+    relacionadas ao armazenamento dos dados
+
+
+Organização do Projeto
+══════════════════════
+
+  A forma como estruturamos nosso projeto também é importante!
+
+  Nosso primeiro mini-projeto: uma biblioteca para gerenciamento de um
+  sistema de emails
+
+  A estrutura do projeto:
+
+  ┌────
+  │ mail-lib/
+  │ |__ bin/
+  │ |__ build/
+  │ |__ doc/
+  │ |__ include/
+  │     |__ core/
+  │         |__ mailapp.hpp
+  │         |__ mailbox.hpp
+  │         |__ message.hpp
+  │     |__ storage/
+  │         |__ yaml.hpp
+  │ |__ src/
+  │     |__ core/
+  │         |__ mailapp.cpp
+  │         |__ mailbox.cpp
+  │     |__ storage/
+  │         |__ yaml.cpp
+  │ |__ test/
+  │     |__ core/
+  │         |__ mailapp.cpp
+  │         |__ mailbox.cpp
+  │     |__ storage/
+  │         |__ yaml.cpp
+  │         |__ driver.cpp
+  │ |__ Doxyfile
+  │ |__ Makefile
+  └────
+
+  Temos um módulo `mail_lib::core' agrupando as funcionalidades de
+  `Message', `Mailbox', e `Mailapp':
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "mailbox.hpp"
+  │ #include "message.hpp"
+  │ #include "yaml.hpp"
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailapp {
+  │ public:
+  │   /// @brief Inicialização das caixas de entrada e saída
+  │   ///
+  │   /// Busca as mensagens lidas e enviadas pelo usuário,
+  │   /// para inicializar as caixas de mensagens.
+  │   ///
+  │   /// FIXME: obviamente, aqui (ou em algum passo antes)
+  │   ///        deveria ter alguma etapa de autenticação...
+  │   ///
+  │   /// @param user Usuário (email) que está logado
+  │   Mailapp(std::string user);
+  │ 
+  │   /// @brief Realiza o flush das caixas de mensagem
+  │   ~Mailapp();
+  │ 
+  │   /// @return A caixa de entrada, para leitura de emails recebidos
+  │   Mailbox inbox() const;
+  │ 
+  │   /// @return A caixa de saída, para leitura de emails enviados
+  │   Mailbox sent() const;
+  │ 
+  │   /// @brief Adiciona nova mensagem à caixa de saída
+  │   Mailapp &send_message(std::string to, std::string subject, std::string content);
+  │ 
+  │ private:
+  │   std::string _user;
+  │ 
+  │   Mailbox _inbox = Mailbox("inbox");
+  │   Mailbox _sent = Mailbox("sent");
+  │ 
+  │   unsigned _start_new_inbox = 0;
+  │   unsigned _start_new_sent = 0;
+  │ 
+  │   storage::YAML _user_storage;
+  │ };
+  │ }
+  └────
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "message.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox {
+  │ public:
+  │   /// @brief Inicializa a caixa com um determinado nome, mas vazia
+  │   ///
+  │   /// Detalhes...
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   Mailbox(std::string name);
+  │ 
+  │   /// @brief Inicializa a caixa com mensagens previamente lidas
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   /// @param msgs Vetor de mensagens, onde a **última** deve ser
+  │   ///             a mais recente (idealmente teria um timestamp...)
+  │   Mailbox(std::string name, std::vector<Message> const &msgs);
+  │ 
+  │   /// @brief Adiciona uma mensagem ao final da lista
+  │   /// @param msg Mensagem a ser adicionada
+  │   /// @return A própria caixa, para chamadas consecutivas
+  │   Mailbox &add(Message msg);
+  │ 
+  │   /// @return A lista de mensagens, em que o último elemento é
+  │   ///         a mensagem adicionada mais recentemente
+  │   std::vector<Message> read_all() const;
+  │ 
+  │   /// @return Nome da caixa de entrada
+  │   std::string name() const;
+  │ 
+  │ private:
+  │   std::string _name;
+  │   std::vector<Message> _msgs;
+  │ };
+  │ };
+  └────
+  ┌────
+  │ #include "mailbox.hpp"
+  │ #include "message.hpp"
+  │ 
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs) {
+  │   _name = name;
+  │   _msgs = msgs;
+  │ }
+  │ 
+  │ Mailbox::Mailbox(std::string name) : Mailbox(name, {}) {}
+  │ 
+  │ 
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "mailbox.hpp"
+  │ #include "message.hpp"
+  │ #include "yaml.hpp"
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailapp {
+  │ public:
+  │   /// @brief Inicialização das caixas de entrada e saída
+  │   ///
+  │   /// Busca as mensagens lidas e enviadas pelo usuário,
+  │   /// para inicializar as caixas de mensagens.
+  │   ///
+  │   /// FIXME: obviamente, aqui (ou em algum passo antes)
+  │   ///        deveria ter alguma etapa de autenticação...
+  │   ///
+  │   /// @param user Usuário (email) que está logado
+  │   Mailapp(std::string user);
+  │ 
+  │   /// @brief Realiza o flush das caixas de mensagem
+  │   ~Mailapp();
+  │ 
+  │   /// @return A caixa de entrada, para leitura de emails recebidos
+  │   Mailbox inbox() const;
+  │ 
+  │   /// @return A caixa de saída, para leitura de emails enviados
+  │   Mailbox sent() const;
+  │ 
+  │   /// @brief Adiciona nova mensagem à caixa de saída
+  │   Mailapp &send_message(std::string to, std::string subject, std::string content);
+  │ 
+  │ private:
+  │   std::string _user;
+  │ 
+  │   Mailbox _inbox = Mailbox("inbox");
+  │   Mailbox _sent = Mailbox("sent");
+  │ 
+  │   unsigned _start_new_inbox = 0;
+  │   unsigned _start_new_sent = 0;
+  │ 
+  │   storage::YAML _user_storage;
+  │ };
+  │ }
+  └────
+  ┌────
+  │ #include "mailapp.hpp"
+  │ #include "mailbox.hpp"
+  │ #include "yaml.hpp"
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailapp::Mailapp(std::string user) : _user(user), _user_storage(user) {
+  │   auto mboxes = _user_storage.load();
+  │ 
+  │   auto inbox_it = mboxes.find("inbox");
+  │   if (inbox_it != mboxes.end()) {
+  │     _inbox = inbox_it->second;
+  │     _start_new_inbox = _inbox.read_all().size();
+  │   }
+  │ 
+  │   auto sent_it = mboxes.find("sent");
+  │   if (sent_it != mboxes.end()) {
+  │     _sent = sent_it->second;
+  │     _start_new_sent = _sent.read_all().size();
+  │   }
+  │ }
+  │ 
+  │ Mailapp::~Mailapp() {
+  │   Mailbox new_inbox("inbox");
+  │   auto inbox_msgs = _inbox.read_all();
+  │   for (unsigned i = _start_new_inbox; i < inbox_msgs.size(); i++) {
+  │     new_inbox.add(inbox_msgs[i]);
+  │   }
+  │ 
+  │   Mailbox new_sent("sent");
+  │   auto sent_msgs = _sent.read_all();
+  │   for (unsigned i = _start_new_sent; i < sent_msgs.size(); i++) {
+  │     new_sent.add(sent_msgs[i]);
+  │   }
+  │ 
+  │   _user_storage.save({new_inbox, new_sent});
+  │ }
+  │ 
+  │ Mailbox Mailapp::inbox() const {
+  │   return _inbox;
+  │ }
+  │ 
+  │ Mailbox Mailapp::sent() const {
+  │   return _sent;
+  │ }
+  │ 
+  │ Mailapp &Mailapp::send_message(std::string to, std::string subject, std::string content) {
+  │   Message m = {_user, to, subject, content};
+  │   _sent.add(m);
+  │ 
+  │   // Aqui estamos acessando a pasta de um usuário não autenticado,
+  │   // possível fonte de problemas/ataques...
+  │   // Mas é só um exemplo para as aulas, então vamos simplificar;
+  │   storage::YAML(to).save({ Mailbox("inbox").add(m) });
+  │ 
+  │   return *this;
+  │ }
+  │ }
+  └────
+  E temos o módulo `mail_lib::storage', composto pela classe `YAML':
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "mailbox.hpp"
+  │ 
+  │ #include <fstream>
+  │ #include <unordered_map>
+  │ #include <string>
+  │ 
+  │ namespace mail_lib::storage {
+  │ class YAML {
+  │ public:
+  │   /// @brief Inicializa o gerenciador YAML das caixas do usuário
+  │   ///
+  │   /// O diretório do usuário é criado vazio, caso não exista
+  │   YAML(std::string user);
+  │ 
+  │   /// TODO: poderia verificar se os arquivos não foram alterados,
+  │   ///       para evitar loads em sequência...
+  │   /// @return Lista de mailboxes do usuário
+  │   std::unordered_map<std::string, core::Mailbox> load();
+  │ 
+  │   /// @brief Persiste as mailboxes nos arquivos do usuário.
+  │   YAML &save(std::vector<core::Mailbox> const &mboxes);
+  │ 
+  │ private:
+  │   std::string _user_path;
+  │   std::unordered_map<std::string, std::fstream> _user_files;
+  │ };
+  │ }
+  └────
+  ┌────
+  │ #include "yaml.hpp"
+  │ #include "mailbox.hpp"
+  │ 
+  │ #include <filesystem>
+  │ #include <iomanip>
+  │ #include <sstream>
+  │ #include <string>
+  │ #include <unordered_map>
+  │ 
+  │ namespace fs = std::filesystem;
+  │ 
+  │ namespace mail_lib::storage {
+  │ YAML::YAML(std::string user) {
+  │   _user_path = STORAGE_DIR"/" + user + "/";
+  │   fs::create_directory(_user_path); // Cria diretório, se não existe
+  │ 
+  │   for (auto const &entry : fs::directory_iterator(_user_path)) {
+  │     auto const &file_path = entry.path();
+  │     auto file_mode = std::fstream::in | std::fstream::out | std::fstream::app;
+  │     _user_files[file_path.stem()] = std::fstream(file_path.c_str(), file_mode);
+  │   }
+  │ }
+  │ 
+  │ std::unordered_map<std::string, core::Mailbox> YAML::load() {
+  │   std::unordered_map<std::string, core::Mailbox> mboxes;
+  │   for (auto &file : _user_files) {
+  │     std::string filename = file.first;
+  │     std::fstream &fs = file.second;
+  │     std::string item;
+  │ 
+  │     std::vector<core::Message> msgs;
+  │     fs.seekg(std::ios::beg);
+  │ 
+  │     while (std::getline(fs, item)) {
+  │       core::Message msg;
+  │ 
+  │       std::istringstream stream(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.from);
+  │ 
+  │       std::getline(fs, item);
+  │       stream.str(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.to);
+  │ 
+  │       std::getline(fs, item);
+  │       stream.str(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.subject);
+  │ 
+  │       std::getline(fs, item);
+  │       stream.str(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.content);
+  │ 
+  │       msgs.push_back(msg);
+  │     }
+  │     mboxes.try_emplace(filename, filename, msgs);
+  │   }
+  │   return mboxes;
+  │ }
+  │ 
+  │ YAML &YAML::save(std::vector<core::Mailbox> const &mboxes) {
+  │   for (core::Mailbox const &mbox: mboxes) {
+  │     std::string filename = mbox.name();
+  │ 
+  │     if (!_user_files.count(filename)) {
+  │       auto file_mode = std::fstream::in | std::fstream::out | std::fstream::app;
+  │       _user_files[filename] = std::fstream(_user_path + filename + ".yaml", file_mode);
+  │     }
+  │ 
+  │     std::fstream &fs = _user_files[filename];
+  │     for (core::Message const &msg : mbox.read_all()) {
+  │       fs << "- from: \"" << msg.from << "\"" << std::endl;;
+  │       fs << "  to: \"" << msg.to << "\"" << std::endl;
+  │       fs << "  subject: \"" << msg.subject << "\"" << std::endl;
+  │       fs << "  content: \"" << msg.content << "\"" << std::endl;
+  │     }
+  │   }
+  │   return *this;
+  │ }
+  │ }
+  └────
+  Por fim, temos também os testes para cada uma das classes, também
+  organizados pelos módulos:
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include <doctest.hpp>
+  └────
+  ┌────
+  │ #include "doctest.hpp"
+  │ #include "core/mailapp.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <filesystem>
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ using mail_lib::core::Message;
+  │ 
+  │ namespace fs = std::filesystem;
+  │ 
+  │ TEST_CASE("Enviando mensagem para outro usuário") {
+  │   fs::remove_all(STORAGE_DIR"/fake-from");
+  │   fs::remove_all(STORAGE_DIR"/fake-to");
+  │ 
+  │   Mailapp from_app("fake-from");
+  │   from_app.send_message("fake-to", "subject", "sending message");
+  │ 
+  │   Mailapp to_app("fake-to");
+  │   Message last_sent = from_app.sent().read_all().back();
+  │   Message last_received = to_app.inbox().read_all().back();
+  │ 
+  │   CHECK_EQ(last_sent.from, "fake-from");
+  │   CHECK_EQ(last_sent.to, "fake-to");
+  │   CHECK_EQ(last_sent.subject, "subject");
+  │   CHECK_EQ(last_sent.content, "sending message");
+  │ 
+  │   CHECK_EQ(last_received.from, "fake-from");
+  │   CHECK_EQ(last_received.to, "fake-to");
+  │   CHECK_EQ(last_received.subject, "subject");
+  │   CHECK_EQ(last_received.content, "sending message");
+  │ }
+  └────
+  ┌────
+  │ #include "doctest.hpp"
+  │ #include "core/message.hpp"
+  │ #include "core/mailbox.hpp"
+  │ 
+  │ #include <vector>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ using mail_lib::core::Message;
+  │ 
+  │ TEST_CASE("Adicionando mensagens à caixa de entrada vazia") {
+  │   Mailbox mbox("inbox");
+  │   Message msg0 = { "from0", "to0", "content0" };
+  │   Message msg1 = { "from1", "to1", "content1" };
+  │   mbox.add(msg0).add(msg1);
+  │ 
+  │   std::vector<Message> msgs = mbox.read_all();
+  │ 
+  │   auto check_msg = [](Message a, Message b) {
+  │     CHECK_EQ(a.from, b.from);
+  │     CHECK_EQ(a.to, b.to);
+  │     CHECK_EQ(a.content, b.content);
+  │   };
+  │ 
+  │   check_msg(msg0, msgs[0]);
+  │   check_msg(msg1, msgs[1]);
+  │ }
+  │ 
+  │ TEST_CASE("Adicionando mensagens à caixa já preenchida") {
+  │   std::vector<Message> old_msgs = {{ "from0", "to0", "content0" }};
+  │ 
+  │   Mailbox mbox("inbox", old_msgs);
+  │   mbox.add({ "from1", "to1", "content1" });
+  │ 
+  │   auto check_msg = [](Message a, Message b) {
+  │     CHECK_EQ(a.from, b.from);
+  │     CHECK_EQ(a.to, b.to);
+  │     CHECK_EQ(a.content, b.content);
+  │   };
+  │ 
+  │   std::vector<Message> msgs = mbox.read_all();
+  │ 
+  │   check_msg(old_msgs[0], msgs[0]);
+  │   check_msg({ "from1", "to1", "content1" } , msgs[1]);
+  │ }
+  └────
+  ┌────
+  │ #include "doctest.hpp"
+  │ #include "core/message.hpp"
+  │ #include "core/mailbox.hpp"
+  │ #include "storage/yaml.hpp"
+  │ 
+  │ #include <filesystem>
+  │ #include <string>
+  │ #include <unordered_map>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ using mail_lib::core::Message;
+  │ 
+  │ // Apelido para o namespace (para ficar mais curto)
+  │ namespace fs = std::filesystem;
+  │ namespace storage = mail_lib::storage;
+  │ 
+  │ TEST_CASE("YAML") {
+  │   std::unordered_map<std::string, Mailbox> mboxes;
+  │ 
+  │   SUBCASE("Testando o carregamento dos dados: load fake") {
+  │     storage::YAML storage("fake-load");
+  │     mboxes = storage.load();
+  │   }
+  │ 
+  │   SUBCASE("Testando o salvamento dos dados: store + load") {
+  │     fs::remove_all(STORAGE_DIR"/fake-save");
+  │     storage::YAML storage("fake-save");
+  │     mboxes = storage.save({
+  │         Mailbox("inbox")
+  │         .add({ "someone0", "fake-user", "subject0", "received0" })
+  │         .add({ "someone1", "fake-user", "subject1", "received1" }),
+  │ 
+  │         Mailbox("sent")
+  │         .add({ "fake-user", "someone0", "subject0", "sent0" })
+  │         .add({ "fake-user", "someone1", "subject1", "sent1" })
+  │       }).load();
+  │   }
+  │ 
+  │   Mailbox &sent = mboxes.at("sent");
+  │   std::vector<Message> sent_msgs = sent.read_all();
+  │ 
+  │   CHECK_EQ(sent.name(), "sent");
+  │   CHECK_EQ(sent_msgs[0].from, "fake-user");
+  │   CHECK_EQ(sent_msgs[0].to, "someone0");
+  │   CHECK_EQ(sent_msgs[0].subject, "subject0");
+  │   CHECK_EQ(sent_msgs[0].content, "sent0");
+  │ 
+  │   CHECK_EQ(sent_msgs[1].from, "fake-user");
+  │   CHECK_EQ(sent_msgs[1].to, "someone1");
+  │   CHECK_EQ(sent_msgs[1].subject, "subject1");
+  │   CHECK_EQ(sent_msgs[1].content, "sent1");
+  │ 
+  │   auto inbox = mboxes.at("inbox");
+  │   auto inbox_msgs = inbox.read_all();
+  │ 
+  │   CHECK_EQ(inbox.name(), "inbox");
+  │   CHECK_EQ(inbox_msgs[0].from, "someone0");
+  │   CHECK_EQ(inbox_msgs[0].to, "fake-user");
+  │   CHECK_EQ(inbox_msgs[0].subject, "subject0");
+  │   CHECK_EQ(inbox_msgs[0].content, "received0");
+  │ 
+  │   CHECK_EQ(inbox_msgs[1].from, "someone1");
+  │   CHECK_EQ(inbox_msgs[1].to, "fake-user");
+  │   CHECK_EQ(inbox_msgs[1].subject, "subject1");
+  │   CHECK_EQ(inbox_msgs[1].content, "received1");
+  │ }
+  └────
