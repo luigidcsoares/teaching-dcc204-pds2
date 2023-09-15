@@ -149,57 +149,25 @@ mail-lib/
 Temos um módulo ~mail_lib::core~ agrupando as funcionalidades de ~Message~, ~Mailbox~, e ~Mailapp~:
 
 #+html: <details>
-#+html: <summary> include/core/message.hpp (clique aqui)
+#+html: <summary>include/core/message.hpp (clique aqui)</summary>
 #+begin_src C++
 #pragma once
 
-#include "mailbox.hpp"
-#include "message.hpp"
-#include "yaml.hpp"
+#include <string>
 
 namespace mail_lib::core {
-class Mailapp {
-public:
-  /// @brief Inicialização das caixas de entrada e saída
-  ///
-  /// Busca as mensagens lidas e enviadas pelo usuário,
-  /// para inicializar as caixas de mensagens.
-  ///
-  /// FIXME: obviamente, aqui (ou em algum passo antes)
-  ///        deveria ter alguma etapa de autenticação...
-  ///
-  /// @param user Usuário (email) que está logado
-  Mailapp(std::string user);
-
-  /// @brief Realiza o flush das caixas de mensagem
-  ~Mailapp();
-
-  /// @return A caixa de entrada, para leitura de emails recebidos
-  Mailbox inbox() const;
-
-  /// @return A caixa de saída, para leitura de emails enviados
-  Mailbox sent() const;
-
-  /// @brief Adiciona nova mensagem à caixa de saída
-  Mailapp &send_message(std::string to, std::string subject, std::string content);
-
-private:
-  std::string _user;
-  
-  Mailbox _inbox = Mailbox("inbox");
-  Mailbox _sent = Mailbox("sent");
-
-  unsigned _start_new_inbox = 0;
-  unsigned _start_new_sent = 0;
-  
-  storage::YAML _user_storage;
+struct Message {
+  std::string from;
+  std::string to;
+  std::string subject;
+  std::string content;
 };
 }
 #+end_src
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> include/core/mailbox.hpp (clique aqui)
+#+html: <summary>include/core/mailbox.hpp (clique aqui)</summary>
 #+begin_src C++
 #pragma once
 
@@ -244,7 +212,7 @@ private:
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> src/core/mailbox.cpp (clique aqui)
+#+html: <summary>src/core/mailbox.cpp (clique aqui)</summary>
 #+begin_src C++
 #include "mailbox.hpp"
 #include "message.hpp"
@@ -277,7 +245,7 @@ std::string Mailbox::name() const {
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> include/core/mailapp.hpp (clique aqui)
+#+html: <summary>include/core/mailapp.hpp (clique aqui)</summary>
 #+begin_src C++
 #pragma once
 
@@ -327,7 +295,7 @@ private:
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> src/core/mailapp.cpp (clique aqui)
+#+html: <summary>src/core/mailapp.cpp (clique aqui)</summary>
 #+begin_src C++
 #include "mailapp.hpp"
 #include "mailbox.hpp"
@@ -393,7 +361,7 @@ Mailapp &Mailapp::send_message(std::string to, std::string subject, std::string 
 E temos o módulo ~mail_lib::storage~, composto pela classe ~YAML~:
 
 #+html: <details>
-#+html: <summary> include/storage/yaml.hpp (clique aqui)
+#+html: <summary>include/storage/yaml.hpp (clique aqui)</summary>
 #+begin_src C++
 #pragma once
 
@@ -428,7 +396,7 @@ private:
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> src/storage/yaml.cpp (clique aqui)
+#+html: <summary>src/storage/yaml.cpp (clique aqui)</summary>
 #+begin_src C++
 #include "yaml.hpp"
 #include "mailbox.hpp"
@@ -514,7 +482,7 @@ YAML &YAML::save(std::vector<core::Mailbox> const &mboxes) {
 Por fim, temos também os testes para cada uma das classes, também organizados pelos módulos:
 
 #+html: <details>
-#+html: <summary> test/driver.cpp (clique aqui)
+#+html: <summary>test/driver.cpp (clique aqui)</summary>
 #+begin_src C++
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest.hpp>
@@ -522,7 +490,7 @@ Por fim, temos também os testes para cada uma das classes, também organizados 
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> test/core/mailapp.cpp (clique aqui)
+#+html: <summary>test/core/mailapp.cpp (clique aqui)</summary>
 #+begin_src C++
 #include "doctest.hpp"
 #include "core/mailapp.hpp"
@@ -560,7 +528,7 @@ TEST_CASE("Enviando mensagem para outro usuário") {
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> test/core/mailbox.cpp (clique aqui)
+#+html: <summary>test/core/mailbox.cpp (clique aqui)</summary>
 #+begin_src C++
 #include "doctest.hpp"
 #include "core/message.hpp"
@@ -610,7 +578,7 @@ TEST_CASE("Adicionando mensagens à caixa já preenchida") {
 #+html: </details>
 
 #+html: <details>
-#+html: <summary> test/storage/yaml.cpp (clique aqui)
+#+html: <summary>test/storage/yaml.cpp (clique aqui)</summary>
 #+begin_src C++
 #include "doctest.hpp"
 #include "core/message.hpp"
