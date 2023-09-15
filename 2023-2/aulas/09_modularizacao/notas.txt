@@ -640,10 +640,10 @@ Do Código Fonte ao Executável
   programação para um programa executável envolve várias fases. No caso
   de C++, estas etapas são:
 
-  1) *Pré-processamento*: nesta fase, todas aquelas macros prefixadas
-      com o caractere *#* são processadas. Por exemplo, quando o
-      pré-processador encontra o comando `#include <iostream>', ele o
-      substitui por todo o conteúdo do cabeçalho `iostream'.
+  (1) *Pré-processamento*: nesta fase, todas aquelas macros prefixadas
+  com o caractere *#* são processadas. Por exemplo, quando o
+  pré-processador encontra o comando `#include <iostream>', ele o
+  substitui por todo o conteúdo do cabeçalho `iostream'.
 
   Considere o seguinte programa:
 
@@ -695,12 +695,11 @@ Do Código Fonte ao Executável
   │ }
   └────
 
-  1) *Compilação*: o processo de compilação por si só envolve várias
-      etapas, como análises sintáticas e semânticas. O resultado final é
-      o código assembly correspondente ao código de entrada. Assembly é
-      uma representação humanamente legível do código de máquina (o
-      formato final). Podemos produzir o assembly com o seguinte
-      comando:
+  (2) *Compilação*: o processo de compilação por si só envolve várias
+  etapas, como análises sintáticas e semânticas. O resultado final é o
+  código assembly correspondente ao código de entrada. Assembly é uma
+  representação humanamente legível do código de máquina (o formato
+  final). Podemos produzir o assembly com o seguinte comando:
 
   ┌────
   │ g++ -std=c++17 -I include/ -S src/main.cpp -o build/main.s
@@ -734,33 +733,33 @@ Do Código Fonte ao Executável
   │ 	.section	.note.GNU-stack,"",@progbits
   └────
 
-  1) *Assembly*: o código no formato assembly é entregue para um
-      programa conhecido como /assembler/, que traduz esta representação
-      humanamente legível para o código de máquina. Em C++, chamamos o
-      resultado deste processo de arquivo /objeto/. Este ainda não é o
-      arquivo final, executável. Podemos gerar o arquivo objeto com o
-      seguinte comando:
+  (3) *Assembly*: o código no formato assembly é entregue para um
+  programa conhecido como /assembler/, que traduz esta representação
+  humanamente legível para o código de máquina. Em C++, chamamos o
+  resultado deste processo de arquivo /objeto/. Este ainda não é o
+  arquivo final, executável. Podemos gerar o arquivo objeto com o
+  seguinte comando:
 
   ┌────
   │ g++ -std=c++17 -I include/ -c src/main.cpp -o build/main.o
   └────
 
-  1) *Ligação*: você deve ter reparado que em nenhuma das três etapas
-      acima o arquivo de código `src/header.cpp' foi referenciado. Isto,
-      porque as três etapas anteriores são sempre realizadas
-      individualmente para cada /unidade de tradução/. Uma unidade de
-      tradução corresponde ao conteúdo de único arquivo de código
-      (`.cpp') após este ter passado pela etapa de pré-processamento.
+  (4) *Ligação*: você deve ter reparado que em nenhuma das três etapas
+  acima o arquivo de código `src/header.cpp' foi referenciado. Isto,
+  porque as três etapas anteriores são sempre realizadas individualmente
+  para cada /unidade de tradução/. Uma unidade de tradução corresponde
+  ao conteúdo de único arquivo de código (`.cpp') após este ter passado
+  pela etapa de pré-processamento.
 
-     Quando executamos o comando `g++ -std=c++17 -I include/
-     src/main.cpp src/header.cpp -o bin/main.cpp', implicitamente dois
-     comandos são executados separadamente:
+  Quando executamos o comando `g++ -std=c++17 -I include/ src/main.cpp
+  src/header.cpp -o bin/main.cpp', implicitamente dois comandos são
+  executados separadamente:
 
-     • `g++ -std=c++17 -I include -c src/main.cpp -o build/main.o'
-     • `g++ -std=c++17 -I include -c src/header.cpp -o build/header.o'
+  • `g++ -std=c++17 -I include -c src/main.cpp -o build/main.o'
+  • `g++ -std=c++17 -I include -c src/header.cpp -o build/header.o'
 
-     Este dois arquivos objetos gerados ainda precisam serem conectados,
-     o que é feito com o comando
+  Este dois arquivos objetos gerados ainda precisam serem conectados, o
+  que é feito com o comando
 
   ┌────
   │ g++ build/main.o build/header.o -o bin/main
