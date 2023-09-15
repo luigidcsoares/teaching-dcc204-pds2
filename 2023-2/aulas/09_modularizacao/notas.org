@@ -748,12 +748,14 @@ g++ -std=c++17 -I include/ -c src/main.cpp -o build/main.o
 
 (4) *Ligação*: você deve ter reparado que em nenhuma das três etapas acima o arquivo de código =src/header.cpp= foi referenciado. Isto, porque as três etapas anteriores são sempre realizadas individualmente para cada /unidade de tradução/. Uma unidade de tradução corresponde ao conteúdo de único arquivo de código (=.cpp=) após este ter passado pela etapa de pré-processamento.
 
-   Quando executamos o comando =g++ -std=c++17 -I include/ src/main.cpp src/header.cpp -o bin/main.cpp=, implicitamente dois comandos são executados separadamente:
+Quando executamos o comando =g++ -std=c++17 -I include/ src/main.cpp src/header.cpp -o bin/main.cpp=, implicitamente dois comandos são executados separadamente:
 
-   - src_sh[:exports code :results none]{g++ -std=c++17 -I include -c src/main.cpp -o build/main.o}
-   - src_sh[:exports code :results none]{g++ -std=c++17 -I include -c src/header.cpp -o build/header.o}
+#+begin_src sh :exports code :results none
+g++ -std=c++17 -I include -c src/main.cpp -o build/main.o
+g++ -std=c++17 -I include -c src/header.cpp -o build/header.o
+#+end_src
 
-   Este dois arquivos objetos gerados ainda precisam serem conectados, o que é feito com o comando
+Este dois arquivos objetos gerados ainda precisam serem conectados, o que é feito com o comando
 
 #+begin_src sh :exports code :results none
 g++ build/main.o build/header.o -o bin/main

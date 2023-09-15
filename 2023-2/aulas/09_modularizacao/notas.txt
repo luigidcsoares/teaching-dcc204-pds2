@@ -755,8 +755,10 @@ Do Código Fonte ao Executável
   src/header.cpp -o bin/main.cpp', implicitamente dois comandos são
   executados separadamente:
 
-  • `g++ -std=c++17 -I include -c src/main.cpp -o build/main.o'
-  • `g++ -std=c++17 -I include -c src/header.cpp -o build/header.o'
+  ┌────
+  │ g++ -std=c++17 -I include -c src/main.cpp -o build/main.o
+  │ g++ -std=c++17 -I include -c src/header.cpp -o build/header.o
+  └────
 
   Este dois arquivos objetos gerados ainda precisam serem conectados, o
   que é feito com o comando
