@@ -918,14 +918,8 @@ CXX := g++
 CXXFLAGS := -std=c++17 -Wall -fPIC 
 # Flags de inclusão de cabeçalho	
 INCLUDE := -I include/
-# Caminho para o doctest
-DOCTEST += -I ../
 # Nome da pasta onde estão os códigos fonte
 SRC_DIR := src
-# Nome da pasta onde estão os códigos de teste
-TEST_DIR := test
-# Nome da pasta onde serão armazenados arquivos binários
-BIN_DIR := bin
 # Nome da pasta onde serão armazenados arquivos de compilação
 BUILD_DIR := build
 # Nome da pasta em que serão armazenadas as caixas de mensagens de cada usuário.
