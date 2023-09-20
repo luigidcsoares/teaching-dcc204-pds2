@@ -1117,6 +1117,6 @@ $(BUILD_DIR)/$(TEST_DIR)/%.o: $(TEST_DIR)/%.cpp
 
 clean:
 	@echo "🧹 Cleaning ..."
-	@rm -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 #+end_src
 #+html: </details>
