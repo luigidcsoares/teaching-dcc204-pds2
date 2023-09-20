@@ -1,0 +1,473 @@
+                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      NOTAS DE AULA - 10 DEPURAÇÃO
+
+                           Luigi D. C. Soares
+                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Introdução
+══════════
+
+  Boas práticas de programação reduzem a chance de erros, mas eles ainda
+  vão existir!
+
+  Medidas proativas:
+  • Testes de unidade
+  • Programação defensiva (veremos mais a frente)
+
+  Medidas reativas: *depuração*
+
+  Revisão vs Depuração vs Testes
+  • Revisão: verificação e validação (verificar se problemas existem)
+  • Testes: o que fazer para "quebrar" o programa? Como reproduzir
+    "bugs"?
+  • Depuração: Como *localizar* a raíz do problema? O que fazer para
+    *consertar*?
+
+
+Tipos de Erro
+═════════════
+
+Sintático (em tempo de compilação)
+──────────────────────────────────
+
+  Qual o problema?
+
+  ┌────
+  │ int main() {
+  │   int x = (3 + 5; // error: expected ')' before ';' token
+  │   return 0;
+  │ }
+  └────
+
+
+Semântico (em tempo de compilação)
+──────────────────────────────────
+
+  Qual o erro?
+
+  ┌────
+  │ int main() {
+  │   int a = "hello"; // error: invalid conversion from 'const char*' to 'int'
+  │   return 0;
+  │ }
+  └────
+
+  E agora? Tem algum problema?
+
+  ┌────
+  │ int main() {
+  │   int i;
+  │   i++; // warning: 'i' is used uninitialized
+  │   return 0;
+  │ }
+  └────
+
+  Podemos pedir que o compilador emita mais warnings, com a opção -Wall:
+  `g++ -std=c++17 -Wall main.cpp -o main'
+
+  Existem outras opções para que ainda mais warnings sejam emitidos:
+  -Wextra, -pedantic
+
+
+Lógicos (durante execução)
+──────────────────────────
+
+  O programa a seguir compila, mas o que pode acontecer?
+
+  ┌────
+  │ #include <iostream>
+  │ int main() {
+  │   int a = 10;
+  │   int b;
+  │ 
+  │   std::cin >> b;
+  │   std::cout << a / b << std::endl; // Durante execução: floating point exception
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  Erros observados durante execução:
+  • Resultado incorreto
+  • Loops infinitos
+  • Segmentation fault
+  • …
+
+
+Estratégias de Depuração
+════════════════════════
+
+  1. *Reproduzir* o problema (determinar condições para execução)
+     • Pode ser necessário reproduzir de várias maneiras distintas
+  2. *Identificar* o local e provável causa (dados -> hipótese ->
+      experimentos -> repete)
+  3. Alterar o código para correção
+  4. Avaliar a solução e procurar por outros problemas
+
+
+O que *NÃO* fazer
+─────────────────
+
+  • Tentar encontrar defeitos advinhando
+  • Fazer alterações aleatórias até funcionar
+  • Não manter um histórico das alterações feitas (e se uma alteração
+    introduzir um novo problema?)
+
+
+Estratégia raíz (mais básica)
+─────────────────────────────
+
+  Acompanhar a execução do programa em diversos momentos:
+  • std::cout/printf
+  • Contras:
+    • Vários comandos de impressão implica em redução da legibilidade
+    • Várias compilações
+    • Técnica passiva: não é possível modificar variáveis durante a
+      execução
+
+
+Ferramentas de Depuração
+────────────────────────
+
+GDB (C/C++)
+╌╌╌╌╌╌╌╌╌╌╌
+
+  • Adicionar breakpoints
+  • Verificar/alterar valores de variáveis
+  • Necessária a opção -g durante a compilação
+  • Online: <https://www.onlinegdb.com/online_c++_compiler>
+
+  Alguns comandos:
+  • Breakpoint (ponto de interrupção em uma linha do código):
+    • Criar: `break linha'
+    • Condicional: `break 16 if x < min'
+    • Temporário (apenas uma vez): `tbreak liha'
+    • Listar: `info break'
+    • Remover: `clear linha'
+  • Comandos de execução:
+    • Próxima instrução, acessando subrotinas: `step'
+    • Próxima instrução, sem entrar em subrotinas: `next'
+    • Executar até o final da subrotina: `finish'
+    • Continuar execução até o próximo breakpoint: `continue'
+    • Pular para determinada linha: `jump' (e.g., voltar para o início
+      da função; use com cuidado)
+  • Manipulação de variáveis:
+    • Acompanhar a informação de uma variável ao longo da execução:
+      `display x'
+    • Imprimir conteúdo uma única vez: `print x'
+    • Alterar conteúdo da variável: `set var x = 2'
+
+
+Exemplo: Encontrar o maior valor
+────────────────────────────────
+
+  O código a seguir está correto?
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, int begin, int end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (int i = begin; i < end; i++) {
+  │     int x = xs[i];
+  │     if (x > min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 6) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 2147483647
+  └────
+
+
+  O resultado esperado era 2, o menor elemento do vetor. Vamos adicionar
+  um breakpoint ao início da função `find_min':
+
+  ┌────
+  │ g++ -std=c++17 -Wall -g main.cpp -o main
+  │ gdb main
+  │ (gdb) break 12
+  │ (gdb) run
+  └────
+
+  Neste ponto, a execução irá parar exatamente no momento da
+  inicialização da variável `min'. Gostaríamos de visualizar o valor da
+  variável `min' a cada passo dado. Para isso, podemos usar o comando
+  `display'. Vamos, também, adicionar um segundo breakpoint, no comando
+  condicional dentro do loop:
+
+  ┌────
+  │ (gdb) display min
+  │ (gdb) break 16
+  │ (gdb) continue
+  └────
+
+  Dentro do loop, gostaríamos de visualizar o valor da variável `x',
+  para comparar com `min'. Pode ser interessante também acompanhar a
+  variável `i', que controla as iterações do loop:
+
+  ┌────
+  │ (gdb) display x
+  │ (gdb) display i
+  └────
+
+  Neste momento, `i = 0', `x = 60', e `min =2147483647'. Vamos dar um
+  passo e ver o que acontece:
+
+  ┌────
+  │ (gdb) step
+  └────
+
+  Voltamos para a linha 14, o que significa que não entramos no `if',
+  fomos direto para o incremento da variável `i'. Deveríamos ter entrado
+  no `if'…
+
+  Primeiro problema: deveria ser x < min
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, int begin, int end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (int i = begin; i < end; i++) {
+  │     int x = xs[i];
+  │     if (x < min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 6) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 0
+  └────
+
+
+  Consertamos o problema, mas… o resultado ainda não é o que
+  esperávamos!
+
+  Vamos recomeçar a depuração:
+
+  ┌────
+  │ g++ -std=c++17 -Wall -g main.cpp -o main
+  │ gdb main
+  │ (gdb) break 16
+  │ (gdb) run
+  │ (gdb) display i
+  │ (gdb) display x
+  │ (gdb) display min
+  │ (gdb) step
+  └────
+
+  Entramo no `if'! Estamos na linha 17, `min = x'. Aparentemente, o `if'
+  está correto. Vamos continuar o loop até a última iteração:
+
+  ┌────
+  │ (gdb) clear 16
+  │ (gdb) break 16 if i == end - 1
+  │ (gdb) continue
+  └────
+
+  Na última iteração, temos `i = 5', `x = 0', e `min = 2'. Mas, qual o
+  tamanho do vetor?
+
+  ┌────
+  │ (gdb) print xs.size()
+  └────
+
+  O tamanho do vetor é exatamente 5! As posições válidas são de 0 a 4… A
+  posição 5 não é uma posição válida, mas conseguimos accessá-la mesmo
+  assim, e o valor (coincidentemente) que está lá é 0…
+
+  Vamos voltar para o início da função e alterar `end' para 5, que
+  deveria ser o correto:
+
+  ┌────
+  │ (gdb) tbreak 12
+  │ (gdb) jump 12
+  │ (gdb) set var end = 5
+  │ (gdb) clear 16
+  │ (gdb) finish
+  └────
+
+  Segundo problema: estamos passando do limite do vector
+  • Dica: usar o método `.at(i)' do vector; irá testar se está dentro
+    dos limites e parar o programa com erro explícito
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, int begin, int end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (int i = begin; i < end; i++) {
+  │     int x = xs.at(i);
+  │     if (x < min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 6) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  E consertando o limite superior:
+
+  ┌────
+  │ #include <iostream>
+  │ #include <limits>
+  │ #include <vector>
+  │ 
+  │ /// @brief Recupera o menor elemento em um intervalo de uma lista.
+  │ ///
+  │ /// @param xs Lista de números naturais
+  │ /// @param begin Posição indicando início do intervalo (incluso)
+  │ /// @param end Posição indicando fim do intervalo (não incluso)
+  │ /// @return Menor elemento ou MAX INT se lista vazia
+  │ int find_min(std::vector<int> xs, int begin, int end) {
+  │   int min = std::numeric_limits<int>::max();
+  │ 
+  │   for (int i = begin; i < end; i++) {
+  │     int x = xs.at(i);
+  │     if (x < min) {
+  │       min = x;
+  │     }
+  │   }
+  │ 
+  │   return min;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs = {60, 17, 21, 44, 2};
+  │   std::cout << find_min(xs, 0, 5) << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ 2
+  └────
+
+
+G++/Clang Sanitizer
+───────────────────
+
+  Como detectar erros de memória? Vazamento, uso após delete, delete
+  após delete, etc
+
+  Já vimos anteriormente a opção `-fsanitize=address':
+
+  ┌────
+  │ g++ -std=c++17 -Wall -g -fsanitize=address main.cpp -o main
+  │ ./main
+  └────
+
+  Quais os problemas do código a seguir?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ struct TADExemplo {
+  │   int atributo;
+  │ };
+  │ 
+  │ int main() {
+  │   TADExemplo *e = new TADExemplo;
+  │   e->atributo = 10;
+  │   delete e;
+  │   std::cout << e->atributo << std::endl;
+  │   e->atributo = 0;
+  │   std::cout << e->atributo << std::endl;
+  │   delete e;
+  │   return 0;
+  │ }
+  └────
+
+  A princípio, esta ferramenta mostra apenas o primeiro erro e termina a
+  execução.
+
+
+Valgrind
+────────
+
+  Uma alternativa é a ferramenta Valgrind. Esta ferramenta vai muito
+  além de apenas detecção de erros de memória, existem (e é possível
+  desenvolver) plugins para o Valgrind
+  (<https://valgrind.org/info/tools.html>).
+
+  Exemplo: [CFGGrind] é um plugin que reconstrói o fluxo de execução de
+  um programa. Além de visualizar o fluxo de execução com informações
+  adicionais, a ferramenta produz estatísticas como quantidade de
+  funções, quantidade de instruções executadas (discriminando por cada
+  tipo de instrução), etc.
+
+  Vale pesquisar mais sobre!
+
+  Vamos focar na parte de memória. Para o mesmo exemplo acima, desta vez
+  compilando sem o `-fsanitize':
+
+  ┌────
+  │ g++ -std=c++17 -Wall -g main.cpp -o main
+  │ valgrind --leak-check=full ./main
+  └────
+
+  Nos dias atuais, o AddressSanitizer (`-fsanitize=addres') se mostra
+  bem mais eficiente que o Valgrind (incluindo em relação ao tempo de
+  execução dos programas instrumentados). Todavia, ainda há espaço para
+  uso do Valgrind: note que, diferentemente do AddressSanitizer, o
+  Valgrind não requer acesso ao código fonte. Poderíamos utilizá-lo com
+  qualquer outro binário (fora outros usos não relacionados a memória).
+
+
+[CFGGrind] <https://github.com/rimsa/CFGgrind>
