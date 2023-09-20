@@ -981,7 +981,7 @@ Construindo o Makefile da Biblioteca Mail-Lib
   ┌────
   │ clean:
   │         @echo "🧹 Cleaning ..."
-  │         @rm -rf $(BUILD_DIR) $(BIN_DIR)
+  │         @rm -rf $(BUILD_DIR)
   └────
 
   E o nosso primeiro alvo para a compilação de um dos arquivos de código
@@ -1200,5 +1200,5 @@ Construindo o Makefile da Biblioteca Mail-Lib
   │ 
   │ clean:
   │         @echo "🧹 Cleaning ..."
-  │         @rm -rf $(BUILD_DIR) $(BIN_DIR)
+  │         @rm -rf $(BUILD_DIR)
   └────

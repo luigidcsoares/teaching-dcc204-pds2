@@ -931,7 +931,7 @@ Agora, vamos definir um alvo para limpar os arquivos de compilação do projeto,
 #+begin_src makefile
 clean:
 	@echo "🧹 Cleaning ..."
-	@rm -rf $(BUILD_DIR) $(BIN_DIR)
+	@rm -rf $(BUILD_DIR)
 #+end_src
 
 E o nosso primeiro alvo para a compilação de um dos arquivos de código em objeto:
@@ -1117,6 +1117,6 @@ $(BUILD_DIR)/$(TEST_DIR)/%.o: $(TEST_DIR)/%.cpp
 
 clean:
 	@echo "🧹 Cleaning ..."
-	@rm -rf $(BUILD_DIR) $(BIN_DIR)
+	@rm -rf $(BUILD_DIR)
 #+end_src
 #+html: </details>
