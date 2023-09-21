@@ -19,8 +19,10 @@
 # Labs & exams (use this for private content, with submodule)
 !/*/atividades/
 
-# Code
+# Code & Environment
 !doctest.hpp
+!flake.nix
+!flake.lock
 
 # Schedule, syllabus, projects
 !header.tex
