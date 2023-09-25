@@ -1,0 +1,895 @@
+              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+               NOTAS DE AULA - 11 VERSIONAMENTO DE CÓDIGO
+
+                           Luigi D. C. Soares
+              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Controle de Versão
+══════════════════
+
+  • Como (e por quê) manter múltiplas versões de um projeto?
+  • E se em algum momento fizemos uma alteração no projeto que
+    gostaríamos de reverter?
+    • Criar várias cópias?
+    • projeto_v1.zip
+    • projeto_v2.zip
+    • projeto_final.zip
+    • projeto_final_agora_vai.zip
+    • …
+
+  • Como ver as diferenças entre duas ou mais versões do projeto?
+  • Se estamos trabalhando em grupo, como compartilhar o código?
+  • Se duas pessoas alteram o mesmo arquivo, o que acontece?
+
+  Ferramentas de controle de versão:
+  • Git, Mercurial, SVN
+
+
+Git
+═══
+
+Configurando sua identidade
+───────────────────────────
+
+  Apoś instalar o git, você deverá configurar seu nome e seu endereço de
+  email:
+  • `git config --global user.name "fulano"'
+  • `git config --global user.email "fulano@gmail.com"'
+
+  Vamos, também, configurar um nome para a `branch' padrão do projeto
+  (voltaremos nisso mais a frente):
+  • `git config --global init.defaultBranch main'
+
+
+Criando um repositório local
+────────────────────────────
+
+  Com o git instalado e configurado, navegue até o projeto que deseja
+  versionar e inicialize um repositório nesta pasta:
+  • `cd /caminho/para/o/projeto/'
+  • `git init'
+
+  Após a inicialização, execute o comando a seguir para verificar o
+  estado do repositório:
+  • `git status'
+
+  Por exemplo, ao criar o repositório do projeto `mail-lib', o estado
+  inicial verificado pelo comando `git status' é:
+
+  ┌────
+  │ On branch main
+  │ 
+  │ No commits yet
+  │ 
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	include/
+  │ 	src/
+  │ 	test/
+  │ 	users/
+  │ 
+  │ nothing added to commit but untracked files present (use "git add" to track)
+  └────
+
+  O que são esses arquivos não rastreados (untracked)? E o que seria um
+  commit?
+
+
+Fluxo de Trabalho
+─────────────────
+
+  Os arquivos em um repositório git podem estar em quatro estados
+  diferentes:
+  • /Untracked/ (não rastreado)
+  • /Unmodified/ (não modificado)
+  • /Modified/ (modificado)
+  • /Staged/
+
+  Além disso, estes arquivos são considerados como parte de uma dentre
+  três áreas diferentes:
+  • Diretório de trabalho: os arquivos reais, que estamos
+    alterando/adicionando, e que ainda não fazem parte do repositório
+  • Staging: área temporária, contendo alterações a serem confirmadas
+  • Repositório: área contendo informações sobre os arquivos que fazem
+    parte do repositório
+
+  Visualmente, temos o seguinte fluxo:
+
+  ┌────
+  │ Diretório de Trabalho          Área Staging          Repositório
+  │           |                         |                     |
+  │           | ---------- add ------>  |                     |
+  │           |                         |                     |
+  │           |                         | ------ commit --->  |
+  └────
+
+  Digamos que desejamos adicionar ao repositório todos os arquivos de
+  cabeçalho, que estão na pasta include:
+
+  (1) - Vamos adicionar a pasta à área de staging: `git add include/'
+
+  Executando o comando `git status' novamente, temos a seguinte saída:
+
+  ┌────
+  │ On branch main
+  │ 
+  │ No commits yet
+  │ 
+  │ Changes to be committed:
+  │   (use "git rm --cached <file>..." to unstage)
+  │ 	new file:   include/core/mailapp.hpp
+  │ 	new file:   include/core/mailbox.hpp
+  │ 	new file:   include/core/message.hpp
+  │ 	new file:   include/storage/yaml.hpp
+  │ 
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	src/
+  │ 	test/
+  │ 	users/
+  └────
+
+  Note que agora temos uma informação nova: todos os arquivos da pasta
+  include aparecem como alterações a serem "commitadas". Neste ponto,
+  estas alterações estão na área de staging.
+
+  (2) Vamos confirmar as alterações e as inserir no repositório: `git
+  commit -m "Adicionando os arquivos de cabeçalho"'
+
+  A saída do comando commit:
+
+  ┌────
+  │ [main (root-commit) c20bd0c] Adicionando os arquivos de cabeçalho
+  │  4 files changed, 124 insertions(+)
+  │  create mode 100644 include/core/mailapp.hpp
+  │  create mode 100644 include/core/mailbox.hpp
+  │  create mode 100644 include/core/message.hpp
+  │  create mode 100644 include/storage/yaml.hpp
+  └────
+
+  A saída do comando status, após o commit:
+
+  ┌────
+  │ On branch main
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	src/
+  │ 	test/
+  │ 	users/
+  │ 
+  │ nothing added to commit but untracked files present (use "git add" to track)
+  └────
+
+  Podemos, ainda, verificar o histórico do repositório: `git log'
+
+  ┌────
+  │ commit c20bd0c2aacaa15b72d102be5310dd128b43e853 (HEAD -> main)
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:04:27 2023 -0300
+  │ 
+  │     Adicionando os arquivos de cabeçalho
+  └────
+
+  Digamos que agora desejamos inserir no repositório os arquivos de
+  implementação. Podemos executar o comando `git add *.cpp'. Neste caso,
+  estamos adicionando todos os arquivos com a extensão `.cpp'.
+
+  Após a adição, o status do repositório é
+
+  ┌────
+  │ On branch main
+  │ Changes to be committed:
+  │   (use "git restore --staged <file>..." to unstage)
+  │ 	new file:   src/core/mailapp.cpp
+  │ 	new file:   src/core/mailbox.cpp
+  │ 	new file:   src/storage/yaml.cpp
+  │ 	new file:   test/core/mailapp.cpp
+  │ 	new file:   test/core/mailbox.cpp
+  │ 	new file:   test/driver.cpp
+  │ 	new file:   test/storage/yaml.cpp
+  │ 
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	users/
+  └────
+
+  E se, na verdade, o objetivo fosse adicionar apenas os arquivos de
+  implementação da pasta `src', e não os arquivos de testes? O próprio
+  git nos informa como reverter a adição. Ou seja, como mover arquivos
+  da área de staging de volta para o diretório de trabalho: `git restore
+  --staged test/'
+
+  Após o comando `restore', o status do repositório é
+
+  ┌────
+  │ On branch main
+  │ Changes to be committed:
+  │   (use "git restore --staged <file>..." to unstage)
+  │ 	new file:   src/core/mailapp.cpp
+  │ 	new file:   src/core/mailbox.cpp
+  │ 	new file:   src/storage/yaml.cpp
+  │ 
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	test/
+  │ 	users/
+  └────
+
+  Vamos confirmar as alterações: `git commit -m "Adicionando os arquivos
+  de implementação'
+
+  O histórico do repositório (`git log') agora é
+
+  ┌────
+  │ commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283 (HEAD -> main)
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:11:10 2023 -0300
+  │ 
+  │     Adicionando os arquivos de implementação
+  │ 
+  │ commit c20bd0c2aacaa15b72d102be5310dd128b43e853
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:04:27 2023 -0300
+  │ 
+  │     Adicionando os arquivos de cabeçalho
+  └────
+
+
+Ignorando arquivos
+──────────────────
+
+  Vamos verificar o status atual do repositório (`git status'):
+
+  ┌────
+  │ On branch main
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	build/
+  │ 	doc/
+  │ 	users/
+  │ 
+  │ nothing added to commit but untracked files present (use "git add" to track)
+  └────
+
+  Note que a pasta `build' é listada pelo git como uma das pastas não
+  rastreadas. Nem todo arquivo deve ser versionado, e um exemplo
+  bastante comum são os arquivos gerados durante o processo de
+  compilação. Na configuração atual, poderíamos acabar adicionando os
+  arquivos de compilação por acidente. Podemos informar ao git que
+  certos arquivos devem ser ignorados. Fazemos isso criando um arquivo
+  chamado `.gitignore' (note o ponto no início):
+
+  ┌────
+  │ build/
+  │ doc/
+  │ users/
+  └────
+
+  Após adicionar o arquivo `.gitignore', vamos verificar o status do
+  repositório:
+
+  ┌────
+  │ On branch main
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	.gitignore
+  │ 
+  │ nothing added to commit but untracked files present (use "git add" to track)
+  └────
+
+  Vamos adicionar o .gitignore ao repositório:
+  • `git add .gitignore'
+  • `git commit -m "Ignorando build, doc, e users"'
+
+
+Revertendo alterações
+─────────────────────
+
+  Vamos agora introduzir uma modificação em um arquivo que já faz parte
+  do repositório. No arquivo `src/core/mailbox.cpp', vamos adicionar ao
+  construtor a seguinte linha:
+
+  `std::cout << "Criando uma mailbox " << name << std::endl;'
+
+  Status do repositório:
+
+  ┌────
+  │ On branch main
+  │ Changes not staged for commit:
+  │   (use "git add <file>..." to update what will be committed)
+  │   (use "git restore <file>..." to discard changes in working directory)
+  │ 	modified:   src/core/mailbox.cpp
+  │ 
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	test/
+  │ 	users/
+  └────
+
+  Adicionando a modificação à área de staging: `git add
+  src/core/mailbox.cpp'
+
+  ┌────
+  │ On branch main
+  │ Changes to be committed:
+  │   (use "git restore --staged <file>..." to unstage)
+  │ 	modified:   src/core/mailbox.cpp
+  │ 
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	test/
+  │ 	users/
+  └────
+
+  Confirmando as alterações e verificando o histórico: `git commit -m
+  "Adicionando mensagem ao construtor do mailbox"'
+
+  ┌────
+  │ commit 99140706a6e4be5fd3aadcd9d7346e6d7586e449 (HEAD -> main)
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:34:20 2023 -0300
+  │ 
+  │     Adicionando mensagem ao construtor do mailbox
+  │ 
+  │ commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:11:10 2023 -0300
+  │ 
+  │     Adicionando os arquivos de implementação
+  │ 
+  │ commit c20bd0c2aacaa15b72d102be5310dd128b43e853
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:04:27 2023 -0300
+  │ 
+  │     Adicionando os arquivos de cabeçalho
+  └────
+
+  E se a modificação feita no último commit possui algum problema? O
+  commit já foi realizado, será que conseguiríamos revertê-lo? Note que
+  cada commit possui um identificador único. Podemos navegar pelo
+  histórico do repositório através destes identificadores. Vamos
+  desfazer o último commit: `git reset
+  78b3305a0b7b9738d303d2a5d01ca8be1381b283'
+
+  O histórico, após o comando `reset':
+
+  ┌────
+  │ commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283 (HEAD -> main)
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:11:10 2023 -0300
+  │ 
+  │     Adicionando os arquivos de implementação
+  │ 
+  │ commit c20bd0c2aacaa15b72d102be5310dd128b43e853
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:04:27 2023 -0300
+  │ 
+  │     Adicionando os arquivos de cabeçalho
+  └────
+
+  E o status do repositório:
+
+  ┌────
+  │ On branch main
+  │ Changes not staged for commit:
+  │   (use "git add <file>..." to update what will be committed)
+  │   (use "git restore <file>..." to discard changes in working directory)
+  │ 	modified:   src/core/mailbox.cpp
+  │ 
+  │ Untracked files:
+  │   (use "git add <file>..." to include in what will be committed)
+  │ 	Doxyfile
+  │ 	Makefile
+  │ 	build/
+  │ 	doc/
+  │ 	test/
+  │ 	users/
+  │ 
+  │ no changes added to commit (use "git add" and/or "git commit -a")
+  └────
+
+  Vamos "corrigir" a modificação que revertemos, alterando a mensagem no
+  construtor para
+
+  `std::cout << "Criando uma mailbox chamada " << name << std::endl;'
+
+  Vamos adicionar a alteração e commitar novamente. Vamos, também,
+  adicionar ao repositório os testes e os arquivos de configuração
+  Makefile e Doxyfile:
+
+  • `git add src/core/mailbox.cpp'
+  • `git commit -m "Adicionando mensagem ao construtor do mailbox"'
+  • `git add test/'
+  • `git commit -m "Adicionando testes"'
+  • `git add Doxyfile Makefile'
+  • `git commit -m "Adicionando arquivos de configuração"'
+
+  Digamos que, após todas estes commits, identificamos um bug na
+  alteração que fizemos no construtor de mailbox. Se resetarmos o
+  histórico para o commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283, ou
+  seja, o commit anterior à modificação do construtor, teremos que
+  refazer todos os commits acima. Na realidade, gostaríamos de reverter
+  apenas o commit que introduziu o bug. Para isso, vamos usar o comando
+  `revert'.
+
+  Histórico atual do repositório:
+
+  ┌────
+  │ commit 007c3624e47fd7a2f0888ff161725e232ba82e2e (HEAD -> main)
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:43:39 2023 -0300
+  │ 
+  │     Adicionando arquivos de configuração
+  │ 
+  │ commit 23f15ba777a65a3c6ae7fd53eefb452a0b154f11
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:43:34 2023 -0300
+  │ 
+  │     Adicionando testes
+  │ 
+  │ commit 481802aaaba090a87bcc8828365044141d3ca950
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:43:21 2023 -0300
+  │ 
+  │     Adicionando mensagem ao construtor do mailbox
+  │ 
+  │ commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:11:10 2023 -0300
+  │ 
+  │     Adicionando os arquivos de implementação
+  │ 
+  │ commit c20bd0c2aacaa15b72d102be5310dd128b43e853
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:04:27 2023 -0300
+  │ 
+  │     Adicionando os arquivos de cabeçalho
+  └────
+
+  Revertendo o commit que introduziu o bug: `git revert --no-edit
+  481802aaaba090a87bcc8828365044141d3ca950'
+
+  ┌────
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:51:14 2023 -0300
+  │ 
+  │     Revert "Adicionando mensagem ao construtor do mailbox"
+  │ 
+  │     This reverts commit 481802aaaba090a87bcc8828365044141d3ca950.
+  │ 
+  │ commit 007c3624e47fd7a2f0888ff161725e232ba82e2e
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:43:39 2023 -0300
+  │ 
+  │     Adicionando arquivos de configuração
+  │ 
+  │ commit 23f15ba777a65a3c6ae7fd53eefb452a0b154f11
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:43:34 2023 -0300
+  │ 
+  │     Adicionando testes
+  │ 
+  │ commit 481802aaaba090a87bcc8828365044141d3ca950
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:43:21 2023 -0300
+  │ 
+  │     Adicionando mensagem ao construtor do mailbox
+  │ 
+  │ commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 11:11:10 2023 -0300
+  └────
+
+  Note que um novo commit foi realizado. Este novo commit reverte as
+  alterações do commit que introduziu o bug.
+
+
+Trabalhando em múltiplas branches
+─────────────────────────────────
+
+  Suponha que precisamos implementar uma determinada funcionalidade
+  *A*. Começamos a implementá-la, já fizemos alguns commits, mas, no
+  meio do caminho surge uma outra funcionalidade/correção *B* mais
+  importante. E agora?
+
+  Uma prática muito comum e bastante útil é a de desenvolver
+  funcionalidades de maneira independente. Fazemos isso por meio de
+  /branches/ (ramificações). Até então, estávamos trabalhando sempre em
+  uma única branch padrão `main', que configuramos inicialmente.
+
+  Vamos criar uma branch para cada funcionalidade, *a partir da branch
+  main* (vamos nomear cada branch de acordo com determinadas convenções;
+  por exemplo, utilizar o prefixo `feature' para funcionalidades novas e
+  o prefixo `bugfix' para
+  • `git branch feature/A'
+  • `git branch bugfix/B'
+  • `git branch' (para listar as branches locais)
+
+  ┌────
+  │ bugfix/B
+  │ feature/A
+  │ * main
+  └────
+
+  As branches foram criadas, mas ainda estamos na branch main. Vamos
+  trocar para a branch feature/A: `git switch feature/A' (a criação +
+  troca pode ser feita em um único passo: `git switch -c
+  nome_da_branch').
+
+  Vamos adicionar a seguinte linha no arquivo mailbox.cpp, e commitar a
+  alteração:
+
+  `std::cout << "Criando uma mailbox chamada " << name << std::endl;'
+
+  • `git add src/core/mailbox.cpp'
+  • `git commit -m "Adicionando mensagem ao construtor da mailbox"'
+
+  Agora, vamos trocar para a branch bugfix/B: `git switch
+  bugfix/B'. Note que a alteração acima não está presente nesta branch.
+
+  Vamos adicionar a seguinte linha no arquivo mailbox.cpp (representando
+  a correção do bug), e commitar a alteração:
+
+  `std::cout << "Corrigindo bug no construtor" << std::endl;'
+
+  • `git add src/core/mailbox.cpp'
+  • `git commit -m "Corrigindo bug no construtor da mailbox"'
+
+  Neste momento, temos a seguinte estrutura:
+
+  ┌────
+  │ main (último commit = .gitignore=)
+  │ ↳ feature/A (último commit = mensagem no construtor)
+  │ ↳ bugfix/B (último commit = correção no construtor) 
+  └────
+
+  A branch `main' será a branch de produção: vamos atualizá-la apenas
+  quando uma determinada funcionalidade ou correção já tiver sido
+  devidamente testada e estiver correta.
+
+  Vamos atualizar a branch `main' com a correção feita na branch
+  `bugfix/B'. Fazemos isso com o comando `merge':
+  • `git switch main'
+  • `git merge bugfix/B'
+
+  Neste ponto, já não precisamos mais da branch `bugfix/B', então
+  podemos deletá-la: `git branch -d bugfix/B'.
+
+  Histórico da branch main:
+
+  ┌────
+  │ commit 06f0995c8a9f1a81d72682953f83f57c7d6b0893
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 16:00:43 2023 -0300
+  │ 
+  │     Corrigindo bug no construtor da mailbox
+  │ 
+  │ commit ccfb915d842d83d15264d864d34f507959cf0b88
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 15:30:10 2023 -0300
+  │ 
+  │     Ignorando build, doc, e users
+  │ 
+  │ ...
+  └────
+
+  Vamos voltar para a funcionalidade *A* (`git switch feature/A') e
+  adicionar a seguinte linha ao construtor de mailapp:
+
+  `std::cout << "Construíndo mailapp para usuário " << user <<
+  std::endl;'
+
+  • `git add src/core/mailapp.cpp'
+  • `git commit -m "Adicionando mensagem ao construtor de mailapp"'
+
+  Finalizamos a funcionalidade *A*, vamos voltar para a branch main e
+  atualizá-la:
+
+  • `git switch main'
+  • `git merge feature/A'
+
+  O que aconteceu?
+
+  ┌────
+  │ Auto-merging src/core/mailbox.cpp
+  │ CONFLICT (content): Merge conflict in src/core/mailbox.cpp
+  │ Automatic merge failed; fix conflicts and then commit the result.
+  └────
+
+  As duas branches feature/A e bugfix/B alteraram o mesmo arquivo
+  (src/core/mailbox.cpp). Isso gerou um conflito. Ao abrir o arquivo,
+  temos o seguinte conteúdo:
+
+  ┌────
+  │ <<<<<<< HEAD
+  │   std::cout << "Corrigindo bug no construtor" << std::endl;
+  │ =======
+  │   std::cout << "Criando uma mailbox chamada " << name << std::endl;
+  │ >>>>>>> feature/A
+  └────
+
+  A linha de código identificada como HEAD é a linha presente na branch
+  main, que veio da branch bugfix/B. A linha acima de feature/A é a
+  linha que está vindo da branch feature/A. O git identificou o
+  conflito, mas nós precisamos corrigi-lo. A correção varia caso a caso;
+  para este exemplo, vamos manter as duas linhas:
+
+  ┌────
+  │ std::cout << "Corrigindo bug no construtor" << std::endl;
+  │ std::cout << "Criando uma mailbox chamada " << name << std::endl;
+  └────
+
+  Após a correção, vamos commitar a solução do conflito (em alguns
+  casos, pode ser necessário adicionar alterações à area de staging;
+  verifique o status do repositório antes):
+
+  • `git commit --no-edit'
+  • `git log'
+
+  ┌────
+  │ commit 70b77cb3cbfa8a6767714b8fc6575e76a6c3d0a8 (HEAD -> main)
+  │ Merge: 06f0995 397e789
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 16:17:10 2023 -0300
+  │ 
+  │     Merge branch 'feature/A'
+  │     
+  │     # Conflicts:
+  │     #       src/core/mailbox.cpp
+  │ 
+  │ commit 397e7891ad30c35ba558535e8f2d8359a78187dc (feature/A)
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 16:10:08 2023 -0300
+  │ 
+  │     Adicionando mensagem ao construtor de mailapp
+  │ 
+  │ commit 06f0995c8a9f1a81d72682953f83f57c7d6b0893
+  │ Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+  │ Date:   Mon Sep 25 16:00:43 2023 -0300
+  │ 
+  │     Corrigindo bug no consturtor da mailbox
+  │ 
+  │ ...
+  └────
+
+  Note que um novo commit foi criado para a operação de merge, com uma
+  mensagem padrão (poderíamos passar uma mensagem customizada, trocando
+  o `--no-edit' por `-m "mensagem"').
+
+  Agora, podemos deletar a branch feature/A: `git branch -d feature/A'.
+
+
+Github
+══════
+
+  Até então, construímos um repositório local. Porém, nosso objetivo é
+  também compartilhar o projeto com os demais membros da equipe. Para
+  isso, vamos utilizar a plataforma Github (existem outras plataformas,
+  como Gitlab e Bitbucket). Você precisará criar uma conta no Github. O
+  resto da aula assume que a conta já foi criada e você está logado.
+
+
+Configurando o acesso remoto aos repositórios
+─────────────────────────────────────────────
+
+  Um repositório no Github possui dois links diferentes: HTTPS e
+  SSH. Vamos utilizar o protocolo SSH. Para clonar e utilizar o
+  repositório a partir do link SSH, você precisará configurar um par de
+  chaves pública/privada na sua máquina e configurar sua chave pública
+  na sua conta do Github. Siga o tutorial do Github para criar e
+  adicionar uma chave SSH à sua conta (se você está utilizando o WSL,
+  siga as instruções para o sistema operacional Linux):
+  <https://docs.github.com/pt/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>
+
+
+Criando um repositório remoto
+─────────────────────────────
+
+  • No menu superior, clique no botão *+* -> *new repository*
+  • Em *repository name*, dê um nome ao seu repositório (por exemplo:
+    mail-lib)
+  • Em *description*, coloque uma breve descrição sobre o que é este
+    repositório
+  • Clique em *create repository* (a princípio, não iremos mexer em
+    nenhuma das outras opções)
+
+  Você será redirecionado a página do novo repositório. Neste exemplo, o
+  repositório foi criado sem nenhum arquivo (i.e., está vazio).
+
+
+Conectar o repositório local ao remoto
+──────────────────────────────────────
+
+  Na página inicial do repositório, clique na opção de link *SSH*. O
+  próprio Github apresenta instruções para conectar o repositório local
+  ao remoto. Como já temos o repositório local pronto, vamos mandar as
+  nossas alterações para o remoto:
+
+  • Copie o link SSH apresentado na página do Github
+  • No terminal, navegue até a pasta raíz do repositório local
+  • Execute o comando `git remote add origin link_ssh' para criar
+    definir um repositório remoto chamado /origin/
+  • Você pode listar os repositórios remotos com o comando `git remote
+    -v'
+  • Execute o comando `git push -u origin main' para subir as alterações
+    da branch `main' local para a branch `main' remota, e configurar a
+    branch main local para seguir a branch main remota (a opção `-u
+    origin main' é necessária apenas na primeira execução do comando
+    push para uma determinada branch)
+  • Atualize a página do repositório no Github, você verá que os
+    arquivos foram adicionados
+  • Clique Em *commits* para ver a lista de commits realizados
+
+  Caso o repositório não exista localmente (exemplo: estamos baixando o
+  repositório de outra pessoa, ou em outro computador), podemos
+  cloná-lo: `git clone link_ssh caminho/para/repositório/local'.
+
+
+Atualizando o repositório local
+───────────────────────────────
+
+  Vamos adicionar um arquivo *README.md* pela própria página do Github
+  (para simular uma outra pessoa subindo alguma alteração para o
+  repositório remoto):
+
+  • Na página inicial do repositório, clique em *Add a README*
+  • Edite o conteúdo do arquivo para
+
+  ┌────
+  │ # Mini projeto da disciplina PDS 2 / 2023.2 - Mail Lib
+  │ Biblioteca para gerenciamento de emails em C++
+  └────
+
+  O caractere *#* indica um título (## é um subtítulo, e assim por
+  diante)
+
+  • Clique em *preview* para visualizar o arquivo formatado
+  • Clique em *commit changes*
+  • Opcionalmente altere a mensagem do commit e adicione uma descrição
+  • Clique em *commit changes* novamente
+  • Atualize a página do repositório no Github
+
+  Você vai notar que o conteúdo do arquivo README.md agora é renderizado
+  na página inicial. Este tipo de arquivo é tratado de forma especial
+  pelo Github. Vamos utilizá-lo para documentar o projeto (a extensão
+  *md* vem de Markdown).
+
+  Este arquivo só existe no repositório remoto. Vamos atualizar nosso
+  repositório local com esta nova alteração:
+
+  • Para baixar alterações realizadas no repositório remoto executamos o
+    comando `git fetch'
+  • Para inserir as alterações baixadas na branch atual executamos o
+    comando `git merge'
+  • Os dois comandos anteriores podem ser combinados em um só: `git
+    pull'
+
+
+Trabalhando com múltiplas branches: Pull Request
+────────────────────────────────────────────────
+
+  Quando estamos trabalhando em grupo, ao subir uma alteração para o
+  repositório remoto é recomendado que não o faça na branch
+  principal. Ao invés disso, crie uma nova branch para a tarefa que está
+  implementando. Ao fazer isso, e publicar esta branch no servidor
+  remoto, você pode criar um "Pull Request", solicitando que a sua
+  branch seja mesclada com a principal (ou qualquer outra). O Github
+  criará um pull request, no qual você descreverá suas alterações, e
+  outros colaboradores poderão revisar o código e sugerir mudanças antes
+  que estas sejam mescladas com a versão principal do projeto.
+
+  Esta é uma etapa fundamental do processo de desenvolvimento de um
+  software: revisão e refatoração.
+
+  Por exemplo: digamos que estamos trabalhando na refatoração do arquivo
+  de testes correspondente as mailboxes. Vamos adicionar a verificação
+  da quantidade de mensagens adicionadas.
+
+  • Troque para a nova branch: `git switch -c feature/mailbox-test-size'
+  • Adicione a verificação `CHECK_EQ(msgs.size(), 2);' aos dois casos de
+    teste:
+
+  ┌────
+  │ #include "doctest.hpp"
+  │ #include "core/message.hpp"
+  │ #include "core/mailbox.hpp"
+  │ 
+  │ #include <vector>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ using mail_lib::core::Message;
+  │ 
+  │ TEST_CASE("Adicionando mensagens à caixa de entrada vazia") {
+  │   Mailbox mbox("inbox");
+  │   Message msg0 = { "from0", "to0", "content0" };
+  │   Message msg1 = { "from1", "to1", "content1" };
+  │   mbox.add(msg0).add(msg1);
+  │ 
+  │   std::vector<Message> msgs = mbox.read_all();
+  │ 
+  │   auto check_msg = [](Message a, Message b) {
+  │     CHECK_EQ(a.from, b.from);
+  │     CHECK_EQ(a.to, b.to);
+  │     CHECK_EQ(a.content, b.content);
+  │   };
+  │ 
+  │   CHECK_EQ(msgs.size(), 2); // <<< AQUI
+  │   check_msg(msg0, msgs[0]);
+  │   check_msg(msg1, msgs[1]);
+  │ 
+  │ }
+  │ 
+  │ TEST_CASE("Adicionando mensagens à caixa já preenchida") {
+  │   std::vector<Message> old_msgs = {{ "from0", "to0", "content0" }};
+  │ 
+  │   Mailbox mbox("inbox", old_msgs);
+  │   mbox.add({ "from1", "to1", "content1" });
+  │ 
+  │   auto check_msg = [](Message a, Message b) {
+  │     CHECK_EQ(a.from, b.from);
+  │     CHECK_EQ(a.to, b.to);
+  │     CHECK_EQ(a.content, b.content);
+  │   };
+  │ 
+  │   std::vector<Message> msgs = mbox.read_all();
+  │ 
+  │   CHECK_EQ(msgs.size(), 2); // <<< AQUI
+  │   check_msg(old_msgs[0], msgs[0]);
+  │   check_msg({ "from1", "to1", "content1" } , msgs[1]);
+  │ }
+  └────
+
+  • Adicione e confirme as alterações: `git add test/core/mailbox.cpp' e
+    `git commit -m "Verificando tamanho das mailboxes"'
+  • Suba as alterações para o repositório remoto, criando uma branch
+    remota nova: `git push -u origin feature/mailbox-test-size'
+
+  Na página inicial do repositório no Github, clique no botão *main*:
+  você vai notar que agora estará lista a nova branch.
+
+  Agora, vamos criar um /Pull Request/ para solicitar a inclusão das
+  nossas alterações na branch main:
+  • Clique na aba /pull requests/
+  • Clique em /new pull request/
+  • Escolha a branch recém criada
+  • Clique em /create pull request/
+  • Atualize o título do pull request e adicione uma descrição sobre o
+    que foi feito
+  • Clique em /create a pull request/
+
+  Na página do pull request, você vai notar um botão /merge pull
+  request/. Esta opção irá efetuar o merge na branch main. Antes de
+  efetuar o merge, é recomendado que o pull request seja revisado por
+  outros membros da equipe. É possível comentar no pull request,
+  iniciando uma discussão. Por exemplo, podemos criar um comentário
+  requisitando uma refatoração: temos uma mesma função `check_msg' sendo
+  criada nos dois casos de teste.
