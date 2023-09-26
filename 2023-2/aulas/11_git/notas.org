@@ -122,7 +122,7 @@ Note que agora temos uma informação nova: todos os arquivos da pasta include a
 A saída do comando commit:
 
 #+begin_example
-[main (root-commit) c20bd0c] Adicionando os arquivos de cabeçalho
+[main (root-commit) 18eee83] Adicionando os arquivos de cabeçalho
  4 files changed, 124 insertions(+)
  create mode 100644 include/core/mailapp.hpp
  create mode 100644 include/core/mailbox.hpp
@@ -150,9 +150,9 @@ nothing added to commit but untracked files present (use "git add" to track)
 Podemos, ainda, verificar o histórico do repositório: =git log=
 
 #+begin_example
-commit c20bd0c2aacaa15b72d102be5310dd128b43e853 (HEAD -> main)
+commit 18eee838ce7011d6c559f6dfaacf326fd8805079 (HEAD -> main)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:04:27 2023 -0300
+Date:   Tue Sep 26 10:59:26 2023 -0300
 
     Adicionando os arquivos de cabeçalho
 #+end_example
@@ -209,15 +209,15 @@ Vamos confirmar as alterações: =git commit -m "Adicionando os arquivos de impl
 O histórico do repositório (=git log=) agora é
 
 #+begin_example
-commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283 (HEAD -> main)
+commit 5b6752e7e60683b82f437de850c96316cc234d80 (HEAD -> main)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:11:10 2023 -0300
+Date:   Tue Sep 26 11:00:20 2023 -0300
 
-    Adicionando os arquivos de implementação
+    Adicionando arquivos de implementação
 
-commit c20bd0c2aacaa15b72d102be5310dd128b43e853
+commit 18eee838ce7011d6c559f6dfaacf326fd8805079
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:04:27 2023 -0300
+Date:   Tue Sep 26 10:59:26 2023 -0300
 
     Adicionando os arquivos de cabeçalho
 #+end_example
@@ -230,10 +230,13 @@ Vamos verificar o status atual do repositório (=git status=):
 On branch main
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
+	Doxyfile
+	Makefile
 	build/
 	doc/
+	test/
 	users/
-
+        
 nothing added to commit but untracked files present (use "git add" to track)
 #+end_example
 
@@ -252,7 +255,10 @@ On branch main
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
 	.gitignore
-
+	Doxyfile
+	Makefile
+	test/
+        
 nothing added to commit but untracked files present (use "git add" to track)
 #+end_example
 
@@ -279,10 +285,7 @@ Untracked files:
   (use "git add <file>..." to include in what will be committed)
 	Doxyfile
 	Makefile
-	build/
-	doc/
 	test/
-	users/
 #+end_example
 
 Adicionando a modificação à área de staging: =git add src/core/mailbox.cpp=
@@ -297,48 +300,57 @@ Untracked files:
   (use "git add <file>..." to include in what will be committed)
 	Doxyfile
 	Makefile
-	build/
-	doc/
 	test/
-	users/
 #+end_example
 
 Confirmando as alterações e verificando o histórico: =git commit -m "Adicionando mensagem ao construtor do mailbox"⁣=
 
 #+begin_example
-commit 99140706a6e4be5fd3aadcd9d7346e6d7586e449 (HEAD -> main)
+commit 1b6ca25c06516f91309bf0a9017747060c3c1561 (HEAD -> main)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:34:20 2023 -0300
+Date:   Tue Sep 26 11:03:02 2023 -0300
 
     Adicionando mensagem ao construtor do mailbox
 
-commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283
+commit 9a930f92d46945e2e7f9d46a20b8bd37e582f6fb
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:11:10 2023 -0300
+Date:   Tue Sep 26 11:01:32 2023 -0300
 
-    Adicionando os arquivos de implementação
+    Ignorando build, doc, e users
 
-commit c20bd0c2aacaa15b72d102be5310dd128b43e853
+commit 5b6752e7e60683b82f437de850c96316cc234d80
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:04:27 2023 -0300
+Date:   Tue Sep 26 11:00:20 2023 -0300
+
+    Adicionando arquivos de implementação
+
+commit 18eee838ce7011d6c559f6dfaacf326fd8805079
+Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+Date:   Tue Sep 26 10:59:26 2023 -0300
 
     Adicionando os arquivos de cabeçalho
 #+end_example
 
-E se a modificação feita no último commit possui algum problema? O commit já foi realizado, será que conseguiríamos revertê-lo? Note que cada commit possui um identificador único. Podemos navegar pelo histórico do repositório através destes identificadores. Vamos desfazer o último commit: =git reset 78b3305a0b7b9738d303d2a5d01ca8be1381b283=
+E se a modificação feita no último commit possui algum problema? O commit já foi realizado, será que conseguiríamos revertê-lo? Note que cada commit possui um identificador único. Podemos navegar pelo histórico do repositório através destes identificadores. Vamos desfazer o último commit: =git reset 9a930f92d46945e2e7f9d46a20b8bd37e582f6fb=
 
 O histórico, após o comando =reset=:
 
 #+begin_example
-commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283 (HEAD -> main)
+commit 9a930f92d46945e2e7f9d46a20b8bd37e582f6fb (HEAD -> main)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:11:10 2023 -0300
+Date:   Tue Sep 26 11:01:32 2023 -0300
 
-    Adicionando os arquivos de implementação
+    Ignorando build, doc, e users
 
-commit c20bd0c2aacaa15b72d102be5310dd128b43e853
+commit 5b6752e7e60683b82f437de850c96316cc234d80
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:04:27 2023 -0300
+Date:   Tue Sep 26 11:00:20 2023 -0300
+
+    Adicionando arquivos de implementação
+
+commit 18eee838ce7011d6c559f6dfaacf326fd8805079
+Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+Date:   Tue Sep 26 10:59:26 2023 -0300
 
     Adicionando os arquivos de cabeçalho
 #+end_example
@@ -356,10 +368,7 @@ Untracked files:
   (use "git add <file>..." to include in what will be committed)
 	Doxyfile
 	Makefile
-	build/
-	doc/
 	test/
-	users/
 
 no changes added to commit (use "git add" and/or "git commit -a")
 #+end_example
@@ -377,73 +386,68 @@ Vamos adicionar a alteração e commitar novamente. Vamos, também, adicionar ao
 - =git add Doxyfile Makefile=
 - =git commit -m "Adicionando arquivos de configuração"⁣=
 
-Digamos que, após todas estes commits, identificamos um bug na alteração que fizemos no construtor de mailbox. Se resetarmos o histórico para o commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283, ou seja, o commit anterior à modificação do construtor, teremos que refazer todos os commits acima. Na realidade, gostaríamos de reverter apenas o commit que introduziu o bug. Para isso, vamos usar o comando =revert=.
+Digamos que, após todas estes commits, identificamos um bug na alteração que fizemos no construtor de mailbox. Se resetarmos o histórico para o commit =9a930f92d46945e2e7f9d46a20b8bd37e582f6fb=, ou seja, o commit anterior à modificação do construtor, teremos que refazer todos os commits acima. Na realidade, gostaríamos de reverter apenas o commit que introduziu o bug. Para isso, vamos usar o comando =revert=.
 
 Histórico atual do repositório:
 
 #+begin_example
-commit 007c3624e47fd7a2f0888ff161725e232ba82e2e (HEAD -> main)
+commit a47fec73aec3da9820249d5d1b6af5655708c788 (HEAD -> main)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:43:39 2023 -0300
+Date:   Tue Sep 26 11:05:22 2023 -0300
 
     Adicionando arquivos de configuração
 
-commit 23f15ba777a65a3c6ae7fd53eefb452a0b154f11
+commit 2fe5efec809f45e536ef084eaa4e16e1fa3693e2
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:43:34 2023 -0300
+Date:   Tue Sep 26 11:05:13 2023 -0300
 
     Adicionando testes
 
-commit 481802aaaba090a87bcc8828365044141d3ca950
+commit 2c79b0d5c55e90d7c5cf6bff39a161adb7ff727c
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:43:21 2023 -0300
+Date:   Tue Sep 26 11:04:59 2023 -0300
 
-    Adicionando mensagem ao construtor do mailbox
+    Adicionando mensagem ao construtor do mailbox⁣
 
-commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283
+commit 9a930f92d46945e2e7f9d46a20b8bd37e582f6fb
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:11:10 2023 -0300
+Date:   Tue Sep 26 11:01:32 2023 -0300
 
-    Adicionando os arquivos de implementação
+    Ignorando build, doc, e users
 
-commit c20bd0c2aacaa15b72d102be5310dd128b43e853
-Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:04:27 2023 -0300
-
-    Adicionando os arquivos de cabeçalho
+...
 #+end_example
 
-Revertendo o commit que introduziu o bug: =git revert --no-edit 481802aaaba090a87bcc8828365044141d3ca950=
+Revertendo o commit que introduziu o bug: =git revert --no-edit 2c79b0d5c55e90d7c5cf6bff39a161adb7ff727c=
 
 #+begin_example
+commit f3ea40b54fb6de966b799ff8613f5e99bb013857 (HEAD -> main)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:51:14 2023 -0300
+Date:   Tue Sep 26 11:07:03 2023 -0300
 
-    Revert "Adicionando mensagem ao construtor do mailbox"
+    Revert "Adicionando mensagem ao construtor do mailbox⁣"
+    
+    This reverts commit 2c79b0d5c55e90d7c5cf6bff39a161adb7ff727c.
 
-    This reverts commit 481802aaaba090a87bcc8828365044141d3ca950.
-
-commit 007c3624e47fd7a2f0888ff161725e232ba82e2e
+commit a47fec73aec3da9820249d5d1b6af5655708c788
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:43:39 2023 -0300
+Date:   Tue Sep 26 11:05:22 2023 -0300
 
     Adicionando arquivos de configuração
 
-commit 23f15ba777a65a3c6ae7fd53eefb452a0b154f11
+commit 2fe5efec809f45e536ef084eaa4e16e1fa3693e2
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:43:34 2023 -0300
+Date:   Tue Sep 26 11:05:13 2023 -0300
 
     Adicionando testes
 
-commit 481802aaaba090a87bcc8828365044141d3ca950
+commit 2c79b0d5c55e90d7c5cf6bff39a161adb7ff727c
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:43:21 2023 -0300
+Date:   Tue Sep 26 11:04:59 2023 -0300
 
-    Adicionando mensagem ao construtor do mailbox
+    Adicionando mensagem ao construtor do mailbox⁣
 
-commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283
-Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 11:11:10 2023 -0300
+...
 #+end_example
 
 Note que um novo commit foi realizado. Este novo commit reverte as alterações do commit que introduziu o bug.
@@ -502,17 +506,31 @@ Neste ponto, já não precisamos mais da branch =bugfix/B=, então podemos delet
 Histórico da branch main:
 
 #+begin_example
-commit 06f0995c8a9f1a81d72682953f83f57c7d6b0893
+commit 2d0f222143f571ac88eb723bd135ca1524707405 (HEAD -> main)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 16:00:43 2023 -0300
+Date:   Tue Sep 26 11:09:55 2023 -0300
 
     Corrigindo bug no construtor da mailbox
 
-commit ccfb915d842d83d15264d864d34f507959cf0b88
+commit f3ea40b54fb6de966b799ff8613f5e99bb013857
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 15:30:10 2023 -0300
+Date:   Tue Sep 26 11:07:03 2023 -0300
 
-    Ignorando build, doc, e users
+    Revert "Adicionando mensagem ao construtor do mailbox⁣"
+    
+    This reverts commit 2c79b0d5c55e90d7c5cf6bff39a161adb7ff727c.
+
+commit a47fec73aec3da9820249d5d1b6af5655708c788
+Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+Date:   Tue Sep 26 11:05:22 2023 -0300
+
+    Adicionando arquivos de configuração
+
+commit 2fe5efec809f45e536ef084eaa4e16e1fa3693e2
+Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+Date:   Tue Sep 26 11:05:13 2023 -0300
+
+    Adicionando testes
 
 ...
 #+end_example
@@ -560,27 +578,33 @@ Após a correção, vamos commitar a solução do conflito (em alguns casos, pod
 - =git log=
 
 #+begin_example
-commit 70b77cb3cbfa8a6767714b8fc6575e76a6c3d0a8 (HEAD -> main)
-Merge: 06f0995 397e789
+commit fed26065bee307be9a347a1f090bbf308c8f41e6 (HEAD -> main)
+Merge: 2d0f222 1f948a8
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 16:17:10 2023 -0300
+Date:   Tue Sep 26 11:11:58 2023 -0300
 
     Merge branch 'feature/A'
     
     # Conflicts:
     #       src/core/mailbox.cpp
 
-commit 397e7891ad30c35ba558535e8f2d8359a78187dc (feature/A)
+commit 1f948a8746910573702fcd2d62d04a49356740c8 (feature/A)
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 16:10:08 2023 -0300
+Date:   Tue Sep 26 11:11:18 2023 -0300
 
     Adicionando mensagem ao construtor de mailapp
 
-commit 06f0995c8a9f1a81d72682953f83f57c7d6b0893
+commit 2d0f222143f571ac88eb723bd135ca1524707405
 Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
-Date:   Mon Sep 25 16:00:43 2023 -0300
+Date:   Tue Sep 26 11:09:55 2023 -0300
 
-    Corrigindo bug no consturtor da mailbox
+    Corrigindo bug no construtor da mailbox
+
+commit 45d554e6222366bb8bd661251758359031b1ba1f
+Author: Luigi D. C. Soares <luigidcsoares@gmail.com>
+Date:   Tue Sep 26 11:09:18 2023 -0300
+
+    Adicionando mensagem ao construtor da mailbox
 
 ...
 #+end_example
