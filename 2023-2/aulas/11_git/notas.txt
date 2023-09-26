@@ -143,7 +143,7 @@ Fluxo de Trabalho
   estas alterações estão na área de staging.
 
   (2) Vamos confirmar as alterações e as inserir no repositório: `git
-  commit -m "Adicionando os arquivos de cabeçalho"'
+  commit -m "Adicionando os arquivos de cabeçalho"⁣'
 
   A saída do comando commit:
 
@@ -237,7 +237,7 @@ Fluxo de Trabalho
   └────
 
   Vamos confirmar as alterações: `git commit -m "Adicionando os arquivos
-  de implementação'
+  de implementação"⁣'
 
   O histórico do repositório (`git log') agora é
 
@@ -300,7 +300,7 @@ Ignorando arquivos
 
   Vamos adicionar o .gitignore ao repositório:
   • `git add .gitignore'
-  • `git commit -m "Ignorando build, doc, e users"'
+  • `git commit -m "Ignorando build, doc, e users"⁣'
 
 
 Revertendo alterações
@@ -351,7 +351,7 @@ Revertendo alterações
   └────
 
   Confirmando as alterações e verificando o histórico: `git commit -m
-  "Adicionando mensagem ao construtor do mailbox"'
+  "Adicionando mensagem ao construtor do mailbox"⁣'
 
   ┌────
   │ commit 99140706a6e4be5fd3aadcd9d7346e6d7586e449 (HEAD -> main)
@@ -427,11 +427,11 @@ Revertendo alterações
   Makefile e Doxyfile:
 
   • `git add src/core/mailbox.cpp'
-  • `git commit -m "Adicionando mensagem ao construtor do mailbox"'
+  • `git commit -m "Adicionando mensagem ao construtor do mailbox"⁣'
   • `git add test/'
-  • `git commit -m "Adicionando testes"'
+  • `git commit -m "Adicionando testes"⁣'
   • `git add Doxyfile Makefile'
-  • `git commit -m "Adicionando arquivos de configuração"'
+  • `git commit -m "Adicionando arquivos de configuração"⁣'
 
   Digamos que, após todas estes commits, identificamos um bug na
   alteração que fizemos no construtor de mailbox. Se resetarmos o
@@ -551,7 +551,7 @@ Trabalhando em múltiplas branches
   `std::cout << "Criando uma mailbox chamada " << name << std::endl;'
 
   • `git add src/core/mailbox.cpp'
-  • `git commit -m "Adicionando mensagem ao construtor da mailbox"'
+  • `git commit -m "Adicionando mensagem ao construtor da mailbox"⁣'
 
   Agora, vamos trocar para a branch bugfix/B: `git switch
   bugfix/B'. Note que a alteração acima não está presente nesta branch.
@@ -562,7 +562,7 @@ Trabalhando em múltiplas branches
   `std::cout << "Corrigindo bug no construtor" << std::endl;'
 
   • `git add src/core/mailbox.cpp'
-  • `git commit -m "Corrigindo bug no construtor da mailbox"'
+  • `git commit -m "Corrigindo bug no construtor da mailbox"⁣'
 
   Neste momento, temos a seguinte estrutura:
 
@@ -609,7 +609,7 @@ Trabalhando em múltiplas branches
   std::endl;'
 
   • `git add src/core/mailapp.cpp'
-  • `git commit -m "Adicionando mensagem ao construtor de mailapp"'
+  • `git commit -m "Adicionando mensagem ao construtor de mailapp"⁣'
 
   Finalizamos a funcionalidade *A*, vamos voltar para a branch main e
   atualizá-la:
@@ -683,7 +683,7 @@ Trabalhando em múltiplas branches
 
   Note que um novo commit foi criado para a operação de merge, com uma
   mensagem padrão (poderíamos passar uma mensagem customizada, trocando
-  o `--no-edit' por `-m "mensagem"').
+  o `--no-edit' por `-m "mensagem"⁣').
 
   Agora, podemos deletar a branch feature/A: `git branch -d feature/A'.
 
@@ -869,7 +869,7 @@ Trabalhando com múltiplas branches: Pull Request
   └────
 
   • Adicione e confirme as alterações: `git add test/core/mailbox.cpp' e
-    `git commit -m "Verificando tamanho das mailboxes"'
+    `git commit -m "Verificando tamanho das mailboxes"⁣'
   • Suba as alterações para o repositório remoto, criando uma branch
     remota nova: `git push -u origin feature/mailbox-test-size'
 

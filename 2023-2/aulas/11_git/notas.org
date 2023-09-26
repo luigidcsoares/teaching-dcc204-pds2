@@ -117,7 +117,7 @@ Untracked files:
 
 Note que agora temos uma informação nova: todos os arquivos da pasta include aparecem como alterações a serem "commitadas". Neste ponto, estas alterações estão na área de staging.
 
-(2) Vamos confirmar as alterações e as inserir no repositório: =git commit -m "Adicionando os arquivos de cabeçalho"=
+(2) Vamos confirmar as alterações e as inserir no repositório: =git commit -m "Adicionando os arquivos de cabeçalho"⁣=
 
 A saída do comando commit:
 
@@ -204,7 +204,7 @@ Untracked files:
 	users/
 #+end_example
 
-Vamos confirmar as alterações: =git commit -m "Adicionando os arquivos de implementação=
+Vamos confirmar as alterações: =git commit -m "Adicionando os arquivos de implementação"⁣=
 
 O histórico do repositório (=git log=) agora é
 
@@ -258,7 +258,7 @@ nothing added to commit but untracked files present (use "git add" to track)
 
 Vamos adicionar o .gitignore ao repositório:
 - =git add .gitignore=
-- =git commit -m "Ignorando build, doc, e users"=
+- =git commit -m "Ignorando build, doc, e users"⁣=
 
 ** Revertendo alterações
 
@@ -303,7 +303,7 @@ Untracked files:
 	users/
 #+end_example
 
-Confirmando as alterações e verificando o histórico: =git commit -m "Adicionando mensagem ao construtor do mailbox"=
+Confirmando as alterações e verificando o histórico: =git commit -m "Adicionando mensagem ao construtor do mailbox"⁣=
 
 #+begin_example
 commit 99140706a6e4be5fd3aadcd9d7346e6d7586e449 (HEAD -> main)
@@ -371,11 +371,11 @@ Vamos "corrigir" a modificação que revertemos, alterando a mensagem no constru
 Vamos adicionar a alteração e commitar novamente. Vamos, também, adicionar ao repositório os testes e os arquivos de configuração Makefile e Doxyfile:
 
 - =git add src/core/mailbox.cpp=
-- =git commit -m "Adicionando mensagem ao construtor do mailbox"=
+- =git commit -m "Adicionando mensagem ao construtor do mailbox"⁣=
 - =git add test/=
-- =git commit -m "Adicionando testes"=
+- =git commit -m "Adicionando testes"⁣=
 - =git add Doxyfile Makefile=
-- =git commit -m "Adicionando arquivos de configuração"=
+- =git commit -m "Adicionando arquivos de configuração"⁣=
 
 Digamos que, após todas estes commits, identificamos um bug na alteração que fizemos no construtor de mailbox. Se resetarmos o histórico para o commit 78b3305a0b7b9738d303d2a5d01ca8be1381b283, ou seja, o commit anterior à modificação do construtor, teremos que refazer todos os commits acima. Na realidade, gostaríamos de reverter apenas o commit que introduziu o bug. Para isso, vamos usar o comando =revert=.
 
@@ -472,7 +472,7 @@ Vamos adicionar a seguinte linha no arquivo mailbox.cpp, e commitar a alteraçã
 ~std::cout << "Criando uma mailbox chamada " << name << std::endl;~
 
 - =git add src/core/mailbox.cpp=
-- =git commit -m "Adicionando mensagem ao construtor da mailbox"=
+- =git commit -m "Adicionando mensagem ao construtor da mailbox"⁣=
 
 Agora, vamos trocar para a branch bugfix/B: =git switch bugfix/B=. Note que a alteração acima não está presente nesta branch.
 
@@ -481,7 +481,7 @@ Vamos adicionar a seguinte linha no arquivo mailbox.cpp (representando a correç
 ~std::cout << "Corrigindo bug no construtor" << std::endl;~
 
 - =git add src/core/mailbox.cpp=
-- =git commit -m "Corrigindo bug no construtor da mailbox"=
+- =git commit -m "Corrigindo bug no construtor da mailbox"⁣=
 
 Neste momento, temos a seguinte estrutura:
 
@@ -522,7 +522,7 @@ Vamos voltar para a funcionalidade *A* (=git switch feature/A=) e adicionar a se
 ~std::cout << "Construíndo mailapp para usuário " << user << std::endl;~
 
 - =git add src/core/mailapp.cpp=
-- =git commit -m "Adicionando mensagem ao construtor de mailapp"=
+- =git commit -m "Adicionando mensagem ao construtor de mailapp"⁣=
 
 Finalizamos a funcionalidade *A*, vamos voltar para a branch main e atualizá-la:
 
@@ -585,7 +585,7 @@ Date:   Mon Sep 25 16:00:43 2023 -0300
 ...
 #+end_example
 
-Note que um novo commit foi criado para a operação de merge, com uma mensagem padrão (poderíamos passar uma mensagem customizada, trocando o =--no-edit= por =-m "mensagem"=).
+Note que um novo commit foi criado para a operação de merge, com uma mensagem padrão (poderíamos passar uma mensagem customizada, trocando o =--no-edit= por =-m "mensagem"⁣=).
 
 Agora, podemos deletar a branch feature/A: =git branch -d feature/A=.
 
@@ -709,7 +709,7 @@ TEST_CASE("Adicionando mensagens à caixa já preenchida") {
 }
 #+end_src
 
-- Adicione e confirme as alterações: =git add test/core/mailbox.cpp= e =git commit -m "Verificando tamanho das mailboxes"=
+- Adicione e confirme as alterações: =git add test/core/mailbox.cpp= e =git commit -m "Verificando tamanho das mailboxes"⁣=
 - Suba as alterações para o repositório remoto, criando uma branch remota nova: =git push -u origin feature/mailbox-test-size=
 
 Na página inicial do repositório no Github, clique no botão *main*: você vai notar que agora estará lista a nova branch.
