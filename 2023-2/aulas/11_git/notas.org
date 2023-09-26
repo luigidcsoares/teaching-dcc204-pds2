@@ -25,8 +25,8 @@ Ferramentas de controle de versão:
 ** Configurando sua identidade
 
 Apoś instalar o git, você deverá configurar seu nome e seu endereço de email:
-- =git config --global user.name "fulano"=
-- =git config --global user.email "fulano@gmail.com"=
+- =git config --global user.name "fulano"⁣=
+- =git config --global user.email "fulano@gmail.com"⁣=
 
 Vamos, também, configurar um nome para a =branch= padrão do projeto (voltaremos nisso mais a frente):
 - =git config --global init.defaultBranch main=
