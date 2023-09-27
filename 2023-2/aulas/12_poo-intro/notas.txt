@@ -159,8 +159,8 @@ Programação Procedural
   │ TEST_CASE("Adicionando mensagens à caixa de entrada vazia") {
   │   Mailbox mbox = mailbox::init("inbox", {});
   │ 
-  │   Message msg0 = { "from0", "to0", "content0" };
-  │   Message msg1 = { "from1", "to1", "content1" };
+  │   Message msg0 = { "from0", "to0", "subject0", "content0" };
+  │   Message msg1 = { "from1", "to1", "subject1", "content1" };
   │ 
   │   mailbox::add(mailbox::add(mbox, msg0), msg1);
   │   std::vector<Message> msgs = mbox.msgs;
@@ -171,15 +171,15 @@ Programação Procedural
   │ }
   │ 
   │ TEST_CASE("Adicionando mensagens à caixa já preenchida") {
-  │   std::vector<Message> old_msgs = {{ "from0", "to0", "content0" }};
+  │   std::vector<Message> old_msgs = {{ "from0", "to0", "subject0", "content0" }};
   │   Mailbox mbox = mailbox::init("inbox", old_msgs);
   │ 
-  │   mailbox::add(mbox, { "from1", "to1", "content1" });
+  │   mailbox::add(mbox, { "from1", "to1", "subject1", "content1" });
   │   std::vector<Message> msgs = mbox.msgs;
   │ 
   │   CHECK_EQ(msgs.size(), 2);
   │   check_msg(old_msgs[0], msgs[0]);
-  │   check_msg({ "from1", "to1", "content1" } , msgs[1]);
+  │   check_msg({ "from1", "to1", "subject1", "content1" } , msgs[1]);
   │ }
   └────
 
@@ -366,8 +366,8 @@ Programação Orientada a Objetos (POO)
   └────
 
   O que acabamos de definir é uma *classe*, o conceito por trás de uma
-  caixa de emails. A partir desta classe, podemos criar diferentes
-  *instâncias* (objetos):
+  mailbox. A partir desta classe, podemos criar diferentes *instâncias*
+  (objetos):
 
   ┌────
   │ Mailbox mbox1("inbox", {});
