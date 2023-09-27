@@ -1,8 +1,17 @@
-              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-               NOTAS DE AULA - 11 VERSIONAMENTO DE CÓDIGO
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                 NOTAS DE AULA - 11 CONTROLE DE VERSÃO
 
                            Luigi D. C. Soares
-              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Links Úteis
+═══════════
+
+  • Link para o repositório no Github:
+    <https://github.com/luigidcsoares/teaching-dcc204-pds2-project-2023.2-mlib/>
+  • Link para a playlist da aula:
+    <https://www.youtube.com/playlist?list=PL0t5Y5JaeDJHcNpsMYFbAu5UVpvDUcDta>
 
 
 Controle de Versão
@@ -316,7 +325,7 @@ Revertendo alterações
   do repositório. No arquivo `src/core/mailbox.cpp', vamos adicionar ao
   construtor a seguinte linha:
 
-  `std::cout << "Criando uma mailbox " << name << std::endl;'
+  `std::cout << "Criando uma mailbox " << std::endl'
 
   Status do repositório:
 
@@ -426,10 +435,10 @@ Revertendo alterações
   │ no changes added to commit (use "git add" and/or "git commit -a")
   └────
 
-  Vamos "corrigir" a modificação que revertemos, alterando a mensagem no
+  Vamos corrigir a modificação que revertemos, alterando a mensagem no
   construtor para
 
-  `std::cout << "Criando uma mailbox chamada " << name << std::endl;'
+  `std::cout << "Criando uma mailbox " << name << std::endl;'
 
   Vamos adicionar a alteração e commitar novamente. Vamos, também,
   adicionar ao repositório os testes e os arquivos de configuração
@@ -552,7 +561,7 @@ Trabalhando em múltiplas branches
   Vamos adicionar a seguinte linha no arquivo mailbox.cpp, e commitar a
   alteração:
 
-  `std::cout << "Criando uma mailbox chamada " << name << std::endl;'
+  `std::cout << "Criando uma mailbox " << name << std::endl;'
 
   • `git add src/core/mailbox.cpp'
   • `git commit -m "Adicionando mensagem ao construtor da mailbox"⁣'
