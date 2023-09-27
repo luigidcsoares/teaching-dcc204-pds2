@@ -152,6 +152,7 @@ Programação Procedural
   │ void check_msg(Message a, Message b) {
   │   CHECK_EQ(a.from, b.from);
   │   CHECK_EQ(a.to, b.to);
+  │   CHECK_EQ(a.subject, b.subject);
   │   CHECK_EQ(a.content, b.content);
   │ }
   │ 
@@ -279,7 +280,7 @@ Programação Procedural
   │ [doctest] run with "--help" for options
   │ ===============================================================================
   │ [doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 14 | 14 passed | 0 failed |
+  │ [doctest] assertions: 18 | 18 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
@@ -364,9 +365,20 @@ Programação Orientada a Objetos (POO)
   │ }
   └────
 
-  Os testes e a implementação:
+  O que acabamos de definir é uma *classe*, o conceito por trás de uma
+  caixa de emails. A partir desta classe, podemos criar diferentes
+  *instâncias* (objetos):
 
-  Agora, vamos criar alguns testes para a mailbox:
+  ┌────
+  │ Mailbox mbox1("inbox", {});
+  │ Mailbox mbox2("inbox", { {"from", "to", "subject", "content"} });
+  │ Mailbox mbox3("sent", {});
+  │ Mailbox mbox4("sent", {});
+  └────
+
+  Quantos objetos diferentes temos acima?
+
+  Os testes e a implementação:
 
   `test/core/mailbox.cpp'
 
@@ -383,14 +395,15 @@ Programação Orientada a Objetos (POO)
   │ void check_msg(Message a, Message b) {
   │   CHECK_EQ(a.from, b.from);
   │   CHECK_EQ(a.to, b.to);
+  │   CHECK_EQ(a.subject, b.subject);
   │   CHECK_EQ(a.content, b.content);
   │ }
   │ 
   │ TEST_CASE("Adicionando mensagens à caixa de entrada vazia") {
   │   Mailbox mbox("inbox", {});
   │ 
-  │   Message msg0 = { "from0", "to0", "content0" };
-  │   Message msg1 = { "from1", "to1", "content1" };
+  │   Message msg0 = { "from0", "to0", "subject0", "content0" };
+  │   Message msg1 = { "from1", "to1", "subject1", "content1" };
   │ 
   │   mbox.add(msg0).add(msg1);
   │   std::vector<Message> msgs = mbox.read_all();
@@ -401,15 +414,15 @@ Programação Orientada a Objetos (POO)
   │ }
   │ 
   │ TEST_CASE("Adicionando mensagens à caixa já preenchida") {
-  │   std::vector<Message> old_msgs = {{ "from0", "to0", "content0" }};
+  │   std::vector<Message> old_msgs = {{ "from0", "to0", "subject0", "content0" }};
   │   Mailbox mbox("inbox", old_msgs);
   │ 
-  │   mbox.add({ "from1", "to1", "content1" });
+  │   mbox.add({ "from1", "to1", "subject1", "content1" });
   │   std::vector<Message> msgs = mbox.read_all();
   │ 
   │   CHECK_EQ(msgs.size(), 2);
   │   check_msg(old_msgs[0], msgs[0]);
-  │   check_msg({ "from1", "to1", "content1" } , msgs[1]);
+  │   check_msg({ "from1", "to1", "subject1", "content1" } , msgs[1]);
   │ }
   └────
 
@@ -470,7 +483,7 @@ Programação Orientada a Objetos (POO)
   │ [doctest] run with "--help" for options
   │ ===============================================================================
   │ [doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
-  │ [doctest] assertions: 14 | 14 passed | 0 failed |
+  │ [doctest] assertions: 18 | 18 passed | 0 failed |
   │ [doctest] Status: SUCCESS!
   └────
 
