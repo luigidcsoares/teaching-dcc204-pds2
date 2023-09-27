@@ -1,0 +1,488 @@
+#+title: Notas de Aula - 12 Introdução a POO
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+* Paradigmas de Programação
+
+O que são paradigmas de programação?
+- Modelos de computação
+- Estilos de descrição de soluções de problemas
+
+Os paradigmas são diversos. A seguir estão os principais:
+
+#+begin_example
+       Imperativo                              Declarativo
+         /    \                                  /     \
+        /      \                                /       \
+  Procedural  Orientado a Objetos          Funcional   Lógico
+#+end_example
+
+Exemplificando:
+- Imperativo: descreve computação como ações que alteram o estado
+  - Orientado a Objetos:
+    - Dados e procedimentos encapsulados em objetos
+    - Diversos objetos
+    - Interação/comunicação entre objetos, por meio de mensagens
+- Funcional:
+  - Funções puras
+  - Dados imutáveis
+  - Composição de funções
+  - entrada --> função 1 --> função 2 --> ... --> função n --> resultado
+
+Dizer que uma linguagem é orientada a objetos, ou funcional, ou que segue algum paradigma quer dizer que esta linguagem possui funcionalidades/ferramentas que facilitam a construção de soluções seguindos tais paradigmas.
+
+- Java é 100% orientado a objetos (OO)
+- C segue o paradigma procedural
+- Haskell é uma linguagem puramente funcional, tudo é imutável, funções são sempre puras, não possui loops
+- Algumas linguages são "multi-paradigmas":
+  - C++: te permite a escrita de programas no paradigma OO e no paradigma procedural
+  - Scala: OO mas te permite escrever código em um estilo funcional (até certo nível)
+  - Python: OO, procedural, e um pouco de funcional
+  - Racket: te encoraja a escrever no estilo funcional, mas também te permite usar OO
+
+Apenas por curiosidade:
+
+- Fibonacci em Haskell
+
+#+begin_src haskell
+fib :: Int -> Int
+fib 0 = 0
+fib 1 = 1
+fib n = fib (n-1) + fib (n-2)
+#+end_src
+
+- E um exemplo de encadeamento de funções em Elixir (note que funções são passadas para funções)
+
+#+begin_src elixir
+numbers =
+  1..100
+  |> Stream.map(fn x -> x * 2 end)
+  |> Stream.filter(fn x -> rem(x, 2) == 0 end)
+  |> Stream.take_every(3)
+  |> Enum.to_list()
+#+end_src
+
+* Programação Procedural
+
+Vamos implementar uma caixa de emails de forma procedural. Primeiro, começamos com a estrutura das mensagens:
+
+=include/core/message.hpp=
+
+#+begin_src C++ :exports code :main no :tangle procedural/include/core/message.hpp
+#pragma once
+
+#include <string>
+
+namespace mail_lib::core {
+struct Message {
+  std::string from;
+  std::string to;
+  std::string subject;
+  std::string content;
+};
+}
+#+end_src
+
+Agora, vamos declarar a estrutura da mailbox e as operações relacionadas:
+
+=include/core/mailbox.hpp=
+
+#+begin_src C++ :exports code :main no :tangle procedural/include/core/mailbox.hpp
+#pragma once
+
+#include "message.hpp"
+
+#include <string>
+#include <vector>
+
+namespace mail_lib::core {
+struct Mailbox {
+  std::string name;
+  std::vector<Message> msgs;
+};
+
+namespace mailbox {
+/// @brief Inicializa a caixa com um determinado nome e mensagens iniciais
+///
+/// @param name Nome da caixa de mensagens (e.g., inbox)
+/// @param msgs Mensagens iniciais (a **útima** é a mais recente)
+Mailbox init(std::string name, std::vector<Message> const &msgs);
+
+/// @brief Adiciona uma mensagem ao final da lista
+/// @param mbox Mailbox a ser modificada
+/// @param msg Mensagem a ser adicionada
+/// @return A própria caixa de mensagens, para chamadas consecutivas
+Mailbox &add(Mailbox &mbox, Message msg);
+}
+}
+#+end_src
+
+Agora, vamos criar alguns testes para a mailbox:
+
+=test/core/mailbox.cpp=
+
+#+begin_src C++ :exports code :main no :tangle procedural/test/core/mailbox.cpp
+#include "doctest.hpp"
+#include "core/message.hpp"
+#include "core/mailbox.hpp"
+
+#include <vector>
+
+using mail_lib::core::Mailbox;
+using mail_lib::core::Message;
+
+namespace mailbox = mail_lib::core::mailbox;
+
+void check_msg(Message a, Message b) {
+  CHECK_EQ(a.from, b.from);
+  CHECK_EQ(a.to, b.to);
+  CHECK_EQ(a.content, b.content);
+}
+
+TEST_CASE("Adicionando mensagens à caixa de entrada vazia") {
+  Mailbox mbox = mailbox::init("inbox", {});
+  
+  Message msg0 = { "from0", "to0", "content0" };
+  Message msg1 = { "from1", "to1", "content1" };
+  
+  mailbox::add(mailbox::add(mbox, msg0), msg1);
+  std::vector<Message> msgs = mbox.msgs;
+  
+  CHECK_EQ(msgs.size(), 2);
+  check_msg(msg0, msgs[0]);
+  check_msg(msg1, msgs[1]);
+}
+
+TEST_CASE("Adicionando mensagens à caixa já preenchida") {
+  std::vector<Message> old_msgs = {{ "from0", "to0", "content0" }};
+  Mailbox mbox = mailbox::init("inbox", old_msgs);
+  
+  mailbox::add(mbox, { "from1", "to1", "content1" });
+  std::vector<Message> msgs = mbox.msgs;
+
+  CHECK_EQ(msgs.size(), 2);
+  check_msg(old_msgs[0], msgs[0]);
+  check_msg({ "from1", "to1", "content1" } , msgs[1]);
+}
+#+end_src
+
+=test/driver.cpp=
+
+#+begin_src C++ :exports code :main no :tangle procedural/test/driver.cpp
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest.hpp>
+#+end_src
+
+E, por fim, implementar as funções relacionadas a mailbox:
+
+=src/core/mailbox.cpp=
+
+#+begin_src C++ :exports code :main no :tangle procedural/src/core/mailbox.cpp
+#include "core/mailbox.hpp"
+#include "core/message.hpp"
+
+#include <vector>
+#include <iostream>
+
+namespace mail_lib::core::mailbox {
+Mailbox init(std::string name, std::vector<Message> const &msgs) {
+  return { name, msgs };
+}
+
+Mailbox &add(Mailbox &mbox, Message msg) {
+  mbox.msgs.push_back(msg);
+  return mbox;
+}
+}
+#+end_src
+
+E agora, vamos compilar e executar os testes:
+
+=Makefile=
+
+#+name: makefile
+#+begin_src makefile :tangle procedural/Makefile
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -fPIC
+
+INCLUDE := -I include/
+DOCTEST += -I ../../ # doctest, relativo a pasta 11_poo-intro/procedural
+
+SRC_DIR := src
+TEST_DIR := test
+BUILD_DIR := build
+BIN_DIR := bin
+
+SRC_FILES := $(wildcard $(SRC_DIR)/*/*.cpp)
+TEST_FILES := $(wildcard $(TEST_DIR)/*.cpp $(TEST_DIR)/*/*.cpp)
+
+DEP_FILES := $(SRC_FILES:.cpp=.d)
+DEP_FILES += $(TEST_FILES:.cpp=.d)
+
+OBJ_SRC_FILES := $(SRC_FILES:.cpp=.o)
+OBJ_TEST_FILES := $(OBJ_SRC_FILES)
+OBJ_TEST_FILES += $(TEST_FILES:.cpp=.o)
+
+-include $(addprefix $(BUILD_DIR)/,$(DEP_FILES))
+
+test: $(BIN_DIR)/test
+	@$(BIN_DIR)/test
+
+$(BIN_DIR)/test: $(addprefix $(BUILD_DIR)/,$(OBJ_TEST_FILES))
+	@echo "🔧 Preparing test suite ..."
+	@mkdir -p $(BIN_DIR)
+	@$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@echo "🏛️ Building $< ..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -MMD -MP -c $< -o $@
+
+$(BUILD_DIR)/$(TEST_DIR)/%.o: $(TEST_DIR)/%.cpp
+	@echo "🏛️ Building $< ..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) $(DOCTEST) -MMD -MP -c $< -o $@
+
+clean:
+	@echo "🧹 Cleaning ..."
+	@rm -rf $(BUILD_DIR) $(BIN_DIR)
+#+end_src
+        
+#+begin_src sh :results scalar :exports both
+cd procedural/
+make clean
+make test
+#+end_src
+
+#+RESULTS:
+#+begin_example
+🧹 Cleaning ...
+🏛️ Building src/core/mailbox.cpp ...
+🏛️ Building test/driver.cpp ...
+🏛️ Building test/core/mailbox.cpp ...
+🔧 Preparing test suite ...
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+[doctest] assertions: 14 | 14 passed | 0 failed |
+[doctest] Status: SUCCESS!
+#+end_example
+
+* Programação Orientada a Objetos (POO)
+
+Classe:
+  - Conceito, ideia, abstração
+  - Descreve propriedades em comum
+  - Agrupa atributos e operações em uma mesma entidade
+  - Exemplo: Carro
+    
+Objeto:
+  - É uma *instância* de uma classe, existe em tempo de execução
+  - Possui um estado
+  - Exemplo: Uno (de firma, com escada), Ferrari
+
+Voltando ao exemplo da caixa de emails, vamos reescrevê-lo utilizando orientação a objetos (basicamente o que a gente já vem fazendo há algum tempo).
+
+A estrutura das mensagens segue da mesma forma:
+
+=include/core/message.hpp=
+
+#+begin_src C++ :exports code :main no :tangle poo/include/core/message.hpp
+#pragma once
+
+#include <string>
+
+namespace mail_lib::core {
+struct Message {
+  std::string from;
+  std::string to;
+  std::string subject;
+  std::string content;
+};
+}
+#+end_src
+
+Por outro lado, a definição da Mailbox será um pouco diferente:
+- Vamos grupar as operações junto dos atributos
+- Vamos tornar os atributos privados
+- Vamos definir formas de acesso a estes atributos (apenas leitura)
+
+=include/core/mailbox.hpp=
+
+#+begin_src C++ :exports code :main no :tangle poo/include/core/mailbox.hpp
+#pragma once
+
+#include "message.hpp"
+
+#include <string>
+#include <vector>
+
+namespace mail_lib::core {
+class Mailbox {
+public:
+  /// @brief Inicializa a caixa com um determinado nome e mensagens iniciais
+  ///
+  /// @param name Nome da caixa de mensagens (e.g., inbox)
+  /// @param msgs Mensagens iniciais (a **útima** é a mais recente)
+  Mailbox(std::string name, std::vector<Message> const &msgs);
+
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa de mensagens, para chamadas consecutivas
+  Mailbox &add(Message msg);
+  
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
+
+private:
+  std::string _name;
+  std::vector<Message> _msgs;
+};
+}
+#+end_src
+
+Os testes e a implementação:
+
+Agora, vamos criar alguns testes para a mailbox:
+
+=test/core/mailbox.cpp=
+
+#+begin_src C++ :exports code :main no :tangle poo/test/core/mailbox.cpp
+#include "doctest.hpp"
+#include "core/message.hpp"
+#include "core/mailbox.hpp"
+
+#include <vector>
+
+using mail_lib::core::Mailbox;
+using mail_lib::core::Message;
+
+void check_msg(Message a, Message b) {
+  CHECK_EQ(a.from, b.from);
+  CHECK_EQ(a.to, b.to);
+  CHECK_EQ(a.content, b.content);
+}
+
+TEST_CASE("Adicionando mensagens à caixa de entrada vazia") {
+  Mailbox mbox("inbox", {});
+  
+  Message msg0 = { "from0", "to0", "content0" };
+  Message msg1 = { "from1", "to1", "content1" };
+  
+  mbox.add(msg0).add(msg1);
+  std::vector<Message> msgs = mbox.read_all();
+  
+  CHECK_EQ(msgs.size(), 2);
+  check_msg(msg0, msgs[0]);
+  check_msg(msg1, msgs[1]);
+}
+
+TEST_CASE("Adicionando mensagens à caixa já preenchida") {
+  std::vector<Message> old_msgs = {{ "from0", "to0", "content0" }};
+  Mailbox mbox("inbox", old_msgs);
+  
+  mbox.add({ "from1", "to1", "content1" });
+  std::vector<Message> msgs = mbox.read_all();
+
+  CHECK_EQ(msgs.size(), 2);
+  check_msg(old_msgs[0], msgs[0]);
+  check_msg({ "from1", "to1", "content1" } , msgs[1]);
+}
+#+end_src
+
+=test/driver.cpp=
+
+#+begin_src C++ :exports code :main no :tangle poo/test/driver.cpp
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest.hpp>
+#+end_src
+
+E, por fim, implementar as funções relacionadas a mailbox:
+
+=src/core/mailbox.cpp=
+
+#+begin_src C++ :exports code :main no :tangle poo/src/core/mailbox.cpp
+#include "core/mailbox.hpp"
+#include "core/message.hpp"
+
+#include <vector>
+#include <iostream>
+
+namespace mail_lib::core {
+Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs) {
+  _name = name;
+  _msgs = msgs;
+}
+
+Mailbox &Mailbox::add(Message msg) {
+  _msgs.push_back(msg);
+  return *this;
+}
+
+std::vector<Message> Mailbox::read_all() const {
+  return _msgs;
+}
+
+std::string Mailbox::name() const {
+  return _name;
+}
+}
+#+end_src
+
+Compilando e executando os testes:
+
+#+begin_src makefile :exports none :noweb yes :tangle poo/Makefile
+<<makefile>>
+#+end_src
+
+#+begin_src sh :results scalar :exports both
+cd poo/
+make clean
+make test
+#+end_src
+
+#+RESULTS:
+#+begin_example
+🧹 Cleaning ...
+🏛️ Building src/core/mailbox.cpp ...
+🏛️ Building test/driver.cpp ...
+🏛️ Building test/core/mailbox.cpp ...
+🔧 Preparing test suite ...
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+[doctest] assertions: 14 | 14 passed | 0 failed |
+[doctest] Status: SUCCESS!
+#+end_example
+
+* Princípios fundamentais de POO
+
+- Abstração:
+  - Elimine o irrelevante, enfatize o essencial
+  - Classes são abstrações de conceitos
+  - Podemos ter classes abstratas (i.e. que sequer especificam a implementação)
+    - Não podem ser instanciadas
+    - Em C++, implementado com funções virtuais
+    - AbstractSet contém apenas o contrato, as operações
+    - OrderedSet implementa com ordem garantida (árvore)
+    - UnorderedSet implementa sem garantia de ordem (hash)
+    
+- Encapsulamento:
+  - Ocultar informação
+  - Esconda o desnecessário
+  
+- Herança:
+  - Modele a semelhança, mas permita a diferença
+  - Pessoa: tem nome, cpf
+  - Pessoa --> Estudante (específico: matrícula)
+  - Pessoa --> Professor (específico: departamento)
+    
+- Polimorfismo:
+  - Tratar tipos diferentes de forma homogênea
+  - Mesma contrato, comportamentos diferentes
