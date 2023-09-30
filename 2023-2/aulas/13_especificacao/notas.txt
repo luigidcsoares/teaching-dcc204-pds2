@@ -204,7 +204,7 @@ Modelagem CRC (Class-Responsibility-Collaboration)
    Lista de consultas                                                 
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Precisamos, também, modelas as classes que colaboram com o paciente
+  Precisamos, também, modelar as classes que colaboram com o paciente
   (como exercício, pense nas demais classes):
 
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

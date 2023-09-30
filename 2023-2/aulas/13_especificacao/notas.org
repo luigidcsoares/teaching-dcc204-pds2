@@ -139,7 +139,7 @@ Por exemplo, considere um paciente:
 | Telefone                            |                               |
 | Lista de consultas                  |                               |
 
-Precisamos, também, modelas as classes que colaboram com o paciente (como exercício, pense nas demais classes):
+Precisamos, também, modelar as classes que colaboram com o paciente (como exercício, pense nas demais classes):
 
 | Classe: RepositorioMedico           |              |
 | Responsabilidades                   | Colaborações |
