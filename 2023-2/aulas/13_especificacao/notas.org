@@ -1,0 +1,157 @@
+#+title: Notas de Aula - 13 Especificação de Software
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+* Introdução
+
+- Como (e *por quê*) especificar um software?
+- Como organizar o desenvolvimento de um software?
+- O que podemas fazer para facilitar o processo de desenvolvimento?
+
+Considere a seguinte descrição de uma funcionalidade no ponto de vista de um cliente:
+
+"*Como* contador, *quero ser capaz* de fornecer expressões aritméticas *para* obter o resultado da expressão"
+
+Baseado nesta descrição informal da funcionalidade, como poderíamos ter certeza que esta foi implementada da forma adequada (isto é, da forma que o cliente entenda como aceitável)? Que critérios poderíamos definir para posteriormente validar a implementação?
+
+- A expressão deve ser formada pelas operações de adição, subtração, multiplicação, e divisão
+- A expressão deve aceitar valores numéricos com mais de um dígito
+- A expressão deve aceitar valores reais, sendo a parte decimal separada por uma vírgula
+- Devo ser capaz de adicionar parentêses como forma de priorizar uma parte da expressão em relação a sua precedência
+
+Acabamos de criar uma /história de usuário/!
+
+Considere a seguinte expressão: 21 * (3 + 4) - 1
+
+Como podemos processar esta expressão? Que tipos de estruturas vamos precisar?
+- Precisamos separar a expressão em /tokens/ (21 é um token, * é outro token, parentêses são tokens, etc)
+- Como nomear a estrutura responsável por esta separação? /Tokenizer/
+- E quais as responsabilidades dessa estrutura?
+  - Manter a expressão aritmética
+  - Manter a lista de tokens
+  - Avançar para o próximo token
+  - Informar o token atual
+  - Informar a lista de tokens
+
+Acabamos de criar um /cartão CRC/!
+
+* Histórias de Usuário
+
+- Comumente usadas em metodologias ágeis
+- Descrição informal (em linguagem natural) de recursos desejados/necessários para um sistema
+- Conta uma histórica acerca de como *alguém* irá utilizar o produto para alcançar um *objetivo*
+- Um determinado objetivo pode ser representado em diferentes histórias
+- Objetivos diferentes podem compartilhar uma mesma história
+
+A geração de histórias envolvem três etapas:
+- Cartão: descrição da história
+- Conversação: discutir a história gerada, resolver dúvidas, encontrar erros
+- Confirmação: definição de critérios a serem usados para verificar se a história foi concluída
+
+O cartão de uma história de usuário é geralmente escrito seguindo um formato bem definido, explicitando *quem*, *o quê*, e *por quê:
+
+"*Como* <papel>, *quero ser capaz de* <ação> *para* <objetivo>"
+
+Por exemplo, considere um aplicativo de agendamento de consultas. Uma possível história de usuário é
+
+"Como paciente, quero ser capaz de pesquisar por um médico, para encontrar a opção que melhor atenda as minhas necessidades de saúde, levando em consideração a urgência do meu problema"
+
+Essa descrição é informal, e contém somente o suficiente para identificar e contextualizar a funcionalidade desejada pelo cliente (ao contrário de outras abordagens mais rígidas, em que documentos extensos são construídos descrevendo todos os requisitos do sistema).
+
+Esse cartão não contém detalhes do que o cliente espera. Por isso, existe uma segunda etapa de conversação entre os desenvolvedores, o cliente, um possível usuário final (etc), para resolver quaisquer dúvidas que tenham aparecido, e entender as necessidades do cliente.
+
+Após a etapa de conversação, tendo compreendido o que deve ser feito, define-se /critérios de aceitação/ para cada história de usuário. Um critério de aceitação deve ser *testável*, o objetivo do conjunto de critérios é verificar se aquela história de usuário está pronta ou não (não existe meio termo).
+
+Continuando com o nosso exemplo, possíveis critérios de aceitação para a história de usuário relacionada a pesquisa são
+
+- Devo ser capaz de pesquisar por uma especialidade médica (e.g., cardiologia, ortopedia)
+- A pesquisa deve retornar uma lista dos médicos que se encaixam no critério de busca, ordenados pelo nome
+- A pesquisa deve produzir um resultado em até dois segundos
+- Devo ser capaz de ver informações detalhadas de um médico, incluindo nome, localização do consultório, telefones para contato, e horários disponíveis
+
+Que outra história de usuário poderíamos ter para esse aplicativo?
+
+"Como paciente, quero ser capaz de agendar uma consulta através do aplicativo, para que consiga solucionar o meu problema o mais rápido e da forma mais conveniente possível"
+
+- Devo ser capaz de escolher o horário que melhor atende as minhas necessidades
+- Ao escolhe o horário, este deve ser reservado por pelo menos 10 minutos, para que não conflite com outro paciente
+- Devo ser capaz de informar uma breve descrição do motivo do atendimento
+- Devo ser notificado sobre o agendamento da consulta, incluindo os detalhes: dia, horário, nome do médico, e localização
+
+Sobre este último critério, você acha que ele se encaixa melhor como critério ou como uma história de usuário a parte?
+
+"Como médico, quero ser capaz de visualizar o histórico de consultadas de um paciente, para verificar os resultados de exames anteriores"
+
+- O histórico deve exibir as consultadas passadas, ordenadas pela data
+- O histórico deve incluir a data de cada consulta
+- O histórico deve incluir uma breve descrição do diagnóstico
+- Devo ser capaz de ver detalhes uma consulta, incluindo os resultados dos exames realizados e o diagnóstico completo
+- Devo ser capaz de buscar filtrar o histórico pelo mês
+
+-----
+*Extra: organizando histórias de usuário no Github, por meio de issues*
+
+Podemos utilizar as /issues/ do Github para organizar as histórias de usuário e seus critérios de aceitação. Para tanto,
+
+1. Navegue até o repositório do projeto no Github
+2. Clique na aba /issues/
+3. Clique em /new issue/
+4. No título da issue, coloque a história de usuário (como <papel>, quero ser capaz de <ação> para <objetivo>)
+5. Na descrição da issue, clique na opção /task list/
+6. Adicione os critérios de aceitação como itens da lista de tarefas
+7. Em /labels/, adicione o rótulo /enhancement/ (ou crie seu próprio rótulo)
+8. Clique em /submit issue/
+   
+Quando for iniciar a implementação, você pode assinalar quem será o responsável por esta história de usuário.
+
+Após a implementação, teste e verifique se todos os critérios foram satisfeitos. Utilize os checkboxes para marcar cada critério satisfeito. A história só pode ser dada como completa quando *todos* os critérios forem atendidos
+-----
+
+* Modelagem CRC (Class-Responsibility-Collaboration)
+
+Ferramenta para modelagem das entidades, responsabilidades e suas colaborações
+
+Responsabilidade:
+- Conhecimento: fornecer informações (atributos)
+- Realização: fazer alguma coisa, comportamento (operações)
+
+Colaboração:
+- Como os diferentes objetos interagem entre si
+- Como se fosse uma relação cliente/servidor (objeto provê serviço para outro)
+
+Pensando nas histórias de usuário que construímos para o aplicativo de consultas, de quais estruturas iremos precisar?
+
+Por exemplo, considere um paciente:
+- Quais as operações relacionadas a um paciente?
+- Quais as classes necessárias para que estas operações sejam implementadas?
+- Quais atributos o paciente precisa manter?
+
+| Classe: Paciente                    |                               |
+| Responsabilidades                   | Colaborações                  |
+|-------------------------------------+-------------------------------|
+| Agendar consulta                    | Consulta, RepositorioConsulta |
+| Pesquisar médicos por especialidade | RepositorioMedico             |
+| Visualizar consultas agendadas      | Consulta (por quê?)           |
+| Nome                                |                               |
+| Idade                               |                               |
+| CPF                                 |                               |
+| Email                               |                               |
+| Telefone                            |                               |
+| Lista de consultas                  |                               |
+
+| Classe: RepositorioMedico           |              |
+| Responsabilidades                   | Colaborações |
+|-------------------------------------+--------------|
+| Listar todos os médicos             | Médico       |
+| Encontrar médicos por especialidade |              |
+| Adicionar médico                    |              |
+| Remover médico                      |              |
+
+Note que estes cartões são bastante simples, eles servem tanto como um /brainstorm/ sobre o projeto do sistema que será implementado quanto como uma forma de verificar rapidamente o que precisa ser feito. Inclusive, são comumente escritos a mão.
+
+*IMPORTANTE*: apesar do mesmo termo estar sendo utilizado, "responsabilidade" aqui é ligeiramente diferente do termo "responsabilidade" visto no contexto do princício de responsabilidade única (SRP, Single Responsibility Principle):
+
+- Aqui, responsabilidade diz respeito aos atributos e operações de uma classe
+- Lembre-se que, no SRP, "responsabilidade única" não significa uma classe com uma única função
+- No contexto do SRP, responsabilidade não diz respeito a comportamentos específicos, mas sim à classe como um todo
+- As operações que listamos em um cartão CRC devem ser coesas, de modo a, juntas, alcançarem o objetivo principal da classe
