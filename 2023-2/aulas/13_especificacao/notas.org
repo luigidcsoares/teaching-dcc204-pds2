@@ -146,8 +146,8 @@ Precisamos, também, modelar as classes que colaboram com o paciente (como exerc
 |-------------------------------------+--------------|
 | Listar todos os médicos             | Médico       |
 | Encontrar médicos por especialidade |              |
-| Adicionar médico                    |              |
-| Remover médico                      |              |
+| Salvar médico                       |              |
+| Deletar médico                      |              |
 
 Note que estes cartões são bastante simples, eles servem tanto como um /brainstorm/ sobre o projeto do sistema que será implementado quanto como uma forma de verificar rapidamente o que precisa ser feito. Inclusive, são comumente escritos a mão.
 

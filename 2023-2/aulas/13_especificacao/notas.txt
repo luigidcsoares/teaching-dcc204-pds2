@@ -213,8 +213,8 @@ Modelagem CRC (Class-Responsibility-Collaboration)
   ───────────────────────────────────────────────────
    Listar todos os médicos              Médico       
    Encontrar médicos por especialidade               
-   Adicionar médico                                  
-   Remover médico                                    
+   Salvar médico                                     
+   Deletar médico                                    
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Note que estes cartões são bastante simples, eles servem tanto como um
