@@ -1,0 +1,1440 @@
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    NOTAS DE AULA - 14 POO: CLASSES
+
+                           Luigi D. C. Soares
+                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Arquivos adicionais necessários
+═══════════════════════════════
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mail_lib::core {
+  │ struct Message {
+  │   std::string from;
+  │   std::string to;
+  │   std::string subject;
+  │   std::string content;
+  │ };
+  │ }
+  └────
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "mailbox.hpp"
+  │ 
+  │ #include <fstream>
+  │ #include <unordered_map>
+  │ #include <string>
+  │ 
+  │ namespace mail_lib::storage {
+  │ class YAML {
+  │ public:
+  │   /// @brief Inicializa o gerenciador YAML das caixas do usuário
+  │   ///
+  │   /// O diretório do usuário é criado vazio, caso não exista
+  │   YAML(std::string user);
+  │ 
+  │   /// TODO: poderia verificar se os arquivos não foram alterados,
+  │   ///       para evitar loads em sequência...
+  │   /// @return Lista de mailboxes do usuário
+  │   std::unordered_map<std::string, core::Mailbox> load();
+  │ 
+  │   /// @brief Persiste as mailboxes nos arquivos do usuário.
+  │   YAML &save(std::vector<core::Mailbox> const &mboxes);
+  │ 
+  │ private:
+  │   std::string _user_path;
+  │   std::unordered_map<std::string, std::fstream> _user_files;
+  │ };
+  │ }
+  └────
+  ┌────
+  │ #include "yaml.hpp"
+  │ #include "mailbox.hpp"
+  │ 
+  │ #include <filesystem>
+  │ #include <iomanip>
+  │ #include <sstream>
+  │ #include <string>
+  │ #include <unordered_map>
+  │ 
+  │ namespace fs = std::filesystem;
+  │ 
+  │ namespace mail_lib::storage {
+  │ YAML::YAML(std::string user) {
+  │   _user_path = STORAGE_DIR"/" + user + "/";
+  │   fs::create_directory(_user_path); // Cria diretório, se não existe
+  │ 
+  │   for (auto const &entry : fs::directory_iterator(_user_path)) {
+  │     auto const &file_path = entry.path();
+  │     auto file_mode = std::fstream::in | std::fstream::out | std::fstream::app;
+  │     _user_files[file_path.stem()] = std::fstream(file_path.c_str(), file_mode);
+  │   }
+  │ }
+  │ 
+  │ std::unordered_map<std::string, core::Mailbox> YAML::load() {
+  │   std::unordered_map<std::string, core::Mailbox> mboxes;
+  │   for (auto &file : _user_files) {
+  │     std::string filename = file.first;
+  │     std::fstream &fs = file.second;
+  │     std::string item;
+  │ 
+  │     std::vector<core::Message> msgs;
+  │     fs.seekg(std::ios::beg);
+  │ 
+  │     while (std::getline(fs, item)) {
+  │       core::Message msg;
+  │ 
+  │       std::istringstream stream(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.from);
+  │ 
+  │       std::getline(fs, item);
+  │       stream.str(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.to);
+  │ 
+  │       std::getline(fs, item);
+  │       stream.str(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.subject);
+  │ 
+  │       std::getline(fs, item);
+  │       stream.str(item.substr(item.find(":") + 2));
+  │       stream >> std::quoted(msg.content);
+  │ 
+  │       msgs.push_back(msg);
+  │     }
+  │     mboxes.try_emplace(filename, filename, msgs);
+  │   }
+  │   return mboxes;
+  │ }
+  │ 
+  │ YAML &YAML::save(std::vector<core::Mailbox> const &mboxes) {
+  │   for (core::Mailbox const &mbox: mboxes) {
+  │     std::string filename = mbox.name();
+  │ 
+  │     if (!_user_files.count(filename)) {
+  │       auto file_mode = std::fstream::in | std::fstream::out | std::fstream::app;
+  │       _user_files[filename] = std::fstream(_user_path + filename + ".yaml", file_mode);
+  │     }
+  │ 
+  │     std::fstream &fs = _user_files[filename];
+  │     for (core::Message const &msg : mbox.read_all()) {
+  │       fs << "- from: \"" << msg.from << "\"" << std::endl;;
+  │       fs << "  to: \"" << msg.to << "\"" << std::endl;
+  │       fs << "  subject: \"" << msg.subject << "\"" << std::endl;
+  │       fs << "  content: \"" << msg.content << "\"" << std::endl;
+  │     }
+  │   }
+  │   return *this;
+  │ }
+  │ }
+  └────
+
+
+Recapitulando…
+══════════════
+
+  • Classes são abstrações de conceitos
+  • Representam uma categoria de elementos
+  • Conjunto de elementos -> atributos e operações em comum -> Classe
+  • Classes "não existem" em tempo de execução, o que existem são
+    objetos
+  • Objetos são *instâncias* de classes, representam elementos em
+    particular
+
+  • Classes suportam os conceitos de Encapsulamento, Herança e
+    Polimorfismo (que veremos mais a frente)
+  • Em C++, os termos "class" e "struct" representam a mesma coisa,
+    mudando apenas a visibilidade padrão (private vs public)
+
+  • Pensando em boas práticas, não faz sentido utilizar "class" e
+    "struct" de forma "aleatória". Defina um estilo e o siga de forma
+    consistente. Você pode usar apenas class, ou apenas struct, ou
+    talvez usar struct apenas para agrupamento de dados e class para
+    todo o resto (tudo que contém operações). O importante é ser
+    consistente!
+
+  • Minha conveção:
+    • struct para agrupamento de dados, class para todo o resto
+    • struct/class nomeadas no formato `PascalCase'
+    • atributos/métodos públicos nomeados no formato `snake_case'
+    • atributos/método privados nomeados no formato `_snake_case' (com o
+      o prefixo _) (exceção: construtores privados)
+
+
+Componentes de uma Classe
+═════════════════════════
+
+  Tipos de componentes:
+
+  • Membros de instância vs membros de classe (estáticos)
+  • Procedimentos de inicialização e destruição
+
+
+Construtores e Destrutores
+──────────────────────────
+
+  Como é o ciclo de vida de um objeto?
+  • Ele nasce (chamada ao construtor)
+  • Ele é utilizado (acesso aos campos, operações)
+  • Ele morre (sai de escopo se alocado na pilha, ou deletado se alocado
+    no heap: chamada ao destrutor)
+
+  • O construtor sempre leva o mesmo nome da classe
+  • O destrutor sempre leva o mesmo nome da classe, precedido por um til
+    (~)
+
+
+Construtor
+╌╌╌╌╌╌╌╌╌╌
+
+  Vamos retormar nossa classe `Mailbox':
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox {
+  │ public:
+  │   /// @brief Adiciona uma mensagem ao final da lista
+  │   /// @param msg Mensagem a ser adicionada
+  │   /// @return A própria caixa de mensagens, para chamadas consecutivas
+  │   Mailbox &add(Message msg);
+  │ 
+  │   /// @return A lista de mensagens, em que o último elemento é
+  │   ///         a mensagem adicionada mais recentemente
+  │   std::vector<Message> read_all() const;
+  │ 
+  │   /// @return Nome da caixa de entrada
+  │   std::string name() const;
+  │ 
+  │ private:
+  │   std::string _name;
+  │   std::vector<Message> _msgs;
+  │ };
+  │ }
+  └────
+
+  `mailbox.cpp'
+
+  ┌────
+  │ #include "core/mailbox_v1.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <vector>
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+
+  Note que não há nenhum construtor declarado. Quando não definimos
+  nenhum construtor, existe um construtor padrão implícito, sem
+  parâmetros.
+
+  ┌────
+  │ #include "core/mailbox_v1.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   Mailbox mbox;
+  │   std::cout << "Nome: " << (mbox.name() == "" ? "vazio" : mbox.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Nome: vazio
+  │ Qtd. mensagens: 0
+  └────
+
+
+  Podemos implementar o nosso próprio construtor:
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox {
+  │ public:
+  │   Mailbox();
+  │ 
+  │   /// @brief Adiciona uma mensagem ao final da lista
+  │   /// @param msg Mensagem a ser adicionada
+  │   /// @return A própria caixa de mensagens, para chamadas consecutivas
+  │   Mailbox &add(Message msg);
+  │ 
+  │   /// @return A lista de mensagens, em que o último elemento é
+  │   ///         a mensagem adicionada mais recentemente
+  │   std::vector<Message> read_all() const;
+  │ 
+  │   /// @return Nome da caixa de entrada
+  │   std::string name() const;
+  │ 
+  │ private:
+  │   std::string _name;
+  │   std::vector<Message> _msgs;
+  │ };
+  │ }
+  └────
+
+  `mailbox.cpp'
+
+  ┌────
+  │ #include "core/mailbox_v2.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <vector>
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox::Mailbox() {
+  │   std::cout << "Inicializando mailbox" << std::endl;
+  │ }
+  │ 
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+
+  ┌────
+  │ #include "core/mailbox_v2.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   Mailbox mbox;
+  │   // Incorreto:
+  │   // Mailbox mbox();
+  │   std::cout << "Nome: " << (mbox.name() == "" ? "vazio" : mbox.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Inicializando mailbox
+  │ Nome: vazio
+  │ Qtd. mensagens: 0
+  └────
+
+
+  Vamos trocar o construtor padrão pelo construtor que havíamos
+  definido:
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox {
+  │ public:
+  │   /// @brief Inicializa a caixa com um determinado nome e mensagens iniciais
+  │   ///
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   /// @param msgs Mensagens iniciais (a **útima** é a mais recente)
+  │   Mailbox(std::string name, std::vector<Message> const &msgs);
+  │ 
+  │   /// @brief Adiciona uma mensagem ao final da lista
+  │   /// @param msg Mensagem a ser adicionada
+  │   /// @return A própria caixa de mensagens, para chamadas consecutivas
+  │   Mailbox &add(Message msg);
+  │ 
+  │   /// @return A lista de mensagens, em que o último elemento é
+  │   ///         a mensagem adicionada mais recentemente
+  │   std::vector<Message> read_all() const;
+  │ 
+  │   /// @return Nome da caixa de entrada
+  │   std::string name() const;
+  │ 
+  │ private:
+  │   std::string _name;
+  │   std::vector<Message> _msgs;
+  │ };
+  │ }
+  └────
+
+  `mailbox.cpp'
+
+  ┌────
+  │ #include "core/mailbox_v3.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <vector>
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs) {
+  │   _name = name;
+  │   _msgs = msgs;
+  │ }
+  │ 
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+
+  Note que o construtor padrão não existe mais!
+
+  ┌────
+  │ #include "core/mailbox_v3.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   // Falha, porque o construtor padrão não existe!
+  │   // Mailbox mbox;
+  │   Mailbox mbox("inbox", { {"de", "para", "assunto", "conteúdo"} });
+  │   std::cout << "Nome: " << (mbox.name() == "" ? "vazio" : mbox.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Nome: inbox
+  │ Qtd. mensagens: 1
+  └────
+
+
+  A nossa implementação do construtor não é a melhor possível… Para
+  entender o motivo, vamos analisar um outro exemplo:
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int x = 0;
+  │ class A {
+  │ public:
+  │   int y;
+  │ 
+  │   A() {
+  │     y = x;
+  │     std::cout << "Construindo objeto A" << y << std::endl;
+  │     x++;
+  │   }
+  │ };
+  │ 
+  │ class B {
+  │ public:
+  │   B(A a) {
+  │     std::cout << "Construindo objeto B" << std::endl;
+  │     std::cout << "Componente _a: " << _a.y << std::endl;
+  │     _a = a;
+  │     std::cout << "Componente _a: " << _a.y << std::endl;
+  │   }
+  │ 
+  │ private:
+  │   A _a;
+  │ };
+  │ 
+  │ int main() {
+  │   A a;
+  │   B b(a);
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construindo objeto A0
+  │ Construindo objeto A1
+  │ Construindo objeto B
+  │ Componente _a: 1
+  │ Componente _a: 0
+  └────
+
+
+  Por quê o construtor da classe A foi chamado duas vezes? Um objeto foi
+  construído no início da função `main', e outro foi construído na
+  inicialização do objeto `b', correspondente ao campo privado
+  `_a'. Porém, esta inicialização aconteceu antes da execução do
+  construtor `B()' e, logo depois, nós copiamos o objeto `a' passado por
+  parâmetro para o campo `_a'…
+
+  Ou seja, um objeto está sendo instanciado desnecessariamente! Existe
+  uma outra forma de inicializar um campo de uma classe:
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int x = 0;
+  │ class A {
+  │ public:
+  │   int y;
+  │ 
+  │   A() {
+  │     y = x;
+  │     std::cout << "Construindo objeto A" << y << std::endl;
+  │     x++;
+  │   }
+  │ };
+  │ 
+  │ class B {
+  │ public:
+  │   B(A a) : _a(a) {
+  │     std::cout << "Construindo objeto B" << std::endl;
+  │   }
+  │ 
+  │ private:
+  │   A _a;
+  │ };
+  │ 
+  │ int main() {
+  │   A a;
+  │   B b(a);
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construindo objeto A0
+  │ Construindo objeto B
+  └────
+
+
+  Voltando ao nosso exemplo, vamos refatorar o construtor:
+
+  ┌────
+  │ #include "core/mailbox_v3.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <vector>
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs)
+  │   : _name(name), _msgs(msgs) {}
+  │ 
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+
+  E se quiséssemos inicializar uma mailbox sem nenhuma mensagem
+  pré-definida?
+
+  ┌────
+  │ #include "core/mailbox_v3.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   Mailbox mbox("inbox", {});
+  │   std::cout << "Nome: " << (mbox.name() == "" ? "vazio" : mbox.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Nome: inbox
+  │ Qtd. mensagens: 0
+  └────
+
+
+  Podemos abstrair a construção de uma mailbox vazia em um segundo
+  construtor:
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox {
+  │ public:
+  │   /// @brief Inicializa a caixa vazia, com um determinado nome
+  │   ///
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   Mailbox(std::string name);
+  │ 
+  │   /// @brief Inicializa a caixa com um determinado nome e mensagens iniciais
+  │   ///
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   /// @param msgs Mensagens iniciais (a **útima** é a mais recente)
+  │   Mailbox(std::string name, std::vector<Message> const &msgs);
+  │ 
+  │   /// @brief Adiciona uma mensagem ao final da lista
+  │   /// @param msg Mensagem a ser adicionada
+  │   /// @return A própria caixa de mensagens, para chamadas consecutivas
+  │   Mailbox &add(Message msg);
+  │ 
+  │   /// @return A lista de mensagens, em que o último elemento é
+  │   ///         a mensagem adicionada mais recentemente
+  │   std::vector<Message> read_all() const;
+  │ 
+  │   /// @return Nome da caixa de entrada
+  │   std::string name() const;
+  │ 
+  │ private:
+  │   std::string _name;
+  │   std::vector<Message> _msgs;
+  │ };
+  │ }
+  └────
+
+  `mailbox.cpp'
+
+  ┌────
+  │ #include "core/mailbox_v4.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <vector>
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox::Mailbox(std::string name) : Mailbox(name, {}) {}
+  │ 
+  │ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs)
+  │   : _name(name), _msgs(msgs) {
+  │   std::cout << "Construtor com dois parâmetros" << std::endl;
+  │ }
+  │ 
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+
+  Note que o construtor com um parâmetro utiliza o construtor de dois
+  parâmetros:
+
+  ┌────
+  │ #include "core/mailbox_v4.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   Mailbox mbox("inbox");
+  │   std::cout << "Nome: " << (mbox.name() == "" ? "vazio" : mbox.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor com dois parâmetros
+  │ Nome: inbox
+  │ Qtd. mensagens: 0
+  └────
+
+
+  E se quiséssemos construir uma cópia de uma mailbox?
+
+  ┌────
+  │ #include "core/mailbox_v4.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   Mailbox mbox("inbox", { {"de", "para", "assunto", "conteúdo"} });
+  │   Mailbox mbox_copia(mbox.name(), mbox.read_all());
+  │   std::cout << "Nome: " << (mbox_copia.name() == "" ? "vazio" : mbox_copia.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox_copia.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor com dois parâmetros
+  │ Construtor com dois parâmetros
+  │ Nome: inbox
+  │ Qtd. mensagens: 1
+  └────
+
+
+  Podemos simplificar esse processo, através de um construtor especial
+  voltado para cópias. Este construtor, assim como o construtor padrão,
+  é gerado automaticamente quando não existe:
+
+  ┌────
+  │ #include "core/mailbox_v4.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   Mailbox mbox("inbox", { {"de", "para", "assunto", "conteúdo"} });
+  │   Mailbox mbox_copia(mbox);
+  │   std::cout << "Nome: " << (mbox_copia.name() == "" ? "vazio" : mbox_copia.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox_copia.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor com dois parâmetros
+  │ Nome: inbox
+  │ Qtd. mensagens: 1
+  └────
+
+
+  Mas, podemos também optar por implementá-lo:
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox {
+  │ public:
+  │   /// @brief Inicializa a caixa vazia, com um determinado nome
+  │   ///
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   Mailbox(std::string name);
+  │ 
+  │   /// @brief Inicializa a caixa com um determinado nome e mensagens iniciais
+  │   ///
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   /// @param msgs Mensagens iniciais (a **útima** é a mais recente)
+  │   Mailbox(std::string name, std::vector<Message> const &msgs);
+  │ 
+  │   /// @brief Inicializa a caixa como uma cópia de uma outra caixa
+  │   ///
+  │   /// @param mbox Caixa de emails a ser copiada
+  │   Mailbox(Mailbox const &mbox);
+  │ 
+  │   /// @brief Adiciona uma mensagem ao final da lista
+  │   /// @param msg Mensagem a ser adicionada
+  │   /// @return A própria caixa de mensagens, para chamadas consecutivas
+  │   Mailbox &add(Message msg);
+  │ 
+  │   /// @return A lista de mensagens, em que o último elemento é
+  │   ///         a mensagem adicionada mais recentemente
+  │   std::vector<Message> read_all() const;
+  │ 
+  │   /// @return Nome da caixa de entrada
+  │   std::string name() const;
+  │ 
+  │ private:
+  │   std::string _name;
+  │   std::vector<Message> _msgs;
+  │ };
+  │ }
+  └────
+
+  `mailbox.cpp'
+
+  ┌────
+  │ #include "core/mailbox_v5.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <vector>
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox::Mailbox(std::string name) : Mailbox(name, {}) {}
+  │ 
+  │ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs)
+  │   : _name(name), _msgs(msgs) {
+  │   std::cout << "Construtor com dois parâmetros" << std::endl;
+  │ }
+  │ 
+  │ Mailbox::Mailbox(Mailbox const &mbox)
+  │   : Mailbox(mbox._name, mbox._msgs) {}
+  │ 
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+
+  Agora, a mensagem do construtor de dois parâmetros aparece na
+  construção da cópia:
+
+  ┌────
+  │ #include "core/mailbox_v5.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ int main() {
+  │   Mailbox mbox("inbox", { {"de", "para", "assunto", "conteúdo"} });
+  │   Mailbox mbox_copia(mbox);
+  │   std::cout << "Nome: " << (mbox_copia.name() == "" ? "vazio" : mbox_copia.name()) << std::endl;
+  │   std::cout << "Qtd. mensagens: " << mbox_copia.read_all().size() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor com dois parâmetros
+  │ Construtor com dois parâmetros
+  │ Nome: inbox
+  │ Qtd. mensagens: 1
+  └────
+
+
+Destrutor
+╌╌╌╌╌╌╌╌╌
+
+  O ciclo de vida de um objeto chega ao fim de duas maneiras diferentes:
+  • Objetos alocados na pilha: quando o objeto sai do escopo
+  • Objetos alocados no heap: quando o espaço de memória é liberado
+    (através da operação `delete')
+
+  Em ambos os casos, uma função especial é chamada: o destrutor da
+  classe.
+
+  `mailbox.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailbox {
+  │ public:
+  │   /// @brief Inicializa a caixa vazia, com um determinado nome
+  │   ///
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   Mailbox(std::string name);
+  │ 
+  │   /// @brief Inicializa a caixa com um determinado nome e mensagens iniciais
+  │   ///
+  │   /// @param name Nome da caixa de mensagens (e.g., inbox)
+  │   /// @param msgs Mensagens iniciais (a **útima** é a mais recente)
+  │   Mailbox(std::string name, std::vector<Message> const &msgs);
+  │ 
+  │   /// @brief Inicializa a caixa como uma cópia de uma outra caixa
+  │   ///
+  │   /// @param mbox Caixa de emails a ser copiada
+  │   Mailbox(Mailbox const &mbox);
+  │ 
+  │   /// @brief Destrutor da classe
+  │   ~Mailbox();
+  │ 
+  │   /// @brief Adiciona uma mensagem ao final da lista
+  │   /// @param msg Mensagem a ser adicionada
+  │   /// @return A própria caixa de mensagens, para chamadas consecutivas
+  │   Mailbox &add(Message msg);
+  │ 
+  │   /// @return A lista de mensagens, em que o último elemento é
+  │   ///         a mensagem adicionada mais recentemente
+  │   std::vector<Message> read_all() const;
+  │ 
+  │   /// @return Nome da caixa de entrada
+  │   std::string name() const;
+  │ 
+  │ private:
+  │   std::string _name;
+  │   std::vector<Message> _msgs;
+  │ };
+  │ }
+  └────
+
+  `mailbox.cpp'
+
+  ┌────
+  │ #include "core/mailbox_v6.hpp"
+  │ #include "core/message.hpp"
+  │ 
+  │ #include <vector>
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailbox::Mailbox(std::string name) : Mailbox(name, {}) {}
+  │ 
+  │ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs)
+  │   : _name(name), _msgs(msgs) {
+  │   std::cout << "Construtor com dois parâmetros" << std::endl;
+  │ }
+  │ 
+  │ Mailbox::Mailbox(Mailbox const &mbox)
+  │   : Mailbox(mbox._name, mbox._msgs) {}
+  │ 
+  │ Mailbox::~Mailbox() {
+  │   std::cout << "O objeto " << _name << " está sendo destruído" << std::endl;
+  │ }
+  │ 
+  │ Mailbox &Mailbox::add(Message msg) {
+  │   _msgs.push_back(msg);
+  │   return *this;
+  │ }
+  │ 
+  │ std::vector<Message> Mailbox::read_all() const {
+  │   return _msgs;
+  │ }
+  │ 
+  │ std::string Mailbox::name() const {
+  │   return _name;
+  │ }
+  │ }
+  └────
+
+  Note que apenas o objeto na pilha foi destruído de fato, pois não
+  deletamos o objeto no heap:
+
+  ┌────
+  │ #include "core/mailbox_v6.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ void alloc_stack() {
+  │   Mailbox mbox("mbox_stack");
+  │ }
+  │ 
+  │ void alloc_heap() {
+  │   Mailbox *mbox = new Mailbox("mbox_heap");
+  │ }
+  │ 
+  │ int main() {
+  │   alloc_stack();
+  │   alloc_heap();
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor com dois parâmetros
+  │ O objeto mbox_stack está sendo destruído
+  │ Construtor com dois parâmetros
+  └────
+
+
+  Fazendo a correção:
+
+  ┌────
+  │ #include "core/mailbox_v6.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailbox;
+  │ 
+  │ void alloc_stack() {
+  │   Mailbox mbox("mbox_stack");
+  │ }
+  │ 
+  │ void alloc_heap() {
+  │   Mailbox *mbox = new Mailbox("mbox_heap");
+  │   delete mbox;
+  │ }
+  │ 
+  │ int main() {
+  │   alloc_stack();
+  │   alloc_heap();
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construtor com dois parâmetros
+  │ O objeto mbox_stack está sendo destruído
+  │ Construtor com dois parâmetros
+  │ O objeto mbox_heap está sendo destruído
+  └────
+
+
+  Utilizamos o destrutor para liberar recursos alocados e gerenciados
+  pela instância da classe da forma adequada. Por exemplo, na
+  implementação da classe `Mailapp', mantemos em memória as mensagens
+  enviadas por um usuário até que o objeto seja deletado. Quando o
+  mailapp é deletado, salvamos as mensagens novas no arquivo do usuário,
+  para só os objetos associados ao armazenamentos das caixas de email
+  deste usuário serem liberados.
+
+  `mailapp.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "core/mailbox.hpp"
+  │ #include "core/message.hpp"
+  │ #include "storage/yaml.hpp"
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailapp {
+  │ public:
+  │   /// @brief Inicialização das caixas de entrada e saída
+  │   ///
+  │   /// Busca as mensagens lidas e enviadas pelo usuário,
+  │   /// para inicializar as caixas de mensagens.
+  │   ///
+  │   /// FIXME: obviamente, aqui (ou em algum passo antes)
+  │   ///        deveria ter alguma etapa de autenticação...
+  │   ///
+  │   /// @param user Usuário (email) que está logado
+  │   Mailapp(std::string user);
+  │ 
+  │   /// @brief Realiza o flush das caixas de mensagem
+  │   ~Mailapp();
+  │ 
+  │   /// @return A caixa de entrada, para leitura de emails recebidos
+  │   Mailbox inbox() const;
+  │ 
+  │   /// @return A caixa de saída, para leitura de emails enviados
+  │   Mailbox sent() const;
+  │ 
+  │   /// @brief Adiciona nova mensagem à caixa de saída
+  │   Mailapp &send_message(std::string to, std::string subject, std::string content);
+  │ 
+  │ private:
+  │   std::string _user;
+  │   Mailbox _inbox = Mailbox("inbox");
+  │   Mailbox _sent = Mailbox("sent");
+  │   unsigned _start_new_sent = 0;
+  │   storage::YAML _user_storage;
+  │ };
+  │ }
+  └────
+
+  `mailapp.cpp'
+
+  ┌────
+  │ #include "core/mailapp.hpp"
+  │ #include "core/mailbox.hpp"
+  │ #include "storage/yaml.hpp"
+  │ 
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailapp::Mailapp(std::string user) : _user(user), _user_storage(user) {
+  │   auto mboxes = _user_storage.load();
+  │ 
+  │   auto inbox_it = mboxes.find("inbox");
+  │   if (inbox_it != mboxes.end()) {
+  │     _inbox = inbox_it->second;
+  │   }
+  │ 
+  │   auto sent_it = mboxes.find("sent");
+  │   if (sent_it != mboxes.end()) {
+  │     _sent = sent_it->second;
+  │     _start_new_sent = _sent.read_all().size();
+  │   }
+  │ }
+  │ 
+  │ Mailapp::~Mailapp() {
+  │   Mailbox new_sent("sent");
+  │   auto sent_msgs = _sent.read_all();
+  │   for (unsigned i = _start_new_sent; i < sent_msgs.size(); i++) {
+  │     new_sent.add(sent_msgs[i]);
+  │   }
+  │ 
+  │   _user_storage.save({new_sent});
+  │ }
+  │ 
+  │ Mailbox Mailapp::inbox() const {
+  │   return _inbox;
+  │ }
+  │ 
+  │ Mailbox Mailapp::sent() const {
+  │   return _sent;
+  │ }
+  │ 
+  │ Mailapp &Mailapp::send_message(std::string to, std::string subject, std::string content) {
+  │   Message m = {_user, to, subject, content};
+  │   _sent.add(m);
+  │ 
+  │   // Aqui estamos acessando a pasta de um usuário não autenticado,
+  │   // possível fonte de problemas/ataques...
+  │   // Mas é só um exemplo para as aulas, então vamos simplificar;
+  │   storage::YAML(to).save({ Mailbox("inbox").add(m) });
+  │ 
+  │   return *this;
+  │ }
+  │ }
+  └────
+
+
+Membros de Instância
+────────────────────
+
+  • São os atributos e métodos que já estamos acostumados
+  • Espaço de memória alocado para *cada* objeto
+  • Referenciados através de *cada* objeto
+  • Todo objeto possui um ponteiro `this' para si mesmo, utilizado para
+    acessar seus atributos e métodos
+
+  Por exemplo, ao instanciar três objetos
+
+  ┌────
+  │ Mailbox inbox1("inbox");
+  │ Mailbox inbox2("inbox");
+  │ Mailbox sent("sent", { {"de", "para", "assunto", "conteúdo"} });
+  └────
+
+  cada um destes objetos possui seus próprios valores para os campos
+  privados `_name' e `_msgs'.
+
+  São três objetos distintos, ainda que dois deles tenham os valores
+  para estes campos! Ou seja, em memória existem *três* campos `_name' e
+  *três* campos `_msgs', cada par no espaço de memória do objeto
+  associado.
+
+
+Membros de Classe
+─────────────────
+
+  • Não estão associados a uma instância específica, são componentes da
+    *classe*
+  • São compartilhados por todas as instâncias
+  • Ocupam espaço *único* na memória
+  • Geralmente são utilizados para definição de constantes, mas não
+    precisam ser constantes
+  • Em C++, membros de classe são definidos com a palavra chave `static'
+
+  Vamos contar quantas instâncias de mailapps (uma versão simplificada)
+  temos durante a execução de um programa:
+
+  `mailapp.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailapp {
+  │ public:
+  │   Mailapp(std::string user);
+  │   ~Mailapp();
+  │ 
+  │   std::string user() const;
+  │   static unsigned num_mailapps();
+  │ 
+  │ private:
+  │   std::string _user;
+  │   static inline unsigned _num_mailapps = 0;
+  │ };
+  │ }
+  └────
+
+  `mailapp.cpp'
+
+  ┌────
+  │ #include "core/mailapp_v1.hpp"
+  │ 
+  │ #include <iostream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailapp::Mailapp(std::string user) : _user(user) {
+  │   std::cout << "Construíndo mailapp do usuário " << _user << std::endl;
+  │   _num_mailapps++;
+  │ }
+  │ 
+  │ Mailapp::~Mailapp() {
+  │   std::cout << "Destruíndo mailapp do usuário " << _user << std::endl;
+  │   _num_mailapps--;
+  │ }
+  │ 
+  │ std::string Mailapp::user() const {
+  │   return _user;
+  │ }
+  │ 
+  │ unsigned Mailapp::num_mailapps() {
+  │   return _num_mailapps;
+  │ }
+  │ }
+  └────
+
+  ┌────
+  │ #include "core/mailapp_v1.hpp"
+  │ 
+  │ #include <iostream>
+  │ #include <string>
+  │ #include <regex>
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ int main() {
+  │   Mailapp *mapp1 = new Mailapp("luigi@gmail.com");
+  │   Mailapp mapp2("casimiro@gmail.com");
+  │   Mailapp mapp3("taylor_swift@gmail.com");
+  │ 
+  │   std::cout << "Número de instâncias vivas: " << Mailapp::num_mailapps() << std::endl;
+  │ 
+  │   delete mapp1;
+  │   std::cout << "Número de instâncias vivas: " << Mailapp::num_mailapps() << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Construíndo mailapp do usuário luigi@gmail.com
+  │ Construíndo mailapp do usuário casimiro@gmail.com
+  │ Construíndo mailapp do usuário taylor_swift@gmail.com
+  │ Número de instâncias vivas: 3
+  │ Destruíndo mailapp do usuário luigi@gmail.com
+  │ Número de instâncias vivas: 2
+  │ Destruíndo mailapp do usuário taylor_swift@gmail.com
+  │ Destruíndo mailapp do usuário casimiro@gmail.com
+  └────
+
+
+  *Obs.:* atributos de classe, quando não declarados como constantes,
+   são como variáveis globais, e isso pode ser *perigoso* (dê um google:
+   "why are global variables evil?")
+
+  Vamos ver um exemplo mais prático/real: assuma que existe uma
+  restrição no formato do usuário passado na construção de um Mailapp: o
+  usuário deve ser um email, no formato "<usuario>@gmail.com". Como
+  poderíamos validar o usuário informado, e impedir a instanciação de um
+  Mailapp caso o usuário não esteja no formato esperado?
+
+  Note que não conseguimos retornar um valor no construtor, para indicar
+  que a validação falhou…
+
+  Podemos refatorar a implementação de mailapp da seguinte forma:
+
+  1. Vamos introduzir uma estrutura para representar um erro
+  2. Vamos esconder o construtor do mailapp, tornando-o privado
+  3. Vamos construir um "construtor" estático (membro de classe), que
+     será responsável pela validação e, em caso de sucesso, instanciação
+     do objeto Mailapp
+  4. Vamos retornar um objeto do tipo `std::variant', que é capaz de
+     armazenar valores de diferentes tipos alternadamente
+
+  Vamos começar construindo alguns testes:
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include <doctest.hpp>
+  │ #include <variant>
+  │ 
+  │ #include "core/mailapp_v2.hpp"
+  │ #include "error.hpp"
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ using mail_lib::Error;
+  │ 
+  │ TEST_CASE("Usuário válido") {
+  │   auto mapp = Mailapp::make("usuario@gmail.com");
+  │   CHECK(std::holds_alternative<Mailapp>(mapp));
+  │   CHECK_EQ(std::get<Mailapp>(mapp).user(), "usuario@gmail.com");
+  │ }
+  │ 
+  │ TEST_CASE("Usuário inválido") {
+  │   SUBCASE("sufixo vazio") {
+  │     auto mapp = Mailapp::make("luigi");
+  │     CHECK(std::holds_alternative<Error>(mapp));
+  │     CHECK_EQ(std::get<Error>(mapp).code, 100);
+  │   }
+  │ 
+  │   SUBCASE("prefixo vazio") {
+  │     auto mapp = Mailapp::make("@gmail.com");
+  │     CHECK(std::holds_alternative<Error>(mapp));
+  │     CHECK_EQ(std::get<Error>(mapp).code, 101);
+  │   }
+  │ 
+  │   SUBCASE("sufixo incorreto") {
+  │     auto mapp = Mailapp::make("luigi@gmail.com.br");
+  │     CHECK(std::holds_alternative<Error>(mapp));
+  │     CHECK_EQ(std::get<Error>(mapp).code, 102);
+  │   }
+  │ }
+  └────
+
+  Agora, a classe para representar um erro:
+
+  `error.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mail_lib {
+  │ struct Error {
+  │   unsigned code;
+  │   std::string msg;
+  │ };
+  │ }
+  └────
+
+  E a refatoração da classe Mailapp:
+
+  `mailapp.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <string>
+  │ #include <variant>
+  │ 
+  │ #include "error.hpp"
+  │ 
+  │ namespace mail_lib::core {
+  │ class Mailapp {
+  │ public:
+  │   ~Mailapp();
+  │ 
+  │   std::string user() const;
+  │   static unsigned num_mailapps();
+  │   static std::variant<Mailapp, Error> make(std::string user);
+  │ 
+  │ private:
+  │   std::string _user;
+  │   static inline unsigned _num_mailapps = 0;
+  │ 
+  │   Mailapp(std::string user);
+  │ };
+  │ }
+  └────
+
+  `mailapp.cpp'
+
+  ┌────
+  │ #include "core/mailapp_v2.hpp"
+  │ 
+  │ #include <iostream>
+  │ #include <string>
+  │ #include <regex>
+  │ #include <variant>
+  │ 
+  │ namespace mail_lib::core {
+  │ std::variant<Mailapp, Error> Mailapp::make(std::string user) {
+  │   if (std::regex_match(user, std::regex(".+@gmail.com"))) {
+  │     return Mailapp(user);
+  │   }
+  │ 
+  │   if (std::regex_match(user, std::regex("@gmail.com"))) {
+  │       return Error{101, "Email informado sem usuário!"};
+  │   }
+  │ 
+  │   if (std::regex_match(user, std::regex(".+@.+"))) {
+  │       return Error{102, "Domínio de email inválido!"};
+  │   }
+  │ 
+  │   return Error{100, "Formato de usuário inválido!"};
+  │ }
+  │ 
+  │ Mailapp::Mailapp(std::string user) : _user(user) {
+  │   std::cout << "Construíndo mailapp do usuário " << _user << std::endl;
+  │   _num_mailapps++;
+  │ }
+  │ 
+  │ Mailapp::~Mailapp() {
+  │   std::cout << "Destruíndo mailapp do usuário " << _user << std::endl;
+  │   _num_mailapps--;
+  │ }
+  │ 
+  │ std::string Mailapp::user() const {
+  │   return _user;
+  │ }
+  │ 
+  │ unsigned Mailapp::num_mailapps() {
+  │   return _num_mailapps;
+  │ }
+  │ }
+  └────
+
+  Executando os testes:
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ Construíndo mailapp do usuário usuario@gmail.com
+  │ Destruíndo mailapp do usuário usuario@gmail.com
+  │ Destruíndo mailapp do usuário usuario@gmail.com
+  │ ===============================================================================
+  │ [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 8 | 8 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
