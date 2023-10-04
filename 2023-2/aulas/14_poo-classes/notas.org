@@ -179,27 +179,11 @@ Como é o ciclo de vida de um objeto?
   
 *** Construtor
 
-
 Vamos retormar nossa classe ~Mailbox~:
 
 =mailbox.hpp=
 
-#+name: mailbox_inc
-#+begin_src C++ :exports none
-/// @brief Adiciona uma mensagem ao final da lista
-/// @param msg Mensagem a ser adicionada
-/// @return A própria caixa de mensagens, para chamadas consecutivas
-Mailbox &add(Message msg);
-
-/// @return A lista de mensagens, em que o último elemento é
-///         a mensagem adicionada mais recentemente
-std::vector<Message> read_all() const;
-
-/// @return Nome da caixa de entrada
-std::string name() const;
-#+end_src
-
-#+begin_src C++ :main no :tangle include/core/mailbox_v1.hpp :noweb yes
+#+begin_src C++ :main no :tangle include/core/mailbox_v1.hpp
 #pragma once
 
 #include "core/message.hpp"
@@ -210,7 +194,17 @@ std::string name() const;
 namespace mail_lib::core {
 class Mailbox {
 public:
-  <<mailbox_inc>>
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa de mensagens, para chamadas consecutivas
+  Mailbox &add(Message msg);
+
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
   
 private:
   std::string _name;
@@ -221,8 +215,14 @@ private:
 
 =mailbox.cpp=
 
-#+name: mailbox_src
-#+begin_src C++ :exports none
+#+begin_src C++ :main no :tangle src/core/mailbox_v1.cpp 
+#include "core/mailbox_v1.hpp"
+#include "core/message.hpp"
+
+#include <vector>
+#include <iostream>
+
+namespace mail_lib::core {
 Mailbox &Mailbox::add(Message msg) {
   _msgs.push_back(msg);
   return *this;
@@ -235,17 +235,6 @@ std::vector<Message> Mailbox::read_all() const {
 std::string Mailbox::name() const {
   return _name;
 }
-#+end_src
-
-#+begin_src C++ :main no :tangle src/core/mailbox_v1.cpp :noweb yes
-#include "core/mailbox_v1.hpp"
-#include "core/message.hpp"
-
-#include <vector>
-#include <iostream>
-
-namespace mail_lib::core {
-<<mailbox_src>>
 }
 #+end_src
 
@@ -273,7 +262,7 @@ Podemos implementar o nosso próprio construtor:
 
 =mailbox.hpp=
 
-#+begin_src C++ :main no :tangle include/core/mailbox_v2.hpp :noweb yes
+#+begin_src C++ :main no :tangle include/core/mailbox_v2.hpp 
 #pragma once
 
 #include "core/message.hpp"
@@ -286,7 +275,17 @@ class Mailbox {
 public:
   Mailbox();
   
-  <<mailbox_inc>>
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa de mensagens, para chamadas consecutivas
+  Mailbox &add(Message msg);
+
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
   
 private:
   std::string _name;
@@ -297,7 +296,7 @@ private:
 
 =mailbox.cpp=
 
-#+begin_src C++ :main no :tangle src/core/mailbox_v2.cpp :noweb yes
+#+begin_src C++ :main no :tangle src/core/mailbox_v2.cpp 
 #include "core/mailbox_v2.hpp"
 #include "core/message.hpp"
 
@@ -309,7 +308,18 @@ Mailbox::Mailbox() {
   std::cout << "Inicializando mailbox" << std::endl;
 }
 
-<<mailbox_src>>
+Mailbox &Mailbox::add(Message msg) {
+  _msgs.push_back(msg);
+  return *this;
+}
+
+std::vector<Message> Mailbox::read_all() const {
+  return _msgs;
+}
+
+std::string Mailbox::name() const {
+  return _name;
+}
 }
 #+end_src
 
@@ -338,7 +348,7 @@ Vamos trocar o construtor padrão pelo construtor que havíamos definido:
 
 =mailbox.hpp=
 
-#+begin_src C++ :main no :tangle include/core/mailbox_v3.hpp :noweb yes
+#+begin_src C++ :main no :tangle include/core/mailbox_v3.hpp 
 #pragma once
 
 #include "core/message.hpp"
@@ -355,7 +365,17 @@ public:
   /// @param msgs Mensagens iniciais (a **útima** é a mais recente)
   Mailbox(std::string name, std::vector<Message> const &msgs);
 
-  <<mailbox_inc>>
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa de mensagens, para chamadas consecutivas
+  Mailbox &add(Message msg);
+
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
   
 private:
   std::string _name;
@@ -366,7 +386,7 @@ private:
 
 =mailbox.cpp=
 
-#+begin_src C++ :main no :tangle src/core/mailbox_v3a.cpp :noweb yes
+#+begin_src C++ :main no :tangle src/core/mailbox_v3a.cpp 
 #include "core/mailbox_v3.hpp"
 #include "core/message.hpp"
 
@@ -379,7 +399,18 @@ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs) {
   _msgs = msgs;
 }
 
-<<mailbox_src>>
+Mailbox &Mailbox::add(Message msg) {
+  _msgs.push_back(msg);
+  return *this;
+}
+
+std::vector<Message> Mailbox::read_all() const {
+  return _msgs;
+}
+
+std::string Mailbox::name() const {
+  return _name;
+}
 }
 #+end_src
 
@@ -491,7 +522,7 @@ int main() {
 
 Voltando ao nosso exemplo, vamos refatorar o construtor:
 
-#+begin_src C++ :main no :tangle src/core/mailbox_v3b.cpp :noweb yes
+#+begin_src C++ :main no :tangle src/core/mailbox_v3b.cpp 
 #include "core/mailbox_v3.hpp"
 #include "core/message.hpp"
 
@@ -502,7 +533,18 @@ namespace mail_lib::core {
 Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs)
   : _name(name), _msgs(msgs) {}
 
-<<mailbox_src>>
+Mailbox &Mailbox::add(Message msg) {
+  _msgs.push_back(msg);
+  return *this;
+}
+
+std::vector<Message> Mailbox::read_all() const {
+  return _msgs;
+}
+
+std::string Mailbox::name() const {
+  return _name;
+}
 }
 #+end_src
 
@@ -530,7 +572,7 @@ Podemos abstrair a construção de uma mailbox vazia em um segundo construtor:
 
 =mailbox.hpp=
 
-#+begin_src C++ :main no :tangle include/core/mailbox_v4.hpp :noweb yes
+#+begin_src C++ :main no :tangle include/core/mailbox_v4.hpp 
 #pragma once
 
 #include "core/message.hpp"
@@ -552,7 +594,17 @@ public:
   /// @param msgs Mensagens iniciais (a **útima** é a mais recente)
   Mailbox(std::string name, std::vector<Message> const &msgs);
 
-  <<mailbox_inc>>
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa de mensagens, para chamadas consecutivas
+  Mailbox &add(Message msg);
+
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
   
 private:
   std::string _name;
@@ -563,7 +615,7 @@ private:
 
 =mailbox.cpp=
 
-#+begin_src C++ :main no :tangle src/core/mailbox_v4.cpp :noweb yes
+#+begin_src C++ :main no :tangle src/core/mailbox_v4.cpp 
 #include "core/mailbox_v4.hpp"
 #include "core/message.hpp"
 
@@ -578,7 +630,18 @@ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs)
   std::cout << "Construtor com dois parâmetros" << std::endl;
 }
 
-<<mailbox_src>>
+Mailbox &Mailbox::add(Message msg) {
+  _msgs.push_back(msg);
+  return *this;
+}
+
+std::vector<Message> Mailbox::read_all() const {
+  return _msgs;
+}
+
+std::string Mailbox::name() const {
+  return _name;
+}
 }
 #+end_src
 
@@ -652,7 +715,7 @@ Mas, podemos também optar por implementá-lo:
 
 =mailbox.hpp=
 
-#+begin_src C++ :main no :tangle include/core/mailbox_v5.hpp :noweb yes
+#+begin_src C++ :main no :tangle include/core/mailbox_v5.hpp 
 #pragma once
 
 #include "core/message.hpp"
@@ -679,7 +742,17 @@ public:
   /// @param mbox Caixa de emails a ser copiada
   Mailbox(Mailbox const &mbox);
 
-  <<mailbox_inc>>
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa de mensagens, para chamadas consecutivas
+  Mailbox &add(Message msg);
+
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
   
 private:
   std::string _name;
@@ -690,7 +763,7 @@ private:
 
 =mailbox.cpp=
 
-#+begin_src C++ :main no :tangle src/core/mailbox_v5.cpp :noweb yes
+#+begin_src C++ :main no :tangle src/core/mailbox_v5.cpp 
 #include "core/mailbox_v5.hpp"
 #include "core/message.hpp"
 
@@ -708,7 +781,18 @@ Mailbox::Mailbox(std::string name, std::vector<Message> const &msgs)
 Mailbox::Mailbox(Mailbox const &mbox)
   : Mailbox(mbox._name, mbox._msgs) {}
 
-<<mailbox_src>>
+Mailbox &Mailbox::add(Message msg) {
+  _msgs.push_back(msg);
+  return *this;
+}
+
+std::vector<Message> Mailbox::read_all() const {
+  return _msgs;
+}
+
+std::string Mailbox::name() const {
+  return _name;
+}
 }
 #+end_src
 
@@ -745,7 +829,7 @@ Em ambos os casos, uma função especial é chamada: o destrutor da classe.
 
 =mailbox.hpp=
 
-#+begin_src C++ :main no :tangle include/core/mailbox_v6.hpp :noweb yes
+#+begin_src C++ :main no :tangle include/core/mailbox_v6.hpp 
 #pragma once
 
 #include "core/message.hpp"
@@ -775,7 +859,17 @@ public:
   /// @brief Destrutor da classe
   ~Mailbox();
 
-  <<mailbox_inc>>
+  /// @brief Adiciona uma mensagem ao final da lista
+  /// @param msg Mensagem a ser adicionada
+  /// @return A própria caixa de mensagens, para chamadas consecutivas
+  Mailbox &add(Message msg);
+
+  /// @return A lista de mensagens, em que o último elemento é
+  ///         a mensagem adicionada mais recentemente
+  std::vector<Message> read_all() const;
+
+  /// @return Nome da caixa de entrada
+  std::string name() const;
   
 private:
   std::string _name;
@@ -786,7 +880,7 @@ private:
 
 =mailbox.cpp=
 
-#+begin_src C++ :main no :tangle src/core/mailbox_v6.cpp :noweb yes
+#+begin_src C++ :main no :tangle src/core/mailbox_v6.cpp 
 #include "core/mailbox_v6.hpp"
 #include "core/message.hpp"
 
@@ -808,7 +902,18 @@ Mailbox::~Mailbox() {
   std::cout << "O objeto " << _name << " está sendo destruído" << std::endl;
 }
 
-<<mailbox_src>>
+Mailbox &Mailbox::add(Message msg) {
+  _msgs.push_back(msg);
+  return *this;
+}
+
+std::vector<Message> Mailbox::read_all() const {
+  return _msgs;
+}
+
+std::string Mailbox::name() const {
+  return _name;
+}
 }
 #+end_src
 
