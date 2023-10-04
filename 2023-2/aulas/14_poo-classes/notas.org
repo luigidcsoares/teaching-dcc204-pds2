@@ -1207,7 +1207,7 @@ Podemos refatorar a implementação de mailapp da seguinte forma:
 Vamos começar construindo alguns testes:
 
 #+name: mailapp_test
-#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/core/mailapp_v2.cpp :main no
+#+begin_src C++ :exports code
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest.hpp>
 #include <variant>
@@ -1341,7 +1341,9 @@ unsigned Mailapp::num_mailapps() {
 
 Executando os testes:
 
-#+call: mailapp_test() :exports results :results scalar
+#+begin_src C++ :flags -std=c++17 -I ../ -I include/ src/core/mailapp_v2.cpp :main no :exports results :results scalar :noweb yes
+<<mailapp_test>>
+#+end_src
 
 #+RESULTS:
 : [doctest] doctest version is "2.4.11"
@@ -1353,4 +1355,3 @@ Executando os testes:
 : [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
 : [doctest] assertions: 8 | 8 passed | 0 failed |
 : [doctest] Status: SUCCESS!
-
