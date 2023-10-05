@@ -444,11 +444,8 @@ A nossa implementação do construtor não é a melhor possível... Para entende
 int x = 0;
 class A {
 public:
-  int y;
-  
   A() {
-    y = x;
-    std::cout << "Construindo objeto A" << y << std::endl;
+    std::cout << "Construindo objeto A" << x << std::endl;
     x++;
   }
 };
@@ -457,9 +454,7 @@ class B {
 public:
   B(A a) {
     std::cout << "Construindo objeto B" << std::endl;
-    std::cout << "Componente _a: " << _a.y << std::endl;
     _a = a;
-    std::cout << "Componente _a: " << _a.y << std::endl;
   }
   
 private:
@@ -477,8 +472,6 @@ int main() {
 : Construindo objeto A0
 : Construindo objeto A1
 : Construindo objeto B
-: Componente _a: 1
-: Componente _a: 0
 
 Por quê o construtor da classe A foi chamado duas vezes? Um objeto foi construído no início da função ~main~, e outro foi construído na inicialização do objeto ~b~, correspondente ao campo privado ~_a~. Porém, esta inicialização aconteceu antes da execução do construtor ~B()~ e, logo depois, nós copiamos o objeto ~a~ passado por parâmetro para o campo ~_a~...
 
@@ -490,11 +483,8 @@ Ou seja, um objeto está sendo instanciado desnecessariamente! Existe uma outra 
 int x = 0;
 class A {
 public:
-  int y;
-  
   A() {
-    y = x;
-    std::cout << "Construindo objeto A" << y << std::endl;
+    std::cout << "Construindo objeto A" << x << std::endl;
     x++;
   }
 };

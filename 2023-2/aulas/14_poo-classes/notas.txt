@@ -467,11 +467,8 @@ Construtor
   │ int x = 0;
   │ class A {
   │ public:
-  │   int y;
-  │ 
   │   A() {
-  │     y = x;
-  │     std::cout << "Construindo objeto A" << y << std::endl;
+  │     std::cout << "Construindo objeto A" << x << std::endl;
   │     x++;
   │   }
   │ };
@@ -480,9 +477,7 @@ Construtor
   │ public:
   │   B(A a) {
   │     std::cout << "Construindo objeto B" << std::endl;
-  │     std::cout << "Componente _a: " << _a.y << std::endl;
   │     _a = a;
-  │     std::cout << "Componente _a: " << _a.y << std::endl;
   │   }
   │ 
   │ private:
@@ -500,8 +495,6 @@ Construtor
   │ Construindo objeto A0
   │ Construindo objeto A1
   │ Construindo objeto B
-  │ Componente _a: 1
-  │ Componente _a: 0
   └────
 
 
@@ -521,11 +514,8 @@ Construtor
   │ int x = 0;
   │ class A {
   │ public:
-  │   int y;
-  │ 
   │   A() {
-  │     y = x;
-  │     std::cout << "Construindo objeto A" << y << std::endl;
+  │     std::cout << "Construindo objeto A" << x << std::endl;
   │     x++;
   │   }
   │ };
