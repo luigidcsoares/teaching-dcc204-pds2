@@ -1,0 +1,507 @@
+#+title: Notas de Aula - 15 POO: Encapsulamento
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+* O que é Encapsulamento?
+
+- Encapsulamento é uma estratégia de abstração
+- Se refere ao agrupamento de dados e operações em uma única entidade
+- Consiste em abstrair detalhes de implementação relacionados ao estado do objeto
+
+No paradigma orientado a objetos, temos que classes expõem operações por meio das quais podemos alterar o estado de uma instância; ou seja, ao invés de alterarmos o estado de um objeto diretamente, "pedimos" ao objeto para que ele faça esta alteração, através das operações públicas disponíveis. Assim, o objeto consegue garantir que o novo estado sempre será válido.
+
+* Exemplo de Motivação
+
+Considere o gerenciamento de uma conta bancária. No paradigma procedural, teríamos uma estrutura ~ContaBancaria~ cujo papel é apenas agrupar as informações que constituem uma conta bancária:
+
+#+begin_src C++ :exports code
+struct ContaBancaria {
+  std::string agencia;
+  std::string numero;
+  double saldo;
+};
+#+end_src
+
+E, a partir desta estrutura, poderíamos manipular os campos de uma conta bancária diretamente:
+
+#+begin_src C++ :exports code
+ContaBancaria c = { "3", "123456", 0.0 };
+c.saldo += 100; // Depositando 100 reais
+c.saldo -= 1000; // Sacando 1000 reais
+#+end_src
+
+Qual o estado final da conta bancária? Note que (assumindo que o saldo não pode ser negativo) o estado não será válido, pois não há nenhuma validação em relação ao valor que está sendo depositado ou sacado. Até poderíamos fornecer operações de depósito e saque junto a classe ~ContaBancaria~, mas nada impede que o usuário da classe ~ContaBancaria~ acesse e manipule seus campos diretamente, e consequentemente produza um estado "corrompido".
+
+O objetivo do encapsulamento é impedir que estas manipulações arbitrárias do estado de um objeto possam acontecer. Apenas o objeto deve ser capaz de alterar o seu estado, pois o próprio objeto sabe o que configura ou não um estado válido, e portanto é capaz de garantir que nenhuma operação irá produzir um estado inválido.
+
+* Rumo ao Encapsulamento
+
+O primeiro passo para alcançar a noção de encapsulamento é agrupar informações e comportamento em uma única entidade. Fazemos isso através das classes.
+
+O segundo passo é esconder as informações que constituem a classe. Em C++, fazemos isso por meio da palavra-chave ~private~.
+
+Vamos refatorar a estrutura ~ContaBancaria~, seguindo os dois passos acima:
+
+#+begin_src C++ :exports code
+class ContaBancaria {
+public:
+  ContaBancaria(std::string agencia, std::string numero, double saldo);
+  
+private:
+  std::string _agencia;
+  std::string _numero;
+  double _saldo;
+};
+#+end_src
+
+Tente criar uma instância de ~ContaBancaria~ e acessar os campos ~_agencia~, ~_numero~, e ~saldo~. Você não irá conseguir!
+
+Agora, precisamos definir operações que serão responsáveis por alterar o estado do objeto.
+
+** Getters e Setters
+
+Uma prática comum, e geralmente incorreta, é a de tornar privados todos os campos de uma classe, e definir /getters/ e /setters/ para cada um dos campos. Getters são métodos voltados para o acesso aos valores dos atributos de um objeto, enquanto setters são métodos que permitem a alteração dos atributos de um objeto.
+
+Por exemplo, no caso da classe ~ContaBancaria~, criaríamos os seguintes métodos:
+
+#+begin_src C++ :exports code
+class ContaBancaria {
+public:
+  ContaBancaria(std::string agencia, std::string numero, double saldo);
+
+  std::string get_agencia() const { return _agencia; }
+  std::string get_numero() const { return _numero; }
+  double get_saldo() const { return _saldo; }
+
+  void set_agencia(std::string agencia) { _agencia = agencia; }
+  void set_numero(std::string numero) { _numero = numero; }
+  void set_agencia(double saldo) { _saldo = saldo; }
+  
+private:
+  std::string _agencia;
+  std::string _numero;
+  double _saldo;
+};
+#+end_src
+
+Todavia, note que os getters e setters definidos acima são *triviais*; isto é, não adicionam nenhum valor semântico. Na prática, o efeito é o mesmo que manter os atributos ~agencia~, ~numero~, e ~saldo~ públicos.
+
+Isto é algo discutido, inclusive, no guia de boas práticas de C++: [[https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c131-avoid-trivial-getters-and-setters][Avoid trivial getters and setters]]
+
+Muitas vezes, operações da forma ~set_campo~ sequer serão a melhor opção. Por exemplo, no caso de uma conta bancária, faz sentido definir um valor específico para o saldo? Ou será que existem operações mais adequadas/coerentes em relação a manipulação do saldo de uma conta?
+
+** Gerenciando o Estado de um Objeto
+
+No caso de uma conta bancária, temos duas operações responsáveis pela atualização do saldo: ~depositar~ e ~sacar~. Além disso, não faz sentido permitir a alteração da agência e número de uma conta. Por isso, no lugar dos setters triviais, vamos ter apenas as operações de depósito e saque. Vamos manter os getters para permitir o acesso as informações da conta
+(pessoalmente, prefiro omitir o prefixo ~get_~; mas, é apenas uma convenção, o importante é ser consistente).
+
+=conta.hpp=
+
+#+begin_src C++ :exports code :main no :tangle include/conta_v1.hpp
+#pragma once
+#include <string>
+
+class ContaBancaria {
+public:
+  ContaBancaria(std::string agencia, std::string numero, double saldo);
+
+  std::string agencia() const;
+  std::string numero() const;
+  double saldo() const;
+
+  void depositar(double valor);
+  void sacar(double valor);
+  
+private:
+  std::string _agencia;
+  std::string _numero;
+  double _saldo;
+};
+#+end_src
+
+Vamos criar alguns testes iniciais e implementar estas operações:
+
+=test.cpp=
+
+#+name: test_v1
+#+begin_src C++
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest.hpp>
+#include "conta_v1.hpp"
+
+TEST_CASE("depositar") {
+  ContaBancaria c("001", "123456", 0.50);
+  c.depositar(49.50);
+  CHECK_EQ(c.saldo(), 50);
+}
+
+TEST_CASE("sacar") {
+  ContaBancaria c("001", "123456", 50.00);
+  c.sacar(49.50);
+  CHECK_EQ(c.saldo(), 0.50);
+}
+#+end_src
+
+=conta.cpp=
+
+#+begin_src C++ :main no :tangle src/conta_v1.cpp
+#include "conta_v1.hpp"
+#include <string>
+
+ContaBancaria::ContaBancaria(std::string agencia, std::string numero, double saldo)
+  : _agencia(agencia), _numero(numero), _saldo(saldo) {}
+
+std::string ContaBancaria::agencia() const {
+  return _agencia;
+}
+
+std::string ContaBancaria::numero() const {
+  return _numero;
+}
+
+double ContaBancaria::saldo() const {
+  return _saldo;
+}
+
+void ContaBancaria::depositar(double valor) {
+  _saldo += valor;
+}
+
+void ContaBancaria::sacar(double valor) {
+  _saldo -= valor;
+}
+#+end_src
+
+Executando os testes:
+
+#+begin_src C++ :flags -std=c++17 -I include/ -I ../ src/conta_v1.cpp :exports results :noweb yes :main no :results scalar
+<<test_v1>>
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases: 2 | 2 passed | 0 failed | 0 skipped
+: [doctest] assertions: 2 | 2 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+A implementação acima está correta? Você consegue pensar em algum teste diferente? Quais entradas corrompiriam o estado de uma conta bancária?
+
+Vamos alterar a interface do depósito e saque para lidar com possíveis erros:
+
+=conta.hpp=
+
+#+begin_src C++ :exports code :main no :tangle include/conta_v2.hpp
+#pragma once
+#include <string>
+
+class ContaBancaria {
+public:
+  ContaBancaria(std::string agencia, std::string numero, double saldo);
+
+  std::string agencia() const;
+  std::string numero() const;
+  double saldo() const;
+
+  enum class ResultadoDeposito { ok, arg_invalido };
+  ResultadoDeposito depositar(double valor);
+
+  enum class ResultadoSaque { ok, arg_invalido, saldo_negativo };
+  ResultadoSaque sacar(double valor);
+  
+private:
+  std::string _agencia;
+  std::string _numero;
+  double _saldo;
+};
+#+end_src
+
+=test.cpp=
+
+#+name: test_v2
+#+begin_src C++ 
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest.hpp>
+#include "conta_v2.hpp"
+
+using ResultadoDeposito = ContaBancaria::ResultadoDeposito;
+using ResultadoSaque = ContaBancaria::ResultadoSaque;
+
+TEST_CASE("depositar") {
+  ContaBancaria c("001", "123456", 0.50);
+  
+  SUBCASE("depósito válido => atualiza saldo") {
+    CHECK_EQ(c.depositar(49.50), ResultadoDeposito::ok);
+    CHECK_EQ(c.saldo(), 50);
+  }
+
+  SUBCASE("depósito inválido => mantém saldo") {
+    CHECK_EQ(c.depositar(-49.50), ResultadoDeposito::arg_invalido);
+    CHECK_EQ(c.saldo(), 0.50);
+  }
+}
+
+TEST_CASE("sacar") {
+  ContaBancaria c("001", "123456", 50.00);
+
+  SUBCASE("saque válido => atualiza saldo") {
+    CHECK_EQ(c.sacar(49.50), ResultadoSaque::ok);
+    CHECK_EQ(c.saldo(), 0.50);
+  }
+
+  SUBCASE("saque inválido => mantém saldo") {
+    SUBCASE("valor negativo passado como argumento") {
+      CHECK_EQ(c.sacar(-49.50), ResultadoSaque::arg_invalido);
+    }
+
+    SUBCASE("saldo insuficiente") {
+      CHECK_EQ(c.sacar(100.00), ResultadoSaque::saldo_negativo);
+    }
+    
+    CHECK_EQ(c.saldo(), 50.00);
+  }
+}
+#+end_src
+
+=conta.cpp=
+
+#+begin_src C++ :main no :tangle src/conta_v2.cpp
+#include "conta_v2.hpp"
+#include <string>
+
+ContaBancaria::ContaBancaria(std::string agencia, std::string numero, double saldo)
+  : _agencia(agencia), _numero(numero), _saldo(saldo) {}
+
+std::string ContaBancaria::agencia() const {
+  return _agencia;
+}
+
+std::string ContaBancaria::numero() const {
+  return _numero;
+}
+
+double ContaBancaria::saldo() const {
+  return _saldo;
+}
+
+ContaBancaria::ResultadoDeposito ContaBancaria::depositar(double valor) {
+  if (valor < 0) return ResultadoDeposito::arg_invalido;
+  _saldo += valor;
+  return ResultadoDeposito::ok;
+}
+
+ContaBancaria::ResultadoSaque ContaBancaria::sacar(double valor) {
+  if (valor < 0) return ResultadoSaque::arg_invalido;
+  if (_saldo - valor < 0) return ResultadoSaque::saldo_negativo;
+  _saldo -= valor;
+  return ResultadoSaque::ok;
+}
+#+end_src
+
+Executando os testes:
+
+#+begin_src C++ :flags -std=c++17 -I include/ -I ../ src/conta_v2.cpp :exports results :noweb yes :main no :results scalar
+<<test_v2>>
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+: [doctest] assertions: 10 | 10 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+Note que a partir de agora podemos alterar a implementação das operações de saque e depósito sem que isto afete a utilização no ponto de vista do usuário da classe ~ContaBancaria~. Por exemplo, e se quiséssemos adicionar uma tarifa de 0.25?
+
+=conta.hpp=
+
+#+begin_src C++ :exports code :main no :tangle include/conta_v3.hpp
+#pragma once
+#include <string>
+
+class ContaBancaria {
+public:
+  ContaBancaria(std::string agencia, std::string numero, double saldo);
+
+  std::string agencia() const;
+  std::string numero() const;
+  double saldo() const;
+
+  enum class ResultadoDeposito { ok, arg_invalido };
+  ResultadoDeposito depositar(double valor);
+
+  enum class ResultadoSaque { ok, arg_invalido, saldo_negativo };
+  ResultadoSaque sacar(double valor);
+
+  static constexpr double k_tarifa = 0.25;
+  
+private:
+  std::string _agencia;
+  std::string _numero;
+  double _saldo;
+
+  void _descontar_tarifa();
+};
+#+end_src
+
+=test.cpp=
+
+#+name: test_v3
+#+begin_src C++ 
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest.hpp>
+#include "conta_v3.hpp"
+
+using ResultadoDeposito = ContaBancaria::ResultadoDeposito;
+using ResultadoSaque = ContaBancaria::ResultadoSaque;
+
+TEST_CASE("depositar") {
+  ContaBancaria c("001", "123456", 0.50);
+  
+  SUBCASE("depósito válido => atualiza saldo") {
+    CHECK_EQ(c.depositar(49.50), ResultadoDeposito::ok);
+    CHECK_EQ(c.saldo(), 50 - ContaBancaria::k_tarifa);
+  }
+
+  SUBCASE("depósito inválido => mantém saldo") {
+    double valor = 0.0;
+
+    SUBCASE("valor negativo passado como argumento") {
+      valor = -49.50;
+    }
+    
+    SUBCASE("valor menor que a tarifa de utilização da conta") {
+      valor = ContaBancaria::k_tarifa - 0.01;
+    }
+    
+    CHECK_EQ(c.depositar(valor), ResultadoDeposito::arg_invalido);
+    CHECK_EQ(c.saldo(), 0.50);
+  }
+}
+
+TEST_CASE("sacar") {
+  ContaBancaria c("001", "123456", 50.00);
+
+  SUBCASE("saque válido => atualiza saldo") {
+    CHECK_EQ(c.sacar(49.50), ResultadoSaque::ok);
+    CHECK_EQ(c.saldo(), 0.50 - ContaBancaria::k_tarifa);
+  }
+
+  SUBCASE("saque inválido => mantém saldo") {
+    SUBCASE("valor negativo passado como argumento") {
+      CHECK_EQ(c.sacar(-49.50), ResultadoSaque::arg_invalido);
+    }
+
+    SUBCASE("saldo insuficiente") {
+      CHECK_EQ(c.sacar(100.00), ResultadoSaque::saldo_negativo);
+    }
+    
+    CHECK_EQ(c.saldo(), 50.00);
+  }
+}
+#+end_src
+
+=conta.cpp=
+
+#+begin_src C++ :main no :tangle src/conta_v3.cpp
+#include "conta_v3.hpp"
+#include <string>
+
+ContaBancaria::ContaBancaria(std::string agencia, std::string numero, double saldo)
+  : _agencia(agencia), _numero(numero), _saldo(saldo) {}
+
+std::string ContaBancaria::agencia() const {
+  return _agencia;
+}
+
+std::string ContaBancaria::numero() const {
+  return _numero;
+}
+
+double ContaBancaria::saldo() const {
+  return _saldo;
+}
+
+ContaBancaria::ResultadoDeposito ContaBancaria::depositar(double valor) {
+  if (valor < 0 || valor < k_tarifa) return ResultadoDeposito::arg_invalido;
+  _saldo += valor;
+  _descontar_tarifa();
+  return ResultadoDeposito::ok;
+}
+
+ContaBancaria::ResultadoSaque ContaBancaria::sacar(double valor) {
+  if (valor < 0) return ResultadoSaque::arg_invalido;
+  if (_saldo - valor - k_tarifa < 0) return ResultadoSaque::saldo_negativo;
+  _saldo -= valor;
+  _descontar_tarifa();
+  return ResultadoSaque::ok;
+}
+
+void ContaBancaria::_descontar_tarifa() {
+  _saldo -= k_tarifa;
+}
+#+end_src
+
+Executando os testes:
+
+#+begin_src C++ :flags -std=c++17 -I include/ -I ../ src/conta_v3.cpp :exports results :noweb yes :main no :results scalar
+<<test_v3>>
+#+end_src
+
+#+RESULTS:
+: [doctest] doctest version is "2.4.11"
+: [doctest] run with "--help" for options
+: ===============================================================================
+: [doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+: [doctest] assertions: 12 | 12 passed | 0 failed |
+: [doctest] Status: SUCCESS!
+
+
+* Modificadores de Acesso e Introdução a Herança
+
+Como vimos uma ferramenta comumente utilizada (mas não presente em todas as linguagens, ex: Python) são os modificadores de acesso. C++ provê três níveis de acesso (do mais permissivo ao mais restrito):
+
+- *public*: todo mundo consegue acessar, é o padrão (quando não explícito) para ~struct~
+- *protected*: o acesso é restrito a classes que fazem parte da hierarquia (e classes amigas, em C++)
+- *private*: o acesso é restrito a própria classe (e classes amigas, em C++), é o padrão (quando não explícito) para ~class~
+
+O modificador *protected* só faz sentido em conjunto com o conceito de herança. Vamos ver um exemplo como introdução:
+
+#+begin_src C++ :flags -std=c++17 :exports both
+#include <iostream>
+
+class Base {
+protected:
+  int _i = 10;
+};
+
+class Derivada : public Base {
+public:
+  int f() {
+    _i++;
+    return _i;
+  }
+};
+
+int main() {
+  Base b;
+
+  // error: 'int Base::_i' is protected within this context
+  // std::cout << b._i << std::endl;
+
+  Derivada d;
+  std::cout << d.f() << std::endl;
+
+  // error: 'int Base::_i' is protected within this context
+  // std::cout << d._i << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: 11
+
+Note que na própria herança aparece um modificador ~public~. Voltaremos nisso mais a frente.
