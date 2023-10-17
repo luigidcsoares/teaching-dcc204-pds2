@@ -1,0 +1,761 @@
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+             NOTAS DE AULA - 16 POO: HERANÇA E POLIMORFISMO
+                             DE SUBTIPAGEM
+
+                           Luigi D. C. Soares
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+• Herança:
+  • *Reutilizar* características de uma classe na definição de outra
+     classe
+  • *Hierarquia* de classes
+  • Facilita a extensibilidade do sistema e reutilização de código
+  • Classe mais genérica: superclasse (pai)
+  • Classe especializada: subclasse (filha)
+
+• Polimorfismo:
+  • Termo originário do grego: poli (muitas) + morphos (formas)
+  • Como assim? Já vimos isso antes?
+
+
+Herança
+═══════
+
+  Retomando o exemplo da aula 13, considere um aplicativo de agendamento
+  de consultas. Temos dois possíveis usuários: pacientes e
+  médicos. Vamos criar duas classes para representar pacientes e
+  médicos:
+
+  ┌────
+  │ class Paciente {
+  │ public:
+  │   Paciente(std::string _plano_saude, std::string email,
+  │            std::string primeiro_nome, std::string sobrenome, unsigned idade);
+  │ 
+  │   std::string email() const;
+  │   std::string nome() const;
+  │   unsigned idade();
+  │ 
+  │   std::string to_string() const;
+  │ 
+  │   // ...
+  │ 
+  │ private:
+  │   std::string _plano_saude;
+  │   std::string _email;
+  │   std::string _primeiro_nome;
+  │   std::string _sobrenome;
+  │   unsigned _idade;
+  │ };
+  └────
+
+  ┌────
+  │ class Medico {
+  │ public:
+  │   Medico(std::string id_crm, std::string estado_crm,
+  │          std::string especialidade, std::string email,
+  │          std::string primeiro_nome, std::string sobrenome, unsigned idade);
+  │ 
+  │   std::string email() const;
+  │   std::string nome() const;
+  │   unsigned idade();
+  │ 
+  │   std::string to_string() const;
+  │ 
+  │   // ...
+  │ 
+  │ private:
+  │   std::string _id_crm;
+  │   std::string _estado_crm;
+  │   std::string _especialidade;
+  │   std::string _email;
+  │   std::string _primeiro_nome;
+  │   std::string _sobrenome;
+  │   unsigned _idade;
+  │ };
+  └────
+
+  Você consegue identificar redundâncias nas definições de `Paciente' e
+  `Medico'?
+
+  Vamos mover essas redundâncias para uma nova classe `Usuario':
+
+  `usuario.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mediapp::model {
+  │ class Usuario {
+  │ public:
+  │   Usuario(std::string email, std::string primeiro_nome,
+  │           std::string sobrenome, unsigned idade);
+  │ 
+  │   std::string email() const;
+  │   std::string nome() const;
+  │   unsigned idade() const;
+  │ 
+  │   std::string to_string() const;
+  │ 
+  │ private:
+  │   std::string _email;
+  │   std::string _primeiro_nome;
+  │   std::string _sobrenome;
+  │   unsigned _idade;
+  │ };
+  │ }
+  └────
+
+  `usuario.cpp'
+
+  ┌────
+  │ #include "model/usuario.hpp"
+  │ #include <string>
+  │ 
+  │ namespace mediapp::model {
+  │ Usuario::Usuario(std::string email, std::string primeiro_nome,
+  │                  std::string sobrenome, unsigned idade)
+  │   : _email(email), _primeiro_nome(primeiro_nome),
+  │     _sobrenome(sobrenome), _idade(idade) {}
+  │ 
+  │ std::string Usuario::email() const {
+  │   return _email;
+  │ }
+  │ 
+  │ std::string Usuario::nome() const {
+  │   return _primeiro_nome + " " + _sobrenome;
+  │ }
+  │ 
+  │ unsigned Usuario::idade() const {
+  │   return _idade;
+  │ }
+  │ 
+  │ std::string Usuario::to_string() const {
+  │   return nome() + " (" + _email + ", " + std::to_string(_idade) + " anos)";
+  │ }
+  │ }
+  └────
+
+  Agora, vamos refatorar as classes `Paciente' e `Medico' para que
+  utilizem herança:
+
+  `paciente.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "model/usuario.hpp"
+  │ #include <string>
+  │ 
+  │ namespace mediapp::model { 
+  │ class Paciente : public Usuario {
+  │ public:
+  │   Paciente(std::string _plano_saude, std::string email,
+  │            std::string primeiro_nome, std::string sobrenome, unsigned idade);
+  │ 
+  │   std::string plano_saude() const;
+  │ 
+  │ private:
+  │   std::string _plano_saude;
+  │ };
+  │ }
+  └────
+
+  `paciente.cpp'
+
+  ┌────
+  │ #include "model/paciente.hpp"
+  │ #include "model/usuario.hpp"
+  │ 
+  │ namespace mediapp::model {
+  │ Paciente::Paciente(std::string plano_saude, std::string email,
+  │                    std::string primeiro_nome, std::string sobrenome, unsigned idade)
+  │   : Usuario(email, primeiro_nome, sobrenome, idade), _plano_saude(plano_saude) {}
+  │ 
+  │ std::string Paciente::plano_saude() const {
+  │   return _plano_saude;
+  │ }
+  │ }
+  └────
+
+  `medico.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "model/usuario.hpp"
+  │ #include <string>
+  │ 
+  │ namespace mediapp::model { 
+  │ class Medico : public Usuario {
+  │ public:
+  │   Medico(std::string id_crm, std::string estado_crm,
+  │          std::string especialidade, std::string email,
+  │          std::string primeiro_nome, std::string sobrenome, unsigned idade);
+  │ 
+  │   std::string crm() const;
+  │   std::string especialidade() const;
+  │   std::string to_string() const;
+  │ 
+  │ private:
+  │   std::string _id_crm;
+  │   std::string _estado_crm;
+  │   std::string _especialidade;
+  │ };
+  │ }
+  └────
+
+  `medico.cpp'
+
+  ┌────
+  │ #include "model/medico.hpp"
+  │ #include "model/usuario.hpp"
+  │ 
+  │ namespace mediapp::model {
+  │ Medico::Medico(std::string id_crm, std::string estado_crm,
+  │                std::string especialidade, std::string email,
+  │                std::string primeiro_nome, std::string sobrenome, unsigned idade)
+  │   : Usuario(email, primeiro_nome, sobrenome, idade),
+  │     _id_crm(id_crm), _estado_crm(estado_crm), _especialidade(especialidade) {}
+  │ 
+  │ std::string Medico::crm() const {
+  │   return "CRM/" + _estado_crm + " " + _id_crm;
+  │ }
+  │ 
+  │ std::string Medico::especialidade() const {
+  │   return _especialidade;
+  │ }
+  │ 
+  │ std::string Medico::to_string() const {
+  │   return Usuario::to_string() + " (" + crm() + ", " + _especialidade + ")";
+  │ }
+  │ }
+  └────
+
+  Para ilustrar, vamos instanciar cada usuário
+
+  ┌────
+  │ #include "model/medico.hpp"
+  │ #include "model/paciente.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mediapp::model::Medico;
+  │ using mediapp::model::Paciente;
+  │ 
+  │ int main() {
+  │   Medico m("123456", "SP", "oncologia", "drauzio@gmail.com", "Drauzio", "Varella", 80);
+  │   std::cout << m.to_string() << std::endl;
+  │ 
+  │   Paciente p("unimed", "tiquinho@gmail.com", "Tiquinho", "Soares", 32);
+  │   std::cout << p.to_string() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Drauzio Varella (drauzio@gmail.com, 80 anos) (CRM/SP 123456, oncologia)
+  │ Tiquinho Soares (tiquinho@gmail.com, 32 anos)
+  └────
+
+
+  • Métodos também são herdados (do contrário, paciente não teria um
+    método `to_string')
+  • No caso de `Medico', foi chamado o método `to_string' especializado
+  • Como é possível determinar qual método será chamado (classe vs
+    superclasse)?
+  • Essa decisão é feita durante a compilação ou execução?
+
+  Note que, devido a utilização de herança, a quantidade de parâmetros
+  nos construtores de `Paciente' e `Medico' aumentou
+  consideravelmente. É uma boa prática reduzir a quantidade de
+  parâmetros. Podemos fazer isso agrupando informações relacionadas:
+
+  `usuario'
+
+  ┌────
+  │ struct InfoPessoal {
+  │   std::string primeiro_nome;
+  │   std::string sobrenome;
+  │   unsigned idade;
+  │ };
+  └────
+
+  ┌────
+  │ class Usuario {
+  │ public:
+  │   Usuario(std::string email, InfoPessoal info);
+  │ 
+  │   std::string email() const;
+  │   std::string nome() const;
+  │   unsigned idade() const;
+  │ 
+  │   std::string to_string() const;
+  │ 
+  │ private:
+  │   std::string _email;
+  │   InfoPessoal _info;
+  │ };
+  └────
+
+  ┌────
+  │ Usuario::Usuario(std::string email, InfoPessoal info)
+  │   : _email(email), _info(info) {}
+  │ 
+  │ std::string Usuario::email() const {
+  │   return _email;
+  │ }
+  │ 
+  │ std::string Usuario::nome() const {
+  │   return _info.primeiro_nome + " " + _info.sobrenome;
+  │ }
+  │ 
+  │ unsigned Usuario::idade() const {
+  │   return _info.idade;
+  │ }
+  │ 
+  │ std::string Usuario::to_string() const {
+  │   return nome() + " (" + email() + ", " + std::to_string(idade()) + " anos)";
+  │ }
+  └────
+
+  `paciente'
+
+  ┌────
+  │ class Paciente : public Usuario {
+  │ public:
+  │   Paciente(std::string _plano_saude, std::string email, InfoPessoal info);
+  │   std::string plano_saude() const;
+  │ 
+  │ private:
+  │   std::string _plano_saude;
+  │ };
+  └────
+
+  ┌────
+  │ Paciente::Paciente(std::string plano_saude, std::string email, InfoPessoal info)
+  │   : Usuario(email, info), _plano_saude(plano_saude) {}
+  │ 
+  │ std::string Paciente::plano_saude() const {
+  │   return _plano_saude;
+  │ }
+  └────
+
+  `medico'
+
+  ┌────
+  │ struct RegistroCRM {
+  │   std::string id_crm;
+  │   std::string estado_crm;
+  │ };
+  └────
+
+  ┌────
+  │ class Medico : public Usuario {
+  │ public:
+  │   Medico(RegistroCRM reg_crm, std::string especialidade,
+  │          std::string email, InfoPessoal info);
+  │ 
+  │   std::string crm() const;
+  │   std::string especialidade() const;
+  │   std::string to_string() const;
+  │ 
+  │ private:
+  │   RegistroCRM _reg_crm;
+  │   std::string _especialidade;
+  │ };
+  └────
+
+  ┌────
+  │ Medico::Medico(RegistroCRM reg_crm, std::string especialidade,
+  │                std::string email, InfoPessoal info)
+  │   : Usuario(email, info), _reg_crm(reg_crm), _especialidade(especialidade) {}
+  │ 
+  │ std::string Medico::crm() const {
+  │   return "CRM/" + _reg_crm.estado_crm + " " + _reg_crm.id_crm;
+  │ }
+  │ 
+  │ std::string Medico::especialidade() const {
+  │   return _especialidade;
+  │ }
+  │ 
+  │ std::string Medico::to_string() const {
+  │   return Usuario::to_string() + " (" + crm() + ", " + _especialidade + ")";
+  │ }
+  └────
+
+
+Herança vs Composição
+─────────────────────
+
+  Note que existe uma espécie de relação entre `Paciente/Medico' e
+  `Usuario':
+  • Paciente *é* um tipo de usuário
+  • Médico *é* um tipo de usuário
+
+  Herança deve ser usada para representar este tipo de relação! Não
+  abuse da funcionalidade, apenas para reaproveitamento de
+  código. Existem outras estratégias para reaproveitamento de código!
+
+  Muitas vezes, a relação será da forma *possui* (/has-a/) ao invés de
+  *é* (/is-a/). Nestes casos, a estratégia mais adequada é *composição*
+  (incluir uma instância de uma classe `A' como membro de uma classe
+  `B'), e não herança!
+
+  Exemplo de uso incorreto de herança: em Java, a classe `Stack' (hoje
+  em dia obsoleta) é implementada por meio de herança. Ela estende a
+  classe `Vector'. Isso significa que é possível, por exemplo, inserir
+  um elemento em uma posição arbitrária, indo contra o conceito de uma
+  pilha (LIFO):
+
+  ┌────
+  │ Stack<Integer> stack = new Stack<Integer>();
+  │ stack.push(1);
+  │ stack.push(2);
+  │ stack.add(1, 3);
+  └────
+
+
+Herança Múltipla
+────────────────
+
+  Vamos extrapolar o exemplo e imaginar que ao invés de agendamento de
+  consultas médicas, o sistema permita o agendamento de diferentes
+  serviços, como contabilidade e advocacia. Podemos definir uma classe
+  `PrestadorServicos', e modelar a relação entre `Medico' e
+  `PrestadorServico' de duas maneiras diferentes:
+
+  • Médico é um usuário do tipo prestador de serviços
+
+  ┌────
+  │ class PrestadorServico : public Usuario { ... };
+  │ class Medico : public PrestadorServico { ... };
+  └────
+
+  • Médico é um usuário *e* um prestador de serviços
+
+  ┌────
+  │ class PrestadorServico { ... };
+  │ class Medico : public Usuario, public PrestadorServico { ... };
+  └────
+
+  Herança múltipla (segunda opção) é um recurso de algumas linguagens
+  (C++, por exemplo), mas nem todas!
+
+  Você consegue perceber algum problema/desvantagem de herança múltipla?
+  ["The Diamond Problem"]
+
+
+["The Diamond Problem"]
+<https://en.wikipedia.org/wiki/Multiple_inheritance#The_diamond_problem>
+
+
+Modificadores de Acesso
+───────────────────────
+
+  Você deve ter notado que o modificador de acesso `public' aparece na
+  herança. O que isso quer dizer?
+  • herança `public': modificadores de acessos dos membros herdados se
+    mantém (grande maioria dos casos)
+  • herança `protected': membros herdados do tipo `public' se tornam
+    `protected'
+  • herança `private': todos os membros herdados se tornam `private'
+
+  Por exemplo:
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ class A {
+  │ public:
+  │   int x;
+  │   A(int x) : x(x) {}
+  │ };
+  │ 
+  │ class B : public A {
+  │ public:
+  │   B(int x) : A(x) {}
+  │ };
+  │ 
+  │ class C : private A {
+  │ public:
+  │   C(int x) : A(x) {}
+  │   int f() { return x; }
+  │ };
+  │ 
+  │ int main() {
+  │   std::cout << B(10).x << std::endl;
+  │   // Não funciona:
+  │   // std::cout << C(10).x << std::endl;
+  │   std::cout << C(10).f() << std::endl;
+  │   return 0;
+  │ }
+  └────
+
+  ━━━━
+   10 
+   10 
+  ━━━━
+
+
+Polimorfismo de Subtipagem
+══════════════════════════
+
+  Qual será a saída do seguinte código?
+
+  ┌────
+  │ #include "model/medico_v2.hpp"
+  │ #include "model/paciente_v2.hpp"
+  │ 
+  │ #include <iostream>
+  │ 
+  │ using mediapp::model::InfoPessoal;
+  │ using mediapp::model::RegistroCRM;
+  │ using mediapp::model::Usuario;
+  │ using mediapp::model::Medico;
+  │ using mediapp::model::Paciente;
+  │ 
+  │ void show(Usuario const &u) {
+  │   std::cout << u.to_string() << std::endl;
+  │ }
+  │ 
+  │ int main() {
+  │   std::string email = "drauzio@gmail.com";
+  │   RegistroCRM reg_crm = {"123456", "SP"};
+  │   InfoPessoal info = {"Drauzio", "Varella", 80};
+  │ 
+  │   Medico m(reg_crm, "oncologia", email, info);
+  │   Paciente p("unimed", email, info);
+  │ 
+  │   show(m);
+  │   show(p);
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Drauzio Varella (drauzio@gmail.com, 80 anos)
+  │ Drauzio Varella (drauzio@gmail.com, 80 anos)
+  └────
+
+
+  Uai… mas, não especializamos a implementação de `to_string' para
+  médicos? O método `to_string' chamado foi a implementação de usuário,
+  e isso foi determinado em tempo de compilação, pelo tipo do parâmetro
+  da função `show'.
+
+  Gostaríamos de determinar o método chamado através de uma
+  referência/ponteiro a partir da instância, em tempo de execução. Para
+  isso, precisamos das palavras-chave `virtual' e `override':
+
+  `usuario'
+
+  ┌────
+  │ class Usuario {
+  │ public:
+  │   Usuario(std::string email, InfoPessoal info);
+  │ 
+  │   std::string email() const;
+  │   std::string nome() const;
+  │   unsigned idade() const;
+  │ 
+  │   virtual std::string to_string() const; // <<<<<
+  │ 
+  │ private:
+  │   std::string _email;
+  │   InfoPessoal _info;
+  │ };
+  └────
+
+  `medico'
+
+  ┌────
+  │ class Medico : public Usuario {
+  │ public:
+  │   Medico(RegistroCRM reg_crm, std::string especialidade,
+  │          std::string email, InfoPessoal info);
+  │ 
+  │   std::string crm() const;
+  │   std::string especialidade() const;
+  │   std::string to_string() const override; // <<<<<
+  │ 
+  │ private:
+  │   RegistroCRM _reg_crm;
+  │   std::string _especialidade;
+  │ };
+  └────
+
+  Agora, executando novamente:
+
+  ┌────
+  │ #include "model/medico_v3.hpp"
+  │ #include "model/paciente_v3.hpp"
+  │ 
+  │ #include <iostream>
+  │ 
+  │ using mediapp::model::InfoPessoal;
+  │ using mediapp::model::RegistroCRM;
+  │ using mediapp::model::Usuario;
+  │ using mediapp::model::Medico;
+  │ using mediapp::model::Paciente;
+  │ 
+  │ void show(Usuario const &u) {
+  │   std::cout << u.to_string() << std::endl;
+  │ }
+  │ 
+  │ int main() {
+  │   std::string email = "drauzio@gmail.com";
+  │   RegistroCRM reg_crm = {"123456", "SP"};
+  │   InfoPessoal info = {"Drauzio", "Varella", 80};
+  │ 
+  │   Medico m(reg_crm, "oncologia", email, info);
+  │   Paciente p("unimed", email, info);
+  │ 
+  │   show(m);
+  │   show(p);
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Drauzio Varella (drauzio@gmail.com, 80 anos) (CRM/SP 123456, oncologia)
+  │ Drauzio Varella (drauzio@gmail.com, 80 anos)
+  └────
+
+
+Princípio de Substituição de Liskov (O "L" de SOLID)
+────────────────────────────────────────────────────
+
+  *Onde um objeto de um tipo T for esperado, um objeto do subtipo S deve
+   ser aceito*
+
+  Considere uma classe retângulo que possui largura, altura, sabe
+  calcular sua área, e também podemos redimensionar. Esse
+  redimensionamento naturalmente possui uma pós-condição: alterar a
+  largura não deve impactar na altura e vice-versa.
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ #include "doctest.hpp"
+  │ 
+  │ class Retangulo {
+  │ public:
+  │   Retangulo(float largura, float altura)
+  │     : _largura(largura), _altura(altura) {}
+  │ 
+  │   // pós-condição: a altura deve permanecer inalterada
+  │   virtual void redimensionar_largura(float largura) {
+  │     _largura = largura;
+  │   }
+  │ 
+  │   // pós-condição: a largura deve permanecer inalterada
+  │   virtual void redimensionar_altura(float altura) {
+  │     _altura = altura;
+  │   }
+  │ 
+  │   float area() const {
+  │     return _largura * _altura;
+  │   }
+  │ 
+  │ private:
+  │   float _largura;
+  │   float _altura;
+  │ };
+  │ 
+  │ void redimensionar(Retangulo &r) {
+  │   r.redimensionar_largura(3);
+  │   r.redimensionar_altura(4);
+  │ }
+  │ 
+  │ TEST_CASE("redimensionar retângulo") {
+  │   Retangulo r(1, 1);
+  │   redimensionar(r);
+  │   CHECK_EQ(r.area(), 12);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+  │ [doctest] assertions: 1 | 1 passed | 0 failed |
+  │ [doctest] Status: SUCCESS!
+  └────
+
+
+  Perfeito, nossa implementação funciona, podemos redimensionar o
+  retângulo e calcular a área dele.
+
+  Matematicamente, um quadrado *é um* retângulo. Já que a relação é "é
+  um", parece fazer sentido utilizar herança para implementar um
+  quadrado. Porém, precisaremos sobrescrever os métodos de
+  redimensionamento para garantir que o quadrado continue sendo um
+  quadrado, isto é, tenha os lados iguais.
+
+  ┌────
+  │ class Quadrado : public Retangulo {
+  │ public:
+  │   Quadrado(float lado) : Retangulo(lado, lado) {}
+  │   void redimensionar_largura(float largura) override {
+  │     Retangulo::redimensionar_largura(largura);
+  │     Retangulo::redimensionar_largura(largura);
+  │   }
+  │   void redimensionar_altura(float altura) override {
+  │     Retangulo::redimensionar_altura(altura);
+  │     Retangulo::redimensionar_altura(altura);
+  │   }
+  │ };
+  └────
+
+  Já dá para notar que tem algo no mínimo estranho. Um quadrado não
+  deveria precisar de dois métodos para alterar seus lados.
+
+  Vamos ignorar isso por enquanto e acreditar que está tudo correto. Um
+  quadrado *é um* retângulo, então deveríamos conseguir passar um
+  quadrado para a função de teste (ou seja, onde estamos utilizando o
+  tipo `Retangulo', deve ser possível utilizar Square sem nenhum
+  problema; esse é o princípio de substituição de Liskov).
+
+  O que acontece ao passar um quadrado para a função `redimensionar'?
+
+  ┌────
+  │ TEST_CASE("redimensionar quadrado") {
+  │   Quadrado q(1);
+  │   redimensionar(q);
+  │   CHECK_EQ(q.area(), 12);
+  │ }
+  └────
+
+  ┌────
+  │ [doctest] doctest version is "2.4.11"
+  │ [doctest] run with "--help" for options
+  │ ===============================================================================
+  │ /tmp/babel-V2UCcY/C-src-wvoXoq.cpp:53:
+  │ TEST CASE:  redimensionar quadrado
+  │ 
+  │ /tmp/babel-V2UCcY/C-src-wvoXoq.cpp:56: ERROR: CHECK_EQ( q.area(), 12 ) is NOT correct!
+  │   values: CHECK_EQ( 16, 12 )
+  │ 
+  │ ===============================================================================
+  │ [doctest] test cases: 1 | 0 passed | 1 failed | 0 skipped
+  │ [doctest] assertions: 1 | 0 passed | 1 failed |
+  │ [doctest] Status: FAILURE!
+  └────
+
+  A implementação do subtipo Quadrado *não obedece* o contrato
+  estabelecido pelo supertipo Retangulo: a pós-condição em cada método
+  também é parte do contrato!
+
+  Apesar de matematicamente um quadrado ser um retângulo, estamos
+  modelando um retângulo *redimensionável*, e um quadrado *não é um
+  retângulo redimensionável*. Não conseguimos substituir o subtipo
+  Quadrado onde aparecia o supertipo Retangulo, porque a definição de
+  Quadrado não está em conformidade com os contratos estabelecidos por
+  Retangulo.
+
+  Esta é uma clara violação do princípio de substituição de Liskov!
