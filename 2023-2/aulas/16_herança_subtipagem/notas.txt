@@ -591,37 +591,6 @@ Polimorfismo de Subtipagem
   Agora, executando novamente:
 
   ┌────
-  │ #include "model/medico_v3.hpp"
-  │ #include "model/paciente_v3.hpp"
-  │ 
-  │ #include <iostream>
-  │ 
-  │ using mediapp::model::InfoPessoal;
-  │ using mediapp::model::RegistroCRM;
-  │ using mediapp::model::Usuario;
-  │ using mediapp::model::Medico;
-  │ using mediapp::model::Paciente;
-  │ 
-  │ void show(Usuario const &u) {
-  │   std::cout << u.to_string() << std::endl;
-  │ }
-  │ 
-  │ int main() {
-  │   std::string email = "drauzio@gmail.com";
-  │   RegistroCRM reg_crm = {"123456", "SP"};
-  │   InfoPessoal info = {"Drauzio", "Varella", 80};
-  │ 
-  │   Medico m(reg_crm, "oncologia", email, info);
-  │   Paciente p("unimed", email, info);
-  │ 
-  │   show(m);
-  │   show(p);
-  │ 
-  │   return 0;
-  │ }
-  └────
-
-  ┌────
   │ Drauzio Varella (drauzio@gmail.com, 80 anos) (CRM/SP 123456, oncologia)
   │ Drauzio Varella (drauzio@gmail.com, 80 anos)
   └────
@@ -735,10 +704,10 @@ Princípio de Substituição de Liskov (O "L" de SOLID)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-V2UCcY/C-src-wvoXoq.cpp:53:
+  │ /tmp/babel-V2UCcY/C-src-RX3Jhu.cpp:53:
   │ TEST CASE:  redimensionar quadrado
   │ 
-  │ /tmp/babel-V2UCcY/C-src-wvoXoq.cpp:56: ERROR: CHECK_EQ( q.area(), 12 ) is NOT correct!
+  │ /tmp/babel-V2UCcY/C-src-RX3Jhu.cpp:56: ERROR: CHECK_EQ( q.area(), 12 ) is NOT correct!
   │   values: CHECK_EQ( 16, 12 )
   │ 
   │ ===============================================================================

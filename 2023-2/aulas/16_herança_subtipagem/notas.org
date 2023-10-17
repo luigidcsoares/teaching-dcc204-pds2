@@ -2,7 +2,6 @@
 #+author: Luigi D. C. Soares
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
-#
 - Herança:
   - *Reutilizar* características de uma classe na definição de outra classe
   - *Hierarquia* de classes
@@ -696,7 +695,7 @@ namespace mediapp::model {
 
 Agora, executando novamente:
 
-#+begin_src C++ :exports both :flags -I include/ src/model/*_v3.cpp :results scalar
+#+begin_src C++ :exports results :flags -I include/ src/model/*_v3.cpp :results scalar
 #include "model/medico_v3.hpp"
 #include "model/paciente_v3.hpp"
 
