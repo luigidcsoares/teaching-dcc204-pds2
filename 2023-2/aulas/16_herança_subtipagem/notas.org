@@ -1,4 +1,4 @@
-#+title: Notas de Aula - 16 POO: Herança e Polimorfismo de Subtipagem
+#+title: Notas de Aula - 16 POO: Herança e Subtipagem
 #+author: Luigi D. C. Soares
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
@@ -729,6 +729,369 @@ int main() {
 #+RESULTS:
 : Drauzio Varella (drauzio@gmail.com, 80 anos) (CRM/SP 123456, oncologia)
 : Drauzio Varella (drauzio@gmail.com, 80 anos)
+
+** Destrutores
+
+É uma boa prática sempre declarar o destrutor como virtual quando existe algum outro método virtual. Por quê?
+
+Vamos implementar os destrutores das classes ~Usuario~, ~Medico~, e ~Paciente~:
+
+=usuario=
+
+#+name: usuario_destr_decl
+#+begin_src C++ :exports code
+class Usuario {
+public:
+  Usuario(std::string email, InfoPessoal info);
+  ~Usuario(); // <<<<<
+  
+  std::string email() const;
+  std::string nome() const;
+  unsigned idade() const;
+
+  virtual std::string to_string() const;
+  
+private:
+  std::string _email;
+  InfoPessoal _info;
+};
+#+end_src
+
+#+name: usuario_destr_impl
+#+begin_src C++ :exports code
+Usuario::~Usuario() {
+  std::cout << "~Usuario()" << std::endl;
+}
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle include/model/usuario_v4.hpp :main no
+#pragma once
+#include <string>
+
+namespace mediapp::model {
+<<info_pessoal_decl>>
+
+<<usuario_destr_decl>>
+}
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle src/model/usuario_v4.cpp :main no
+#include "model/usuario_v4.hpp"
+
+#include <string>
+#include <iostream>
+
+namespace mediapp::model {
+<<usuario_impl>>
+
+<<usuario_destr_impl>>
+}
+#+end_src
+
+=paciente=
+
+#+name: paciente_destr_decl
+#+begin_src C++ :exports code
+class Paciente : public Usuario {
+public:
+  Paciente(std::string _plano_saude, std::string email, InfoPessoal info);
+  ~Paciente(); // <<<<<<
+  
+  std::string plano_saude() const;
+  
+private:
+  std::string _plano_saude;
+};
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle include/model/paciente_v4.hpp :main no
+#pragma once
+
+#include "model/usuario_v4.hpp"
+#include <string>
+
+namespace mediapp::model {
+<<paciente_destr_decl>>
+}
+#+end_src
+
+#+name: paciente_destr_impl
+#+begin_src C++ :exports code
+Paciente::~Paciente() {
+  std::cout << "~Paciente()" << std::endl;
+}
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle src/model/paciente_v4.cpp :main no
+#include "model/paciente_v4.hpp"
+#include "model/usuario_v4.hpp"
+
+#include <iostream>
+
+namespace mediapp::model {
+<<paciente_impl>>
+
+<<paciente_destr_impl>>
+}
+#+end_src
+
+=medico=
+
+#+name: medico_destr_decl
+#+begin_src C++ :exports code
+class Medico : public Usuario {
+public:
+  Medico(RegistroCRM reg_crm, std::string especialidade,
+	 std::string email, InfoPessoal info);
+  ~Medico(); // <<<<<
+  
+  std::string crm() const;
+  std::string especialidade() const;
+  std::string to_string() const override;
+  
+private:
+  RegistroCRM _reg_crm;
+  std::string _especialidade;
+};
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle include/model/medico_v4.hpp :main no
+#pragma once
+
+#include "model/usuario_v4.hpp"
+#include <string>
+
+namespace mediapp::model {
+<<crm_decl>>
+
+<<medico_destr_decl>>
+}
+#+end_src
+
+#+name: medico_destr_impl
+#+begin_src C++ :exports code
+Medico::~Medico() {
+  std::cout << "~Medico()" << std::endl;
+}
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle src/model/medico_v4.cpp :main no
+#include "model/medico_v4.hpp"
+#include "model/usuario_v4.hpp"
+
+#include <iostream>
+
+namespace mediapp::model {
+<<medico_impl>>
+
+<<medico_destr_impl>>
+}
+#+end_src
+
+Qual será a saída do programa a seguir? Por quê?
+
+#+begin_src C++ :exports both :flags -I include/ src/model/*_v4.cpp :results scalar
+#include "model/usuario_v4.hpp"
+#include "model/medico_v4.hpp"
+#include "model/paciente_v4.hpp"
+
+#include <iostream>
+
+using mediapp::model::InfoPessoal;
+using mediapp::model::RegistroCRM;
+using mediapp::model::Usuario;
+using mediapp::model::Medico;
+using mediapp::model::Paciente;
+
+int main() {
+  std::string email = "drauzio@gmail.com";
+  RegistroCRM reg_crm = {"123456", "SP"};
+  InfoPessoal info = {"Drauzio", "Varella", 80};
+  
+  Usuario *m = new Medico(reg_crm, "oncologia", email, info);
+  Usuario *p = new Paciente("unimed", email, info);
+
+  delete m;
+  delete p;
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: ~Usuario()
+: ~Usuario()
+
+O destrutor não é ~virtual~, então não há nenhum polimorfismo envolvido na destruição dos objetos. Neste caso, o destrutor a ser chamado é determinado em tempo de compilação, através do tipo dos ponteiros, que são ponteiros para ~Usuario~ (na realidade, isso na verdade é um comportamento *indefinido*).
+
+Vamos tornar os destrutores virtuais:
+
+=usuario=
+
+#+name: usuario_virt_destr_decl
+#+begin_src C++ :exports code
+class Usuario {
+public:
+  Usuario(std::string email, InfoPessoal info);
+  virtual ~Usuario(); // <<<<<
+  
+  std::string email() const;
+  std::string nome() const;
+  unsigned idade() const;
+
+  virtual std::string to_string() const;
+  
+private:
+  std::string _email;
+  InfoPessoal _info;
+};
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle include/model/usuario_v5.hpp :main no
+#pragma once
+#include <string>
+
+namespace mediapp::model {
+<<info_pessoal_decl>>
+
+<<usuario_virt_destr_decl>>
+}
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle src/model/usuario_v5.cpp :main no
+#include "model/usuario_v5.hpp"
+
+#include <string>
+#include <iostream>
+
+namespace mediapp::model {
+<<usuario_impl>>
+
+<<usuario_destr_impl>>
+}
+#+end_src
+
+=paciente=
+
+#+name: paciente_virt_destr_decl
+#+begin_src C++ :exports code
+class Paciente : public Usuario {
+public:
+  Paciente(std::string _plano_saude, std::string email, InfoPessoal info);
+  virtual ~Paciente(); // <<<<<<
+  
+  std::string plano_saude() const;
+  
+private:
+  std::string _plano_saude;
+};
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle include/model/paciente_v5.hpp :main no
+#pragma once
+
+#include "model/usuario_v5.hpp"
+#include <string>
+
+namespace mediapp::model {
+<<paciente_virt_destr_decl>>
+}
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle src/model/paciente_v5.cpp :main no
+#include "model/paciente_v5.hpp"
+#include "model/usuario_v5.hpp"
+
+#include <iostream>
+
+namespace mediapp::model {
+<<paciente_impl>>
+
+<<paciente_destr_impl>>
+}
+#+end_src
+
+=medico=
+
+#+name: medico_virt_destr_decl
+#+begin_src C++ :exports code
+class Medico : public Usuario {
+public:
+  Medico(RegistroCRM reg_crm, std::string especialidade,
+	 std::string email, InfoPessoal info);
+  virtual ~Medico(); // <<<<<
+  
+  std::string crm() const;
+  std::string especialidade() const;
+  std::string to_string() const override;
+  
+private:
+  RegistroCRM _reg_crm;
+  std::string _especialidade;
+};
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle include/model/medico_v5.hpp :main no
+#pragma once
+
+#include "model/usuario_v5.hpp"
+#include <string>
+
+namespace mediapp::model {
+<<crm_decl>>
+
+<<medico_virt_destr_decl>>
+}
+#+end_src
+
+#+begin_src C++ :exports none :noweb yes :tangle src/model/medico_v5.cpp :main no
+#include "model/medico_v5.hpp"
+#include "model/usuario_v5.hpp"
+
+#include <iostream>
+
+namespace mediapp::model {
+<<medico_impl>>
+
+<<medico_destr_impl>>
+}
+#+end_src
+
+Executando novamente
+
+#+begin_src C++ :exports results :flags -I include/ src/model/*_v5.cpp :results scalar
+#include "model/usuario_v5.hpp"
+#include "model/medico_v5.hpp"
+#include "model/paciente_v5.hpp"
+
+#include <iostream>
+
+using mediapp::model::InfoPessoal;
+using mediapp::model::RegistroCRM;
+using mediapp::model::Usuario;
+using mediapp::model::Medico;
+using mediapp::model::Paciente;
+
+int main() {
+  std::string email = "drauzio@gmail.com";
+  RegistroCRM reg_crm = {"123456", "SP"};
+  InfoPessoal info = {"Drauzio", "Varella", 80};
+  
+  Usuario *m = new Medico(reg_crm, "oncologia", email, info);
+  Usuario *p = new Paciente("unimed", email, info);
+
+  delete m;
+  delete p;
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: ~Medico()
+: ~Usuario()
+: ~Paciente()
+: ~Usuario()
 
 ** Princípio de Substituição de Liskov (O "L" de SOLID)
 

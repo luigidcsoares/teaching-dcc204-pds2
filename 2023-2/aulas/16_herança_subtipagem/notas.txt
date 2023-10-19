@@ -1,9 +1,8 @@
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-             NOTAS DE AULA - 16 POO: HERANÇA E POLIMORFISMO
-                             DE SUBTIPAGEM
+             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              NOTAS DE AULA - 16 POO: HERANÇA E SUBTIPAGEM
 
                            Luigi D. C. Soares
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 • Herança:
@@ -596,6 +595,195 @@ Polimorfismo de Subtipagem
   └────
 
 
+Destrutores
+───────────
+
+  É uma boa prática sempre declarar o destrutor como virtual quando
+  existe algum outro método virtual. Por quê?
+
+  Vamos implementar os destrutores das classes `Usuario', `Medico', e
+  `Paciente':
+
+  `usuario'
+
+  ┌────
+  │ class Usuario {
+  │ public:
+  │   Usuario(std::string email, InfoPessoal info);
+  │   ~Usuario(); // <<<<<
+  │ 
+  │   std::string email() const;
+  │   std::string nome() const;
+  │   unsigned idade() const;
+  │ 
+  │   virtual std::string to_string() const;
+  │ 
+  │ private:
+  │   std::string _email;
+  │   InfoPessoal _info;
+  │ };
+  └────
+
+  ┌────
+  │ Usuario::~Usuario() {
+  │   std::cout << "~Usuario()" << std::endl;
+  │ }
+  └────
+
+  `paciente'
+
+  ┌────
+  │ class Paciente : public Usuario {
+  │ public:
+  │   Paciente(std::string _plano_saude, std::string email, InfoPessoal info);
+  │   ~Paciente(); // <<<<<<
+  │ 
+  │   std::string plano_saude() const;
+  │ 
+  │ private:
+  │   std::string _plano_saude;
+  │ };
+  └────
+
+  ┌────
+  │ Paciente::~Paciente() {
+  │   std::cout << "~Paciente()" << std::endl;
+  │ }
+  └────
+
+  `medico'
+
+  ┌────
+  │ class Medico : public Usuario {
+  │ public:
+  │   Medico(RegistroCRM reg_crm, std::string especialidade,
+  │          std::string email, InfoPessoal info);
+  │   ~Medico(); // <<<<<
+  │ 
+  │   std::string crm() const;
+  │   std::string especialidade() const;
+  │   std::string to_string() const override;
+  │ 
+  │ private:
+  │   RegistroCRM _reg_crm;
+  │   std::string _especialidade;
+  │ };
+  └────
+
+  ┌────
+  │ Medico::~Medico() {
+  │   std::cout << "~Medico()" << std::endl;
+  │ }
+  └────
+
+  Qual será a saída do programa a seguir? Por quê?
+
+  ┌────
+  │ #include "model/usuario_v4.hpp"
+  │ #include "model/medico_v4.hpp"
+  │ #include "model/paciente_v4.hpp"
+  │ 
+  │ #include <iostream>
+  │ 
+  │ using mediapp::model::InfoPessoal;
+  │ using mediapp::model::RegistroCRM;
+  │ using mediapp::model::Usuario;
+  │ using mediapp::model::Medico;
+  │ using mediapp::model::Paciente;
+  │ 
+  │ int main() {
+  │   std::string email = "drauzio@gmail.com";
+  │   RegistroCRM reg_crm = {"123456", "SP"};
+  │   InfoPessoal info = {"Drauzio", "Varella", 80};
+  │ 
+  │   Usuario *m = new Medico(reg_crm, "oncologia", email, info);
+  │   Usuario *p = new Paciente("unimed", email, info);
+  │ 
+  │   delete m;
+  │   delete p;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ ~Usuario()
+  │ ~Usuario()
+  └────
+
+
+  O destrutor não é `virtual', então não há nenhum polimorfismo
+  envolvido na destruição dos objetos. Neste caso, o destrutor a ser
+  chamado é determinado em tempo de compilação, através do tipo dos
+  ponteiros, que são ponteiros para `Usuario' (na realidade, isso na
+  verdade é um comportamento *indefinido*).
+
+  Vamos tornar os destrutores virtuais:
+
+  `usuario'
+
+  ┌────
+  │ class Usuario {
+  │ public:
+  │   Usuario(std::string email, InfoPessoal info);
+  │   virtual ~Usuario(); // <<<<<
+  │ 
+  │   std::string email() const;
+  │   std::string nome() const;
+  │   unsigned idade() const;
+  │ 
+  │   virtual std::string to_string() const;
+  │ 
+  │ private:
+  │   std::string _email;
+  │   InfoPessoal _info;
+  │ };
+  └────
+
+  `paciente'
+
+  ┌────
+  │ class Paciente : public Usuario {
+  │ public:
+  │   Paciente(std::string _plano_saude, std::string email, InfoPessoal info);
+  │   virtual ~Paciente(); // <<<<<<
+  │ 
+  │   std::string plano_saude() const;
+  │ 
+  │ private:
+  │   std::string _plano_saude;
+  │ };
+  └────
+
+  `medico'
+
+  ┌────
+  │ class Medico : public Usuario {
+  │ public:
+  │   Medico(RegistroCRM reg_crm, std::string especialidade,
+  │          std::string email, InfoPessoal info);
+  │   virtual ~Medico(); // <<<<<
+  │ 
+  │   std::string crm() const;
+  │   std::string especialidade() const;
+  │   std::string to_string() const override;
+  │ 
+  │ private:
+  │   RegistroCRM _reg_crm;
+  │   std::string _especialidade;
+  │ };
+  └────
+
+  Executando novamente
+
+  ┌────
+  │ ~Medico()
+  │ ~Usuario()
+  │ ~Paciente()
+  │ ~Usuario()
+  └────
+
+
 Princípio de Substituição de Liskov (O "L" de SOLID)
 ────────────────────────────────────────────────────
 
@@ -704,10 +892,10 @@ Princípio de Substituição de Liskov (O "L" de SOLID)
   │ [doctest] doctest version is "2.4.11"
   │ [doctest] run with "--help" for options
   │ ===============================================================================
-  │ /tmp/babel-V2UCcY/C-src-RX3Jhu.cpp:53:
+  │ /tmp/babel-vpGePR/C-src-nX55VM.cpp:53:
   │ TEST CASE:  redimensionar quadrado
   │ 
-  │ /tmp/babel-V2UCcY/C-src-RX3Jhu.cpp:56: ERROR: CHECK_EQ( q.area(), 12 ) is NOT correct!
+  │ /tmp/babel-vpGePR/C-src-nX55VM.cpp:56: ERROR: CHECK_EQ( q.area(), 12 ) is NOT correct!
   │   values: CHECK_EQ( 16, 12 )
   │ 
   │ ===============================================================================
