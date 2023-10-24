@@ -252,7 +252,9 @@ int main() {
 - Como é possível determinar qual método será chamado (classe vs superclasse)?
 - Essa decisão é feita durante a compilação ou execução?
 
-Note que, devido a utilização de herança, a quantidade de parâmetros nos construtores de ~Paciente~ e ~Medico~ aumentou consideravelmente. É uma boa prática reduzir a quantidade de parâmetros. Podemos fazer isso agrupando informações relacionadas:
+Podemos simplificar de alguma forma a implementação acima?
+
+Repare na a quantidade de parâmetros nos construtores de ~Paciente~ e ~Medico~. O que podemos fazer para reduzir?
 
 =usuario=
 
@@ -565,7 +567,7 @@ using mediapp::model::Usuario;
 using mediapp::model::Medico;
 using mediapp::model::Paciente;
 
-void show(Usuario const &u) {
+void mostrar(Usuario const &u) {
   std::cout << u.to_string() << std::endl;
 }
 
@@ -577,8 +579,8 @@ int main() {
   Medico m(reg_crm, "oncologia", email, info);
   Paciente p("unimed", email, info);
 
-  show(m);
-  show(p);
+  mostrar(m);
+  mostrar(p);
   
   return 0;
 }
@@ -588,7 +590,7 @@ int main() {
 : Drauzio Varella (drauzio@gmail.com, 80 anos)
 : Drauzio Varella (drauzio@gmail.com, 80 anos)
 
-Uai... mas, não especializamos a implementação de ~to_string~ para médicos? O método ~to_string~ chamado foi a implementação de usuário, e isso foi determinado em tempo de compilação, pelo tipo do parâmetro da função ~show~.
+Uai... mas, não especializamos a implementação de ~to_string~ para médicos? O método ~to_string~ chamado foi a implementação de usuário, e isso foi determinado em tempo de compilação, pelo tipo do parâmetro da função ~mostrar~.
 
 Gostaríamos de determinar o método chamado através de uma referência/ponteiro a partir da instância, em tempo de execução. Para isso, precisamos das palavras-chave ~virtual~ e ~override~:
 
@@ -707,7 +709,7 @@ using mediapp::model::Usuario;
 using mediapp::model::Medico;
 using mediapp::model::Paciente;
 
-void show(Usuario const &u) {
+void mostrar(Usuario const &u) {
   std::cout << u.to_string() << std::endl;
 }
 
@@ -719,8 +721,8 @@ int main() {
   Medico m(reg_crm, "oncologia", email, info);
   Paciente p("unimed", email, info);
 
-  show(m);
-  show(p);
+  mostrar(m);
+  mostrar(p);
   
   return 0;
 }
