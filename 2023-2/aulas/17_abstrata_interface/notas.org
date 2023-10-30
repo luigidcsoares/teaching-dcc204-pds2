@@ -206,12 +206,10 @@ int main() {
 }
 #+end_src
 
-#+begin_export latex
 Menu para o cadastro de médicos:
 
 #+caption: Menu para cadastro de médicos
 #+name: fig:cadastro-medico
 [[./cadastro-medico.png]]
-#+end_export
 
 * TODO Interfaces
