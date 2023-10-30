@@ -2,6 +2,10 @@
 #+author: Luigi D. C. Soares
 #+startup: entitiespretty
 #+options: toc:nil  num:nil
+* Links Úteis
+
+- Link para o repositório de agendamento de consultas no Github: https://github.com/luigidcsoares/teaching-dcc204-pds2-project-2023.2-mediapp/
+  
 * Classes e Métodos Abstratos
 
 - Uma classe abstrata *não pode ser instanciada*, ela apenas representa um conceito abstrato
