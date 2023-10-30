@@ -227,6 +227,551 @@ Classes e Métodos Abstratos
   │ }
   └────
 
+  Menu para o cadastro de médicos:
 
-TODO Interfaces
-═══════════════
+  <./cadastro-medico.png>
+
+  Após o cadastro/login como médico, o próximo menu é o menu específico
+  para médicos, que fornece ao médico as opções de visualizar as
+  consultas agendadas e de pesquisar pelas consultas de um paciente em
+  específico. Vamos construir este menu:
+
+  `medico_menu'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "ui/menu.hpp"
+  │ #include "model/medico.hpp"
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mediapp::ui {
+  │ class MedicoMenu : public Menu {
+  │ public:
+  │   MedicoMenu(model::Medico const &medico);
+  │   Menu *next(unsigned option) override;
+  │ private:
+  │   model::Medico const &_medico;
+  │ };
+  │ }
+  └────
+
+  ┌────
+  │ #include "ui/medico_menu.hpp"
+  │ 
+  │ #include "model/medico.hpp"
+  │ 
+  │ #include <iostream>
+  │ #include <string>
+  │ 
+  │ namespace mediapp::ui {
+  │ MedicoMenu::MedicoMenu(model::Medico const &medico) : _medico(medico) {
+  │   _title = medico.to_string();
+  │   _options.push_back("1 - Visualizar Consultas");
+  │   _options.push_back("2 - Pesquisar Paciente");
+  │ }
+  │ 
+  │ Menu *MedicoMenu::next(unsigned option) {
+  │   switch (option) {
+  │   case 1: {
+  │     std::cout << "Visualizando consultas" << std::endl;
+  │     break;
+  │   }
+  │   case 2: {
+  │     std::string email;
+  │     std::cout << "> Email: ";
+  │     std::cin >> email;
+  │     std::cout << "Pesquisando consultas de " << email << std::endl;
+  │     break;
+  │   }
+  │   }
+  │ 
+  │   // TODO: próximo menu
+  │   return nullptr;
+  │ }
+  │ }
+  └────
+
+  Agora, vamos modificar o menu de login para redirecionar para o menu
+  de médico após o cadastro:
+
+  `login_menu'
+
+  ┌────
+  │ case 3: {
+  │   // ...
+  │   model::Medico medico(reg_crm, especialidade, email, info);
+  │   std::cout << "Salvando Médico: " << medico.to_string() << std::endl;
+  │ 
+  │   return new MedicoMenu(medico); // <<<
+  │ }
+  └────
+
+  E vamos modificar o driver do programa para renderizar os próximos
+  menus:
+
+  ┌────
+  │ // ...
+  │ ui::Menu *menu = login.next(option);
+  │ while (menu != nullptr) {
+  │   menu->render();
+  │ 
+  │   std::cin >> option;
+  │   std::cin.ignore(max_input, '\n');
+  │ 
+  │   ui::Menu *old_menu = menu;
+  │   menu = menu->next(option);
+  │ 
+  │   delete old_menu;
+  │ }
+  └────
+
+  Menu para o cadastro de médicos:
+
+  <./medico_consultas.png>
+
+
+Interfaces
+══════════
+
+  • Possuem unicamente o papel de um *contrato*
+
+  • Uma interface /I/ descreve tudo que um objeto precisa implementar
+    para ser considerado um /I/
+
+  • Uma interface possui apenas a *declaração de operações públicas*
+    (sem dados, sem modificadores protected e private)
+
+  • Algumas linguagens (e.g., Java) possuem uma palavra-chave para a
+    definição de interfaces. Não é o caso de C++. Em C++, não existe uma
+    distinção sintática entre classe abstrata e interface, apenas
+    distinção semântica: uma interface é uma classe abstrata que contém
+    *apenas* métodos puramente virtuais
+
+
+Exemplo de Introdução
+─────────────────────
+
+  Um MusicPlayer e um VideoPlayer possuem alguns comportamentos em
+  comum. Quais?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ // Interface
+  │ class Playable {
+  │ public:
+  │   virtual void play() = 0;
+  │   virtual void pause() = 0;
+  │ 
+  │   // Toda interface deve implementar um destrutor virtual!
+  │   virtual ~Playable() = default;
+  │ };
+  │ 
+  │ // MusicPlayer *é* Playable
+  │ class MusicPlayer : public Playable {
+  │ public:
+  │   void play() override {
+  │     std::cout << "Music is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() override {
+  │     std::cout << "Music playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ // VideoPlayer *é* Playable
+  │ class VideoPlayer : public Playable {
+  │ public:
+  │   void play() override {
+  │     std::cout << "Video is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() override {
+  │     std::cout << "Video playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ void test_playable(Playable &p) {
+  │   p.play();
+  │   p.pause();
+  │ }
+  │ 
+  │ int main() {
+  │   MusicPlayer mp;
+  │   VideoPlayer vp;
+  │ 
+  │   test_playable(mp);
+  │   test_playable(vp);
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Music is playing.
+  │ Music playback paused.
+  │ Video is playing.
+  │ Video playback paused.
+  └────
+
+
+  MusicPlayer e VideoPlayer poderiam, também, ter uma função de gravar.
+  • Faz sentido colocar esta operação em `Playable'?
+  • Podemos ter uma classe implementado duas interfaces? Em C++,
+    alcançado por meio de herança múltipla (um caso que faz sentido!)
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ // Interface
+  │ class Playable {
+  │ public:
+  │   virtual void play() = 0;
+  │   virtual void pause() = 0;
+  │ 
+  │   // Toda interface deve implementar um destrutor virtual!
+  │   virtual ~Playable() = default;
+  │ };
+  │ 
+  │ // Outra interface
+  │ class Recordable {
+  │ public:
+  │   virtual void record() = 0;
+  │   virtual ~Recordable() {}
+  │ };
+  │ 
+  │ // MusicPlayer *é* Playable e Recordable
+  │ class MusicPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() override {
+  │     std::cout << "Music is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() override {
+  │     std::cout << "Music playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ // VideoPlayer *é* Playable e Recordable
+  │ class VideoPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() override {
+  │     std::cout << "Video is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() override {
+  │     std::cout << "Video playback paused." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ void test_playable(Playable &p) {
+  │   p.play();
+  │   p.pause();
+  │ }
+  │ 
+  │ void test_recordable(Recordable &r) {
+  │   r.record();
+  │ }
+  │ 
+  │ int main() {
+  │   MusicPlayer mp;
+  │   VideoPlayer vp;
+  │ 
+  │   test_recordable(mp);
+  │   test_playable(mp);
+  │ 
+  │   test_recordable(vp);
+  │   test_playable(vp);
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ error: cannot declare variable ‘mp’ to be of abstract type ‘MusicPlayer’
+  │ error: cannot declare variable ‘vp’ to be of abstract type ‘VideoPlayer’
+  └────
+
+  Hmm, o que deu errado? Volte ao código para identificar o que
+  esquecemos.
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ // Interface
+  │ class Playable {
+  │ public:
+  │   virtual void play() = 0;
+  │   virtual void pause() = 0;
+  │ 
+  │   // Toda interface deve implementar um destrutor virtual!
+  │   virtual ~Playable() = default;
+  │ };
+  │ 
+  │ // Outra interface
+  │ class Recordable {
+  │ public:
+  │   virtual void record() = 0;
+  │   virtual ~Recordable() {}
+  │ };
+  │ 
+  │ // MusicPlayer *é* Playable e Recordable
+  │ class MusicPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() override {
+  │     std::cout << "Music is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() override {
+  │     std::cout << "Music playback paused." << std::endl;
+  │   }
+  │ 
+  │   void record() override {
+  │     std::cout << "Recording music." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ // VideoPlayer *é* Playable e Recordable
+  │ class VideoPlayer : public Playable, public Recordable {
+  │ public:
+  │   void play() override {
+  │     std::cout << "Video is playing." << std::endl;
+  │   }
+  │ 
+  │   void pause() override {
+  │     std::cout << "Video playback paused." << std::endl;
+  │   }
+  │ 
+  │   void record() override {
+  │     std::cout << "Recording video." << std::endl;
+  │   }
+  │ };
+  │ 
+  │ void test_playable(Playable &p) {
+  │   p.play();
+  │   p.pause();
+  │ }
+  │ 
+  │ void test_recordable(Recordable &r) {
+  │   r.record();
+  │ }
+  │ 
+  │ int main() {
+  │   MusicPlayer mp;
+  │   VideoPlayer vp;
+  │ 
+  │   test_recordable(mp);
+  │   test_playable(mp);
+  │ 
+  │   test_recordable(vp);
+  │   test_playable(vp);
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Recording music.
+  │ Music is playing.
+  │ Music playback paused.
+  │ Recording video.
+  │ Video is playing.
+  │ Video playback paused.
+  └────
+
+
+Exemplo Prático
+───────────────
+
+  Vamos voltar para o nosso exemplo do agendamento de consultas e ver
+  uma aplicação prática de interfaces. Vamos implementar o login como
+  médico. Isto envolve buscar o usuário em uma espécie de banco de dados
+  (e, em uma aplicação real, verificar se a senha informada está
+  correta, etc).
+
+  • Vamos adotar um padrão arquitetural conhecido como /repository
+    pattern/
+  • Vamos começar com uma interface /repositorio::Medico/ que define
+    operações de busca e persistência de dados
+
+  `repository/medico'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "model/medico.hpp"
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mediapp::repository {
+  │ class Medico {
+  │ public:
+  │   virtual std::vector<model::Medico> obter_todos() const = 0;
+  │   virtual model::Medico *buscar(std::string const &email) const = 0;
+  │   virtual bool deletar(std::string const &email) const = 0;
+  │   virtual bool salvar(model::Medico const &medico) const = 0;
+  │   virtual ~Medico() = default;
+  │ };
+  │ }
+  └────
+
+  A classe acima define apenas um contrato que classes concretas de
+  armazenamento devem implementar. Qual a vantagem?
+  • Podemos inicialmente implementar o armazenamento dos dados como, por
+    exemplo, um simples arquivo txt
+  • Eventualmente, caso seja necessário migrar o armazenamento para um
+    outro formato (e.g., SQLite, MySQL, etc), basta construir uma nova
+    classe que implemente essa mesma interface
+  • Facilita a implementação de testes unitários de serviços que
+    necessitam de acesso a dados
+
+  Para entender este último ponto, vamos introduzir um quarto módulo ao
+  sistema, uma camada de serviços:
+
+  `service/medico'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "model/medico.hpp"
+  │ #include "repository/medico.hpp"
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mediapp::service {
+  │ class Medico {
+  │ public:
+  │   Medico(repository::Medico const &repo);
+  │   model::Medico *autenticar(std::string const &email) const;
+  │ 
+  │ private:
+  │   repository::Medico const &_repo;
+  │ };
+  │ }
+  └────
+
+  ┌────
+  │ #include "service/medico.hpp"
+  │ #include "model/medico.hpp"
+  │ #include "repository/medico.hpp"
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mediapp::service {
+  │ Medico::Medico(repository::Medico const &repo) : _repo(repo) {}
+  │ 
+  │ model::Medico *Medico::autenticar(std::string const &email) const {
+  │   // TODO: Verificar senha
+  │   // TODO: Buscar notificações, outras informações, etc
+  │   return _repo.buscar(email);
+  │ }
+  │ }
+  └────
+
+  Note que estamos /injetando/ uma instância de um repositório médico na
+  classe de serviços. Desta forma, injetaríamos uma instância do tipo
+  /repository::MedicoMySQL/ na aplicação real, enquanto que nos testes
+  unitários da classe de serviços injetaríamos uma instância
+  /repository::MedicoFake/ para simular os dados de médicos (e assim
+  evitar, por exemplo, conexões com um banco de dados nos testes da
+  classe de serviços; queremos testar os serviços, não o acesso ao
+  banco).
+
+  Vamos criar essa classe "fake" e utilizá-la na aplicação, apenas para
+  ilustrar uma implementação da interface:
+
+  `repository/medico_fake'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "model/usuario.hpp"
+  │ #include "model/medico.hpp"
+  │ #include "repository/medico.hpp"
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mediapp::repository {
+  │ class MedicoFake : public Medico {
+  │ public:
+  │   std::vector<model::Medico> obter_todos() const override;
+  │   model::Medico *buscar(std::string const &email) const override;
+  │   bool deletar(std::string const &email) const override;
+  │   bool salvar(model::Medico const &medico) const override;
+  │ };
+  │ }
+  └────
+
+  ┌────
+  │ #include "repository/medico_fake.hpp"
+  │ 
+  │ #include "model/usuario.hpp"
+  │ #include "model/medico.hpp"
+  │ 
+  │ #include <iostream>
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mediapp::repository {
+  │ std::vector<model::Medico> MedicoFake::obter_todos() const {
+  │   // TODO
+  │   return {};
+  │ }
+  │ 
+  │ model::Medico *MedicoFake::buscar(std::string const &email) const {
+  │   model::RegistroCRM reg_crm = {"123456", "SP"};
+  │   model::InfoPessoal info = {"Dráuzio", "Varela", 80};
+  │   return new model::Medico(reg_crm, "Oncologia", email, info);
+  │ }
+  │ 
+  │ bool MedicoFake::deletar(std::string const &email) const {
+  │   // TODO
+  │   return false;
+  │ }
+  │ 
+  │ bool MedicoFake::salvar(model::Medico const &medico) const {
+  │   // TODO
+  │   return false;
+  │ }
+  │ }
+  └────
+
+  E, no menu de login, vamos utilizar o serviço injetando o repositório
+  fake como dependência:
+
+  ┌────
+  │ repository::MedicoFake r_medico;
+  │ service::Medico s_medico(r_medico); // <<<
+  │ 
+  │ switch (option) {
+  │ case 1: {
+  │   char tipo;
+  │   std::cout << "> Tipo de usuário (p: paciente, m: médico): ";
+  │   std::cin >> tipo;
+  │ 
+  │   std::string email;
+  │   ler_autenticacao(email);
+  │ 
+  │   std::cout << "Logando: " << email << std::endl;
+  │ 
+  │   if (tipo == 'm') {
+  │     model::Medico *medico = s_medico.autenticar(email); // <<<
+  │     // if (medico == nullptr) ...
+  │     return new MedicoMenu(*medico);
+  │   } else {
+  │     // TODO: paciente
+  │   }
+  │ 
+  │   break;
+  │ }
+  │ // ...
+  │ }
+  │ 
+  └────
+
+  Login como médico:
+
+  <./login_medico.png>

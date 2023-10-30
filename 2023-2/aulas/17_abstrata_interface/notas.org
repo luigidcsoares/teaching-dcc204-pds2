@@ -309,5 +309,410 @@ Menu para o cadastro de médicos:
 #+name: fig:medico_consultas
 [[./medico_consultas.png]]
 
+* Interfaces
 
-* TODO Interfaces
+- Possuem unicamente o papel de um *contrato*
+  
+- Uma interface /I/ descreve tudo que um objeto precisa implementar para ser considerado um /I/
+  
+- Uma interface possui apenas a *declaração de operações públicas* (sem dados, sem modificadores protected e private)
+  
+- Algumas linguagens (e.g., Java) possuem uma palavra-chave para a definição de interfaces. Não é o caso de C++. Em C++, não existe uma distinção sintática entre classe abstrata e interface, apenas distinção semântica: uma interface é uma classe abstrata que contém *apenas* métodos puramente virtuais
+
+** Exemplo de Introdução
+
+Um MusicPlayer e um VideoPlayer possuem alguns comportamentos em comum. Quais?
+
+#+begin_src C++ :flags -std=c++17 :exports both :results scalar
+#include <iostream>
+
+// Interface
+class Playable {
+public:
+  virtual void play() = 0;
+  virtual void pause() = 0;
+
+  // Toda interface deve implementar um destrutor virtual!
+  virtual ~Playable() = default;
+};
+
+// MusicPlayer *é* Playable
+class MusicPlayer : public Playable {
+public:
+  void play() override {
+    std::cout << "Music is playing." << std::endl;
+  }
+
+  void pause() override {
+    std::cout << "Music playback paused." << std::endl;
+  }
+};
+
+// VideoPlayer *é* Playable
+class VideoPlayer : public Playable {
+public:
+  void play() override {
+    std::cout << "Video is playing." << std::endl;
+  }
+
+  void pause() override {
+    std::cout << "Video playback paused." << std::endl;
+  }
+};
+
+void test_playable(Playable &p) {
+  p.play();
+  p.pause();
+}
+
+int main() {
+  MusicPlayer mp;
+  VideoPlayer vp;
+  
+  test_playable(mp);
+  test_playable(vp);
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Music is playing.
+: Music playback paused.
+: Video is playing.
+: Video playback paused.
+
+MusicPlayer e VideoPlayer poderiam, também, ter uma função de gravar.
+- Faz sentido colocar esta operação em ~Playable~?
+- Podemos ter uma classe implementado duas interfaces? Em C++, alcançado por meio de herança múltipla (um caso que faz sentido!)
+  
+#+begin_src C++ :flags -std=c++17 :exports both :results silent
+#include <iostream>
+
+// Interface
+class Playable {
+public:
+  virtual void play() = 0;
+  virtual void pause() = 0;
+
+  // Toda interface deve implementar um destrutor virtual!
+  virtual ~Playable() = default;
+};
+
+// Outra interface
+class Recordable {
+public:
+  virtual void record() = 0;
+  virtual ~Recordable() {}
+};
+
+// MusicPlayer *é* Playable e Recordable
+class MusicPlayer : public Playable, public Recordable {
+public:
+  void play() override {
+    std::cout << "Music is playing." << std::endl;
+  }
+
+  void pause() override {
+    std::cout << "Music playback paused." << std::endl;
+  }
+};
+
+// VideoPlayer *é* Playable e Recordable
+class VideoPlayer : public Playable, public Recordable {
+public:
+  void play() override {
+    std::cout << "Video is playing." << std::endl;
+  }
+
+  void pause() override {
+    std::cout << "Video playback paused." << std::endl;
+  }
+};
+
+void test_playable(Playable &p) {
+  p.play();
+  p.pause();
+}
+
+void test_recordable(Recordable &r) {
+  r.record();
+}
+
+int main() {
+  MusicPlayer mp;
+  VideoPlayer vp;
+  
+  test_recordable(mp);
+  test_playable(mp);
+
+  test_recordable(vp);
+  test_playable(vp);
+  
+  return 0;
+}
+#+end_src
+
+#+begin_example
+error: cannot declare variable ‘mp’ to be of abstract type ‘MusicPlayer’
+error: cannot declare variable ‘vp’ to be of abstract type ‘VideoPlayer’
+#+end_example
+
+Hmm, o que deu errado? Volte ao código para identificar o que esquecemos.
+
+#+begin_src C++ :flags -std=c++17 :exports both :results scalar
+#include <iostream>
+
+// Interface
+class Playable {
+public:
+  virtual void play() = 0;
+  virtual void pause() = 0;
+
+  // Toda interface deve implementar um destrutor virtual!
+  virtual ~Playable() = default;
+};
+
+// Outra interface
+class Recordable {
+public:
+  virtual void record() = 0;
+  virtual ~Recordable() {}
+};
+
+// MusicPlayer *é* Playable e Recordable
+class MusicPlayer : public Playable, public Recordable {
+public:
+  void play() override {
+    std::cout << "Music is playing." << std::endl;
+  }
+
+  void pause() override {
+    std::cout << "Music playback paused." << std::endl;
+  }
+
+  void record() override {
+    std::cout << "Recording music." << std::endl;
+  }
+};
+
+// VideoPlayer *é* Playable e Recordable
+class VideoPlayer : public Playable, public Recordable {
+public:
+  void play() override {
+    std::cout << "Video is playing." << std::endl;
+  }
+
+  void pause() override {
+    std::cout << "Video playback paused." << std::endl;
+  }
+
+  void record() override {
+    std::cout << "Recording video." << std::endl;
+  }
+};
+
+void test_playable(Playable &p) {
+  p.play();
+  p.pause();
+}
+
+void test_recordable(Recordable &r) {
+  r.record();
+}
+
+int main() {
+  MusicPlayer mp;
+  VideoPlayer vp;
+  
+  test_recordable(mp);
+  test_playable(mp);
+
+  test_recordable(vp);
+  test_playable(vp);
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Recording music.
+: Music is playing.
+: Music playback paused.
+: Recording video.
+: Video is playing.
+: Video playback paused.
+
+** Exemplo Prático
+
+Vamos voltar para o nosso exemplo do agendamento de consultas e ver uma aplicação prática de interfaces. Vamos implementar o login como médico. Isto envolve buscar o usuário em uma espécie de banco de dados (e, em uma aplicação real, verificar se a senha informada está correta, etc).
+
+- Vamos adotar um padrão arquitetural conhecido como /repository pattern/
+- Vamos começar com uma interface /repositorio::Medico/ que define operações de busca e persistência de dados
+
+=repository/medico=
+
+#+begin_src C++ :exports code
+#pragma once
+
+#include "model/medico.hpp"
+
+#include <string>
+#include <vector>
+
+namespace mediapp::repository {
+class Medico {
+public:
+  virtual std::vector<model::Medico> obter_todos() const = 0;
+  virtual model::Medico *buscar(std::string const &email) const = 0;
+  virtual bool deletar(std::string const &email) const = 0;
+  virtual bool salvar(model::Medico const &medico) const = 0;
+  virtual ~Medico() = default;
+};
+}
+#+end_src
+
+A classe acima define apenas um contrato que classes concretas de armazenamento devem implementar. Qual a vantagem?
+- Podemos inicialmente implementar o armazenamento dos dados como, por exemplo, um simples arquivo txt
+- Eventualmente, caso seja necessário migrar o armazenamento para um outro formato (e.g., SQLite, MySQL, etc), basta construir uma nova classe que implemente essa mesma interface
+- Facilita a implementação de testes unitários de serviços que necessitam de acesso a dados
+
+Para entender este último ponto, vamos introduzir um quarto módulo ao sistema, uma camada de serviços:
+
+=service/medico=
+
+#+begin_src C++ :exports code
+#pragma once
+
+#include "model/medico.hpp"
+#include "repository/medico.hpp"
+
+#include <string>
+
+namespace mediapp::service {
+class Medico {
+public:
+  Medico(repository::Medico const &repo);
+  model::Medico *autenticar(std::string const &email) const;
+  
+private:
+  repository::Medico const &_repo;
+};
+}
+#+end_src
+
+#+begin_src C++ :exports code
+#include "service/medico.hpp"
+#include "model/medico.hpp"
+#include "repository/medico.hpp"
+
+#include <string>
+
+namespace mediapp::service {
+Medico::Medico(repository::Medico const &repo) : _repo(repo) {}
+
+model::Medico *Medico::autenticar(std::string const &email) const {
+  // TODO: Verificar senha
+  // TODO: Buscar notificações, outras informações, etc
+  return _repo.buscar(email);
+}
+}
+#+end_src
+
+Note que estamos /injetando/ uma instância de um repositório médico na classe de serviços. Desta forma, injetaríamos uma instância do tipo /repository::MedicoMySQL/ na aplicação real, enquanto que nos testes unitários da classe de serviços injetaríamos uma instância /repository::MedicoFake/ para simular os dados de médicos (e assim evitar, por exemplo, conexões com um banco de dados nos testes da classe de serviços; queremos testar os serviços, não o acesso ao banco).
+
+Vamos criar essa classe "fake" e utilizá-la na aplicação, apenas para ilustrar uma implementação da interface:
+
+=repository/medico_fake=
+
+#+begin_src C++ :exports code
+#pragma once
+
+#include "model/usuario.hpp"
+#include "model/medico.hpp"
+#include "repository/medico.hpp"
+
+#include <string>
+
+namespace mediapp::repository {
+class MedicoFake : public Medico {
+public:
+  std::vector<model::Medico> obter_todos() const override;
+  model::Medico *buscar(std::string const &email) const override;
+  bool deletar(std::string const &email) const override;
+  bool salvar(model::Medico const &medico) const override;
+};
+}
+#+end_src
+
+#+begin_src C++ :exports code
+#include "repository/medico_fake.hpp"
+
+#include "model/usuario.hpp"
+#include "model/medico.hpp"
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+namespace mediapp::repository {
+std::vector<model::Medico> MedicoFake::obter_todos() const {
+  // TODO
+  return {};
+}
+
+model::Medico *MedicoFake::buscar(std::string const &email) const {
+  model::RegistroCRM reg_crm = {"123456", "SP"};
+  model::InfoPessoal info = {"Dráuzio", "Varela", 80};
+  return new model::Medico(reg_crm, "Oncologia", email, info);
+}
+
+bool MedicoFake::deletar(std::string const &email) const {
+  // TODO
+  return false;
+}
+
+bool MedicoFake::salvar(model::Medico const &medico) const {
+  // TODO
+  return false;
+}
+}
+#+end_src
+
+E, no menu de login, vamos utilizar o serviço injetando o repositório fake como dependência:
+
+#+begin_src C++ :exports code
+repository::MedicoFake r_medico;
+service::Medico s_medico(r_medico); // <<<
+
+switch (option) {
+case 1: {
+  char tipo;
+  std::cout << "> Tipo de usuário (p: paciente, m: médico): ";
+  std::cin >> tipo;
+  
+  std::string email;
+  ler_autenticacao(email);
+  
+  std::cout << "Logando: " << email << std::endl;
+  
+  if (tipo == 'm') {
+    model::Medico *medico = s_medico.autenticar(email); // <<<
+    // if (medico == nullptr) ...
+    return new MedicoMenu(*medico);
+  } else {
+    // TODO: paciente
+  }
+    
+  break;
+}
+// ...
+}
+
+#+end_src
+
+Login como médico:
+
+#+caption: Efetuando login como médico
+#+name: fig:login_medico
+[[./login_medico.png]]
