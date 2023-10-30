@@ -9,7 +9,7 @@
 Links Úteis
 ═══════════
 
-  • Link para o repositório de agendamento de consultas no Github:
+  • Link para o repositório de agendamento de consultas:
     <https://github.com/luigidcsoares/teaching-dcc204-pds2-project-2023.2-mediapp/>
 
 
