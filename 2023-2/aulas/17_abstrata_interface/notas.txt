@@ -1,0 +1,232 @@
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              NOTAS DE AULA - 17 POO: CLASSES ABSTRATAS E
+                               INTERFACES
+
+                           Luigi D. C. Soares
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Classes e Métodos Abstratos
+═══════════════════════════
+
+  • Uma classe abstrata *não pode ser instanciada*, ela apenas
+    representa um conceito abstrato
+
+    Exemplo: uma classe Número abstrai o conceito de números. Números
+    podem ser do tipo Inteiro ou Real, que são subclasses. Nós
+    instanciamos um Inteiro/Real, não um Número genérico.
+
+  • Um *método* abstrato normalmente é um método que não possui
+    implementação, apenas um *contrato*. Em C++, isso vai ser um pouco
+    mais "fraco": um método será abstrato se exigir que classes
+    derivadas o implementem, mas pode ele ter um corpo.
+
+  • Classes que possuem pelo menos um método abstrato são *classes
+    abstratas*
+
+  • Subclasses de uma classe abstrata devem implementar os métodos
+    abstratos que a superclasse define; caso contrário, também passam a
+    ser consideradas abstratas)
+
+  • Em C++, métodos abstratos são também conhecidos como métodos
+    virtuais puros, e seguem a sintaxa `virtual tipo_retorno func(...) =
+    0' (o `= 0' indica que este é um método virtual puro).
+
+  Vamos construir alguns menus para a interface do aplicativo de
+  agendamento de consultas. O aplicativo terá diferentes menus, cada um
+  com suas funcionalidades específicas. Mas, eles compartilham algumas
+  coisas em comum: opções a serem selecionadas pelo usuário e uma
+  operação de renderização (exibição):
+
+  `menu'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <string>
+  │ #include <vector>
+  │ 
+  │ namespace mediapp::ui {
+  │ class Menu {
+  │ public:
+  │   /// @brief Destrutor virtual, para correta destruição de subclasses.
+  │   virtual ~Menu() = default;
+  │ 
+  │   /// @return O próximo menu, a partir da seleção do usuário.
+  │   virtual Menu *next(unsigned option) = 0;
+  │ 
+  │   /// @brief Renderiza as opções do menu.
+  │   virtual void render() const;
+  │ 
+  │ protected:
+  │   std::string _title = "Menu de Opções";
+  │   std::vector<std::string> _options = {"0 - Sair"};
+  │ };
+  │ }
+  └────
+
+  ┌────
+  │ #include "ui/menu.hpp"
+  │ #include <iostream>
+  │ 
+  │ namespace mediapp::ui {
+  │ void Menu::render() const {
+  │   std::string border(_title.size() + 5, '=');
+  │   std::cout << border << '\n';
+  │   std::cout << "|| " << _title << '\n';
+  │   std::cout << border << "\n\n";
+  │ 
+  │   for (std::string opt : _options) {
+  │     std::cout << opt << '\n';
+  │   }
+  │ 
+  │   std::cout << std::endl << "> Opção: ";
+  │ }
+  │ }
+  └────
+
+  O menu inicial, de login, possui três opções: login, cadastro como
+  paciente, ou cadastro como médico. Vamos implementá-lo:
+
+  `login_menu'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include "ui/menu.hpp"
+  │ #include <string>
+  │ 
+  │ namespace mediapp::ui {
+  │ class LoginMenu : public Menu {
+  │ public:
+  │   /// @brief Constrói um menu de login.
+  │   LoginMenu();
+  │ 
+  │   /// @brief Constrói próximo menu (criação de conta ou login)
+  │   /// @return O próximo menu, a partir da seleção do usuário.
+  │   Menu *next(unsigned option) override;
+  │ };
+  │ }
+  └────
+
+  ┌────
+  │ #include "ui/login_menu.hpp"
+  │ 
+  │ #include "model/medico.hpp"
+  │ #include "model/paciente.hpp"
+  │ #include "model/usuario.hpp"
+  │ 
+  │ #include <iostream>
+  │ #include <string>
+  │ 
+  │ namespace mediapp::ui {
+  │ LoginMenu::LoginMenu() {
+  │   _title = "Menu de Autenticação";
+  │   _options.push_back("1 - Entrar");
+  │   _options.push_back("2 - Cadastrar Paciente");
+  │   _options.push_back("3 - Cadastrar Médico");
+  │ }
+  │ 
+  │ Menu *LoginMenu::next(unsigned option) {
+  │   auto ler_autenticacao = [](std::string &email) {
+  │     std::cout << "> Email: ";
+  │     std::cin >> email;
+  │   };
+  │ 
+  │   auto ler_info_pessoal = [](model::InfoPessoal &info) {
+  │     std::cout << "> Primeiro nome: ";
+  │     std::cin >> info.primeiro_nome;
+  │ 
+  │     std::cout << "> Sobrenome: ";
+  │     std::cin >> info.sobrenome;
+  │ 
+  │     std::cout << "> Idade: ";
+  │     std::cin >> info.idade;
+  │   };
+  │ 
+  │   switch (option) {
+  │   case 1: {
+  │     char tipo;
+  │     std::cout << "> Tipo de usuário (p: paciente, m: médico): ";
+  │     std::cin >> tipo;
+  │ 
+  │     std::string email;
+  │     ler_autenticacao(email);
+  │ 
+  │     std::cout << "Logando: " << email << std::endl;
+  │     break;
+  │   }
+  │   case 2: {
+  │     std::string plano_saude;
+  │     std::cout << "> Plano de Saúde: ";
+  │     std::cin >> plano_saude;
+  │ 
+  │     std::string email;
+  │     ler_autenticacao(email);
+  │ 
+  │     model::InfoPessoal info;
+  │     ler_info_pessoal(info);
+  │ 
+  │     model::Paciente paciente(plano_saude, email, info);
+  │     std::cout << "Salvando paciente: " << paciente.to_string() << std::endl;
+  │     break;
+  │   }
+  │   case 3: {
+  │     model::RegistroCRM reg_crm;
+  │ 
+  │     std::cout << "> ID CRM: ";
+  │     std::cin >> reg_crm.id_crm;
+  │ 
+  │     std::cout << "> Estado CRM: ";
+  │     std::cin >> reg_crm.estado_crm;
+  │ 
+  │     std::string especialidade;
+  │     std::cout << "> Especialidade: ";
+  │     std::cin >> especialidade;
+  │ 
+  │     std::string email;
+  │     ler_autenticacao(email);
+  │ 
+  │     model::InfoPessoal info;
+  │     ler_info_pessoal(info);
+  │ 
+  │     model::Medico medico(reg_crm, especialidade, email, info);
+  │     std::cout << "Salvando Médico: " << medico.to_string() << std::endl;
+  │     break;
+  │   }
+  │   }
+  │ 
+  │   // TODO: próximo menu
+  │   return nullptr;
+  │ }
+  │ }
+  └────
+
+  E agora o ponto de entrada do nosso programa:
+
+  ┌────
+  │ #include "ui/login_menu.hpp"
+  │ 
+  │ #include <iostream>
+  │ #include <limits>
+  │ 
+  │ namespace ui = mediapp::ui;
+  │ int main() {
+  │   long int const max_input =
+  │     std::numeric_limits<std::streamsize>::max();
+  │ 
+  │   ui::LoginMenu login;
+  │   login.render();
+  │ 
+  │   unsigned option;
+  │   std::cin >> option;
+  │   std::cin.ignore(max_input, '\n');
+  │ 
+  │   ui::Menu *menu = login.next(option);
+  │   return 0;
+  │ }
+  └────
+
+
+TODO Interfaces
+═══════════════
