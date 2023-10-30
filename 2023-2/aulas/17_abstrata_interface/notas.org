@@ -212,4 +212,102 @@ Menu para o cadastro de médicos:
 #+name: fig:cadastro-medico
 [[./cadastro-medico.png]]
 
+Após o cadastro/login como médico, o próximo menu é o menu específico para médicos, que fornece ao médico as opções de visualizar as consultas agendadas e de pesquisar pelas consultas de um paciente em específico. Vamos construir este menu:
+
+=medico_menu=
+
+#+begin_src C++ :exports code
+#pragma once
+
+#include "ui/menu.hpp"
+#include "model/medico.hpp"
+
+#include <string>
+
+namespace mediapp::ui {
+class MedicoMenu : public Menu {
+public:
+  MedicoMenu(model::Medico const &medico);
+  Menu *next(unsigned option) override;
+private:
+  model::Medico const &_medico;
+};
+}
+#+end_src
+
+#+begin_src C++ :exports code
+#include "ui/medico_menu.hpp"
+
+#include "model/medico.hpp"
+
+#include <iostream>
+#include <string>
+
+namespace mediapp::ui {
+MedicoMenu::MedicoMenu(model::Medico const &medico) : _medico(medico) {
+  _title = medico.to_string();
+  _options.push_back("1 - Visualizar Consultas");
+  _options.push_back("2 - Pesquisar Paciente");
+}
+
+Menu *MedicoMenu::next(unsigned option) {
+  switch (option) {
+  case 1: {
+    std::cout << "Visualizando consultas" << std::endl;
+    break;
+  }
+  case 2: {
+    std::string email;
+    std::cout << "> Email: ";
+    std::cin >> email;
+    std::cout << "Pesquisando consultas de " << email << std::endl;
+    break;
+  }
+  }
+
+  // TODO: próximo menu
+  return nullptr;
+}
+}
+#+end_src
+
+Agora, vamos modificar o menu de login para redirecionar para o menu de médico após o cadastro:
+
+=login_menu=
+
+#+begin_src C++ :exports code
+case 3: {
+  // ...
+  model::Medico medico(reg_crm, especialidade, email, info);
+  std::cout << "Salvando Médico: " << medico.to_string() << std::endl;
+
+  return new MedicoMenu(medico); // <<<
+}
+#+end_src
+
+E vamos modificar o driver do programa para renderizar os próximos menus:
+
+#+begin_src C++ :exports code
+// ...
+ui::Menu *menu = login.next(option);
+while (menu != nullptr) {
+  menu->render();
+  
+  std::cin >> option;
+  std::cin.ignore(max_input, '\n');
+
+  ui::Menu *old_menu = menu;
+  menu = menu->next(option);
+
+  delete old_menu;
+}
+#+end_src
+
+Menu para o cadastro de médicos:
+
+#+caption: Visualização das próximas consultas de um médico
+#+name: fig:medico_consultas
+[[./medico_consultas.png]]
+
+
 * TODO Interfaces
