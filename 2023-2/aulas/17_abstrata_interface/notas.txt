@@ -213,21 +213,15 @@ Classes e Métodos Abstratos
 
   ┌────
   │ #include "ui/login_menu.hpp"
-  │ 
   │ #include <iostream>
-  │ #include <limits>
   │ 
   │ namespace ui = mediapp::ui;
   │ int main() {
-  │   long int const max_input =
-  │     std::numeric_limits<std::streamsize>::max();
-  │ 
   │   ui::LoginMenu login;
   │   login.render();
   │ 
   │   unsigned option;
   │   std::cin >> option;
-  │   std::cin.ignore(max_input, '\n');
   │ 
   │   ui::Menu *menu = login.next(option);
   │   return 0;
@@ -323,9 +317,7 @@ Classes e Métodos Abstratos
   │ ui::Menu *menu = login.next(option);
   │ while (menu != nullptr) {
   │   menu->render();
-  │ 
   │   std::cin >> option;
-  │   std::cin.ignore(max_input, '\n');
   │ 
   │   ui::Menu *old_menu = menu;
   │   menu = menu->next(option);
@@ -446,7 +438,7 @@ Exemplo de Introdução
   │ class Recordable {
   │ public:
   │   virtual void record() = 0;
-  │   virtual ~Recordable() {}
+  │   virtual ~Recordable() = default;
   │ };
   │ 
   │ // MusicPlayer *é* Playable e Recordable
@@ -521,7 +513,7 @@ Exemplo de Introdução
   │ class Recordable {
   │ public:
   │   virtual void record() = 0;
-  │   virtual ~Recordable() {}
+  │   virtual ~Recordable() = default;
   │ };
   │ 
   │ // MusicPlayer *é* Playable e Recordable
