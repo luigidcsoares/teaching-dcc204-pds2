@@ -15,6 +15,7 @@
 !/*/aulas/**/notas*.org
 !/*/aulas/**/notas*.txt
 !/*/aulas/01_apresentacao/slides.pdf
+!/*/aulas/17_abstrata_interface/*.png
 
 # Labs & exams (use this for private content, with submodule)
 !/*/atividades/
