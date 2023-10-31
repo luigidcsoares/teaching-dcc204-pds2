@@ -97,10 +97,9 @@ julgamento do grupo); é possível converter uma tarefa da lista pelo
 próprio GitHub, passando o mouse sobre o item da lista.
 
 Em seguida, faça pelo menos CINCO cartões CRC para as classes que você
-julga como sendo as mais importantes. Cada cartão deve
-apresentar pelo menos quatro responsabilidades /coesas/ (considerando
-conhecimento e realização) e mencionar pelo menos duas
-colaborações. Você pode usar esse site para lhe auxiliar a fazer o
+julga como sendo as mais importantes. Cada cartão deve apresentar pelo
+menos quatro responsabilidades /coesas/ (considerando conhecimento e
+realização). Você pode usar esse site para lhe auxiliar a fazer o
 cartão: https://echeung.me/crcmaker/
 
 * Documentação
@@ -148,7 +147,7 @@ menos!):
 *** Cartões CRC (3 pontos):
   - $-0.6$ pontos por cada cartão CRC não entregue (considerando o mínimo de cinco)
   - $-0.1$ ponto por cada responsabilidade não entregue (mínimo  quatro por cartão)
-  - $-0.1$ ponto por cada colaboração não entregue (mínimo dois por cartão)
+  - $-0.1$ ponto por cada colaboração incoerente
   - Em caso de mais de cinco cartões, a nota corresponderá aos cinco
     mais bem avaliados
     
