@@ -42,9 +42,10 @@
 |     \rowcolor{green!40} | 12/10 | Feriado: Nossa Senhora Aparecida         |                   |
 | \rowcolor{yellow!50} 16 | *17/10* | *Prova 1: Revisão*                         |                   |
 | \rowcolor{yellow!50} 17 | *19/10* | *Prova 1: Aplicação*                       |                   |
-|                      18 | 24/10 | Acompanhamento/Dúvidas Projeto           | Entrega Parcial   |
-|                      19 | 26/10 | POO: Herança e Composição                |                   |
-|                      20 | 31/10 | POO: Herança e Composição                |                   |
+|                      18 | 24/10 | POO: Herança e Subtipagem                |                   |
+|                      19 | 26/10 | Acompanhamento/Dúvidas Projeto           |                   |
+|                       - | 29/10 | -                                        | Entrega Parcial   |
+|                      20 | 31/10 | POO: Classes Abstratas e Interfaces      |                   |
 |     \rowcolor{green!40} | 02/11 | Feriado: Finados                         |                   |
 |                      21 | 07/11 | POO: Polimorfismo                        |                   |
 |                      22 | 09/11 | POO: Polimorfismo                        |                   |
