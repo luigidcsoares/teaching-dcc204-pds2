@@ -1,0 +1,657 @@
+#+title: Notas de Aula - 19 POO: Polimorfismo Estático - CRTP
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#+property: header-args:C+++ :results scalar
+* Motivação
+
+Suponha que desejamos definir uma interface para coleções que são /enumeráveis/ (não confundir com /enums/ em C++). Essa interface define operações como:
+
+
+- ~map~: aplica uma função a cada elemento da coleção e retorna uma nova coleção
+  
+- ~filter~: aplica uma função a cada elemento da coleção e retorna uma nova coleção apenas com os elementos para os quais o resultado foi verdadeiro
+  
+- ~reduce~: aplica uma função a cada elemento da coleção, acumulando um resultado (exemplo: somar os elementos)
+
+- ...
+
+Vamos começar construindo nossa interface ~Enum~ (vamos assumir que coleções enumeráveis são homogêneas (todos os elementos são do mesmo tipo ~T~):
+
+#+begin_src C++
+template <typename T>
+class Enum {
+public:
+  // ...
+};
+#+end_src
+
+A operação ~map~ aplica uma função a elementos do tipo ~T~ da coleção original e retorna novos elementos de um tipo ~Q~:
+
+#+begin_src C++
+template <typename T>
+class Enum {
+public:
+  template <typename Q>
+  Enum<Q> *map(std::function<Q (T)> fn);
+};
+#+end_src
+
+Mas, o objetivo é que ~Enum~ seja uma interface. Assim, coleções podem implementar esta interface e, consequentemente, poderíamos aproveitar do polimorfismo de subtipagem (aquele polimorfismo dinâmico que vimos):
+
+#+name: enum_interface
+#+begin_src C++
+template <typename T>
+class Enum {
+public:
+  template <typename Q>
+  virtual Enum<Q> *map(std::function<Q (T)> fn) = 0;
+};
+#+end_src
+
+Agora, vamos tentar definir uma coleção ~Vector~ que implemente a interface ~Enum~
+
+#+name: vector_interface
+#+begin_src C++
+template <typename T>
+class Vector : public Enum<T> {
+public:
+  Vector(std::vector<T> const &v) : _container(v) {}
+  
+  template <typename Q>
+  Enum<Q> *map(std::function<Q (T)> fn) override {
+    std::vector<Q> mapped;
+    for (T e : _container) mapped.push_back(fn(e));
+    return new Vector<Q>(mapped);
+  }
+
+private:
+  std::vector<T> _container;
+};
+#+end_src
+
+E vamos tentar utilizar o vetor:
+
+#+name: main_interface
+#+begin_src C++
+int main() {
+  Enum<int> *xs = new Vector<int>({5, 4, 3, 2, 1, 0});
+  xs->map<char>([](int e) { return e + 'A'; }); // Transforma em letras
+  delete xs;
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :results none :exports results
+#include <vector>
+#include <functional>
+
+<<enum_interface>>
+
+<<vector_interface>>
+
+<<main_interface>>
+#+end_src
+
+#+begin_example
+error: templates may not be ‘virtual’
+error: member template ‘Enum<Q>* Vector<T>::map(std::function<Q(T)>)’ may not have virt-specifiers
+#+end_example
+
+Temos um problema: C++ não suporta a mistura de polimorfismo paramétrico (templates, em tempo de compilação) e polimorfismo de subtipagem (métodos virtuais, em tempo de execução)!
+
+* Curiously Recurring Template Pattern (CRTP)
+
+- Será que conseguimos alcançar um efeito similar ao do uso de métodos virtuais utilizando templates?
+
+- Nosso objetivo é, a partir de uma indireção (ponteiro, referência) a uma instância de uma classe derivada de ~Enum~ (ou seja, através de um ponteiro/referência para ~Enum~), utilizar os métodos implementados na classe derivada
+
+Será que conseguimos, a partir da classe base, delegar a chamada da função para um container específico? Algo como
+
+#+begin_src C++
+template <typename T>
+class Enum {
+public:
+  template <typename Q>
+  Enum<Q> *map(std::function<Q (T)> fn) {
+    return converter_para_container(this)->map(fn);
+  }
+};
+#+end_src
+
+Bom, o operador que implementa a ideia de ~converter_para_container~ existe:
+
+#+begin_src C++
+template <typename T>
+class Enum {
+public:
+  template <typename Q>
+  Enum<Q> *map(std::function<Q (T)> fn) {
+    return static_cast<Container *>(this)->map(fn);
+  }
+};
+#+end_src
+
+Mas, de onde podemos tirar a informação relacionada a classe ~Container~? Um novo parâmetro de ~Enum~!
+
+#+name: enum_crtp
+#+begin_src C++
+template <typename Container, typename T> // <<<
+class Enum {
+public:
+  template <typename Q>
+  Enum<Container, Q> *map(std::function<Q (T)> fn) { // <<<
+    return static_cast<Container *>(this)->map(fn);
+  }
+};
+#+end_src
+
+Mas, e agora, como passar a informação sobre o container adiante?
+
+#+name: vector_crtp
+#+begin_src C++
+template <typename T>
+class Vector : public Enum<Vector<T>, T> { // <<<
+public:
+  Vector(std::vector<T> const &v) : _container(v) {}
+  
+  template <typename Q>
+  Enum<Vector<Q>, Q> *map(std::function<Q (T)> fn) { // <<<
+    std::vector<Q> mapped;
+    for (T e : _container) mapped.push_back(fn(e));
+    return new Vector<Q>(mapped);
+  }
+
+private:
+  std::vector<T> _container;
+};
+#+end_src
+
+#+name: main_crtp
+#+begin_src C++
+int main() {
+  Enum<Vector<int>, int> *xs = new Vector<int>({5, 4, 3, 2, 1, 0});
+  xs->map<char>([](int e) { return e + 'A'; }); // Transforma em letras
+  delete xs;
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :results none :exports results
+#include <vector>
+#include <functional>
+
+<<enum_crtp>>
+
+<<vector_crtp>>
+
+<<main_crtp>>
+#+end_src
+
+#+begin_example
+error: cannot convert ‘Enum<Vector<char>, char>*’ to ‘Enum<Vector<int>, char>*’ in return
+#+end_example
+
+Hmm, ainda não funcionou... por quê? De onde veio esse retorno ~Enum<Vector<int>, char> *~?
+
+Vamos voltar para a definição da função ~map~ em ~Enum~:
+
+#+begin_src C++
+template <typename Q>
+Enum<Container, Q> *map(std::function<Q (T)> fn) { // <<<
+  return static_cast<Container *>(this)->map(fn);
+}
+#+end_src
+
+O nosso objetivo era, a partir de um vetor de inteiro, retornar um vetor de chars. Mas, quem é ~Container~ nesse template? De onde vem?
+
+#+begin_src C++
+Enum<Vector<int>, int> *xs = new Vector<int>({5, 4, 3, 2, 1, 0});
+#+end_src
+
+~Container = Vector<int>~, não ~Vector<char>~...
+
+O que nós gostaríamos, na verdade, é que ~Container~ não fosse a classe concreta ~Vector<tipo>~, mas sim o template ~Vector~:
+
+#+name: enum_crtp2
+#+begin_src C++
+template <template <typename> typename Container, typename T> // <<<
+class Enum {
+public:
+  template <typename Q>
+  Enum<Container, Q> *map(std::function<Q (T)> fn) {
+    return static_cast<Container<T> *>(this)->map(fn); // <<<
+  }
+};
+#+end_src
+
+#+name: vector_crtp2
+#+begin_src C++
+template <typename T>
+class Vector : public Enum<Vector, T> { // <<<
+public:
+  Vector(std::vector<T> const &v) : _container(v) {}
+  
+  template <typename Q>
+  Enum<Vector, Q> *map(std::function<Q (T)> fn) { // <<<
+    std::vector<Q> mapped;
+    for (T e : _container) mapped.push_back(fn(e));
+    return new Vector<Q>(mapped);
+  }
+
+private:
+  std::vector<T> _container;
+};
+#+end_src
+
+#+name: main_crtp2
+#+begin_src C++
+int main() {
+  Enum<Vector, int> *xs = new Vector<int>({5, 4, 3, 2, 1, 0});
+  xs->map<char>([](int e) { return e + 'A'; }); // Transforma em letras
+  delete xs;
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :results none :exports results
+#include <vector>
+#include <functional>
+
+<<enum_crtp2>>
+
+<<vector_crtp2>>
+
+<<main_crtp2>>
+#+end_src
+
+Agora funciona!!! Vamos adicionar um segundo método ~for_each~ que vai servir para percorrer os elementos e aplicar uma função. Vamos usar esse método para imprimir os elementos das coleções.
+
+#+name: enum_crtp3
+#+begin_src C++
+template <template <typename> typename Container, typename T> // <<<
+class Enum {
+public:
+  template <typename Q>
+  Enum<Container, Q> *map(std::function<Q (T)> fn) {
+    return static_cast<Container<T> *>(this)->map(fn); // <<<
+  }
+
+  void for_each(std::function<void (T)> fn) {
+    static_cast<Container<T> *>(this)->for_each(fn);
+  }
+};
+#+end_src
+
+#+name: vector_crtp3
+#+begin_src C++
+template <typename T>
+class Vector : public Enum<Vector, T> { // <<<
+public:
+  Vector(std::vector<T> const &v) : _container(v) {}
+  
+  template <typename Q>
+  Enum<Vector, Q> *map(std::function<Q (T)> fn) { // <<<
+    std::vector<Q> mapped;
+    for (T e : _container) mapped.push_back(fn(e));
+    return new Vector<Q>(mapped);
+  }
+
+  void for_each(std::function<void (T)> fn) {
+    for (T e : _container) fn(e);
+  }
+
+private:
+  std::vector<T> _container;
+};
+#+end_src
+
+#+name: main_crtp3
+#+begin_src C++
+void show(Enum<Vector, char> *xs) {
+
+  xs->for_each([](char e) { std::cout << e << " "; });
+  std::cout << std::endl;
+}
+
+int main() {
+  Enum<Vector, int> *xs =
+    new Vector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<Vector, char> *xs_letter
+    = xs->map<char>([](int e) { return e + 'A'; });
+
+  show(xs_letter);
+  
+  delete xs;
+  delete xs_letter;
+  
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :exports results
+#include <iostream>
+#include <vector>
+#include <functional>
+
+<<enum_crtp3>>
+
+<<vector_crtp3>>
+
+<<main_crtp3>>
+#+end_src
+
+#+RESULTS:
+: F E D C B A 
+
+Como implementar a função ~show~ de forma que possamos visualizar também o vetor de inteiros pré mapeamento?
+
+#+name: main_crtp3b
+#+begin_src C++
+template <typename T>
+void show(Enum<Vector, T> *xs) {
+  xs->for_each([](T e) { std::cout << e << " "; });
+  std::cout << std::endl;
+}
+
+int main() {
+  Enum<Vector, int> *xs
+    = new Vector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<Vector, char> *xs_letter
+    = xs->map<char>([](int e) { return e + 'A'; });
+
+  show(xs);
+  show(xs_letter);
+  
+  delete xs;
+  delete xs_letter;
+  
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :exports results
+#include <iostream>
+#include <vector>
+#include <functional>
+
+<<enum_crtp3>>
+
+<<vector_crtp3>>
+
+<<main_crtp3b>>
+#+end_src
+
+#+RESULTS:
+: 5 4 3 2 1 0 
+: F E D C B A 
+
+Agora, vamos implementar a mesma interface para um vetor ordenado:
+
+#+name: sorted_vector_crtp
+#+begin_src C++
+template <typename T>
+class SortedVector : public Enum<SortedVector, T> { // <<<
+public:
+  SortedVector(std::vector<T> const &v) : _container(v) {
+    std::sort(_container.begin(), _container.end());
+  }
+  
+  template <typename Q>
+  Enum<SortedVector, Q> *map(std::function<Q (T)> fn) { // <<<
+    std::vector<Q> mapped;
+    for (T e : _container) mapped.push_back(fn(e));
+    return new SortedVector<Q>(mapped);
+  }
+
+  void for_each(std::function<void (T)> fn) {
+    for (T e : _container) fn(e);
+  }
+
+private:
+  std::vector<T> _container;
+};
+#+end_src
+
+#+name: main_crtp4
+#+begin_src C++
+template <typename T>
+void show(Enum<Vector, T> *xs) {
+  xs->for_each([](T e) { std::cout << e << " "; });
+  std::cout << std::endl;
+}
+
+int main() {
+  Enum<Vector, int> *xs =
+    new Vector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<Vector, char> *xs_letter
+    = xs->map<char>([](int e) { return e + 'A'; });
+
+  show(xs);
+  show(xs_letter);
+
+  delete xs;
+  delete xs_letter;
+  
+  Enum<SortedVector, int> *sorted_xs =
+    new SortedVector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<SortedVector, char> *sorted_xs_letter
+    = sorted_xs->map<char>([](int e) { return e + 'A'; });
+
+  show(sorted_xs);
+  show(sorted_xs_letter);
+
+  delete sorted_xs;
+  delete sorted_xs_letter;
+  
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :results none
+#include <iostream>
+#include <vector>
+#include <functional>
+
+<<enum_crtp3>>
+
+<<vector_crtp3>>
+
+<<sorted_vector_crtp>>
+
+<<main_crtp4>>
+#+end_src
+
+#+begin_example
+error: no matching function for call to ‘show(Enum<SortedVector, int>*&)’
+#+end_example
+
+Hmm, o que aconteceu? Claro! A função ~show~ só aceita o enumerável ~Vector~. Lembre-se que nosso objetivo é consegui alcançar um efeito similar ao de métodos virtuais, então precisamos fazer com que ~show~ aceite um enuméravel qualquer:
+
+#+name: main_crtp5
+#+begin_src C++
+template <template <typename> typename Container, typename T>
+void show(Enum<Container, T> *xs) {
+  xs->for_each([](T e) { std::cout << e << " "; });
+  std::cout << std::endl;
+}
+
+int main() {
+  Enum<Vector, int> *xs =
+    new Vector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<Vector, char> *xs_letter
+    = xs->map<char>([](int e) { return e + 'A'; });
+
+  show(xs);
+  show(xs_letter);
+
+  delete xs;
+  delete xs_letter;
+  
+  Enum<SortedVector, int> *sorted_xs =
+    new SortedVector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<SortedVector, char> *sorted_xs_letter
+    = sorted_xs->map<char>([](int e) { return e + 'A'; });
+
+  show(sorted_xs);
+  show(sorted_xs_letter);
+
+  delete sorted_xs;
+  delete sorted_xs_letter;
+  
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :exports results
+#include <iostream>
+#include <vector>
+#include <functional>
+
+<<enum_crtp3>>
+
+<<vector_crtp3>>
+
+<<sorted_vector_crtp>>
+
+<<main_crtp5>>
+#+end_src
+
+#+RESULTS:
+: 5 4 3 2 1 0 
+: F E D C B A 
+: 0 1 2 3 4 5 
+: A B C D E F 
+
+Vamos tentar extrair o mapeamento para uma função polimórfica também:
+
+#+name: main_crtp6
+#+begin_src C++
+template <template <typename> typename Container>
+Enum<Container, char> *as_letter(Enum<Container, int> *xs) {
+  return xs->map<char>([](int e) { return e + 'A'; });
+}
+
+template <template <typename> typename Container, typename T>
+void show(Enum<Container, T> *xs) {
+  xs->for_each([](T e) { std::cout << e << " "; });
+  std::cout << std::endl;
+}
+
+int main() {
+  Enum<Vector, int> *xs =
+    new Vector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<Vector, char> *xs_letter
+    = as_letter(xs);
+
+  show(xs);
+  show(xs_letter);
+
+  delete xs;
+  delete xs_letter;
+  
+  Enum<SortedVector, int> *sorted_xs =
+    new SortedVector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<SortedVector, char> *sorted_xs_letter
+    = as_letter(sorted_xs);
+
+  show(sorted_xs);
+  show(sorted_xs_letter);
+
+  delete sorted_xs;
+  delete sorted_xs_letter;
+  
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :results none
+#include <iostream>
+#include <vector>
+#include <functional>
+
+<<enum_crtp3>>
+
+<<vector_crtp3>>
+
+<<sorted_vector_crtp>>
+
+<<main_crtp6>>
+#+end_src
+
+#+begin_example
+warning: expected ‘template’ keyword before dependent template name
+error: expected primary-expression before ‘char’
+#+end_example
+
+Oops, algo estranho aconteceu: o compilador não conseguiu identificar se, na expressão ~xs->map<char>(...)~, o símbolo "<" se refere o operador de comparação ou ao início de uma lista de parâmetros (isso só acontece porque ~xs~ também é parametrizado por um tipo; quando a chamada de ~map~ estava diretamente na ~main~, o compilador conseguia identificar o significado de "<"). Para resolver, devemos informar explicitamente que ~map~ se trata de um template:
+
+#+name: main_crtp7
+#+begin_src C++
+template <template <typename> typename Container>
+Enum<Container, char> *as_letter(Enum<Container, int> *xs) {
+  return xs->template map<char>([](int e) { return e + 'A'; }); // <<<
+}
+
+template <template <typename> typename Container, typename T>
+void show(Enum<Container, T> *xs) {
+  xs->for_each([](T e) { std::cout << e << " "; });
+  std::cout << std::endl;
+}
+
+int main() {
+  Enum<Vector, int> *xs =
+    new Vector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<Vector, char> *xs_letter
+    = as_letter(xs);
+
+  show(xs);
+  show(xs_letter);
+
+  delete xs;
+  delete xs_letter;
+  
+  Enum<SortedVector, int> *sorted_xs =
+    new SortedVector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<SortedVector, char> *sorted_xs_letter
+    = as_letter(sorted_xs);
+
+  show(sorted_xs);
+  show(sorted_xs_letter);
+
+  delete sorted_xs;
+  delete sorted_xs_letter;
+  
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :exports results
+#include <iostream>
+#include <vector>
+#include <functional>
+
+<<enum_crtp3>>
+
+<<vector_crtp3>>
+
+<<sorted_vector_crtp>>
+
+<<main_crtp7>>
+#+end_src
+
+#+RESULTS:
+: 5 4 3 2 1 0 
+: F E D C B A 
+: 0 1 2 3 4 5 
+: A B C D E F 
