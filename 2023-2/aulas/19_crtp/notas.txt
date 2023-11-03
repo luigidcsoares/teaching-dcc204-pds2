@@ -612,19 +612,19 @@ Adicionando Funcionalidades Comuns
   implementadas utilizando-se `reduce'):
 
   ┌────
-  │ template <template <typename> typename Container, typename T> // <<<
+  │ template <template <typename> typename Container, typename T>
   │ class Enum {
   │ public:
   │   template <typename Q>
   │   Enum<Container, Q> *map(std::function<Q (T)> fn) {
-  │     return static_cast<Container<T> *>(this)->map(fn); // <<<
+  │     return static_cast<Container<T> *>(this)->map(fn);
   │   }
   │ 
   │   void for_each(std::function<void (T)> fn) {
   │     static_cast<Container<T> *>(this)->for_each(fn);
   │   }
   │ 
-  │   Enum<Container, std::pair<T, unsigned>> *with_index() {
+  │   Enum<Container, std::pair<T, unsigned>> *with_index() { // <<<
   │     unsigned index = 0;
   │     return map<std::pair<T, unsigned>>([&index](T e) {
   │       std::pair<T, unsigned> p = {e, index};
