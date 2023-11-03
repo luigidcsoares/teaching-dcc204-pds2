@@ -46,6 +46,8 @@ class Enum {
 public:
   template <typename Q>
   virtual Enum<Q> *map(std::function<Q (T)> fn) = 0;
+  
+  virtual ~Enum() = default;
 };
 #+end_src
 
@@ -121,6 +123,8 @@ public:
   Enum<Q> *map(std::function<Q (T)> fn) {
     return converter_para_container(this)->map(fn);
   }
+  
+  virtual ~Enum() = default;
 };
 #+end_src
 
@@ -134,6 +138,8 @@ public:
   Enum<Q> *map(std::function<Q (T)> fn) {
     return static_cast<Container *>(this)->map(fn);
   }
+  
+  virtual ~Enum() = default;
 };
 #+end_src
 
@@ -148,6 +154,8 @@ public:
   Enum<Container, Q> *map(std::function<Q (T)> fn) { // <<<
     return static_cast<Container *>(this)->map(fn);
   }
+  
+  virtual ~Enum() = default;
 };
 #+end_src
 
@@ -227,6 +235,8 @@ public:
   Enum<Container, Q> *map(std::function<Q (T)> fn) {
     return static_cast<Container<T> *>(this)->map(fn); // <<<
   }
+  
+  virtual ~Enum() = default;
 };
 #+end_src
 
@@ -285,6 +295,8 @@ public:
   void for_each(std::function<void (T)> fn) {
     static_cast<Container<T> *>(this)->for_each(fn);
   }
+  
+  virtual ~Enum() = default;
 };
 #+end_src
 
@@ -665,3 +677,126 @@ int main() {
 : F E D C B A 
 : 0 1 2 3 4 5 
 : A B C D E F 
+
+** Adicionando Funcionalidades Comuns
+
+Podemos utilizar a classe base do CRTP para adicionar funcionalidades em comum as subclasses. Por exemplo, podemos definir uma operação ~with_index~ que constrói um enumerável de elementos do tipo ~T~ associados ao seu índice. Isto não precisa ser implementado repetidamente em cada subclasse, visto que a implementação é comum a todas: basta implementar utilizando a operação ~map~ (na verdade, até a operação ~map~ pode ser implementada a partir de outra operação, chamada ~reduce~; a grande maioria das operações podem ser implementadas utilizando-se ~reduce~):
+
+#+name: enum_crtp_index
+#+begin_src C++
+template <template <typename> typename Container, typename T> // <<<
+class Enum {
+public:
+  template <typename Q>
+  Enum<Container, Q> *map(std::function<Q (T)> fn) {
+    return static_cast<Container<T> *>(this)->map(fn); // <<<
+  }
+
+  void for_each(std::function<void (T)> fn) {
+    static_cast<Container<T> *>(this)->for_each(fn);
+  }
+
+  Enum<Container, std::pair<T, unsigned>> *with_index() {
+    unsigned index = 0;
+    return map<std::pair<T, unsigned>>([&index](T e) {
+      std::pair<T, unsigned> p = {e, index};
+      index++;
+      return p;
+    });
+  }
+  
+  virtual ~Enum() = default;
+};
+#+end_src
+
+Vamos adicionar uma função ~show~ para pares:
+
+#+begin_src C++
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <utility>
+#+end_src
+
+#+name: main_crtp_index
+#+begin_src C++
+template <template <typename> typename Container>
+Enum<Container, char> *as_letter(Enum<Container, int> *xs) {
+  return xs->template map<char>([](int e) { return e + 'A'; });
+}
+
+template <template <typename> typename Container, typename T>
+void show(Enum<Container, T> *xs) {
+  xs->for_each([](T e) { std::cout << e << " "; });
+  std::cout << std::endl;
+}
+
+template <template <typename> typename Container, typename T>
+void show(Enum<Container, std::pair<T, unsigned>> *xs) { // <<<
+  xs->for_each([](std::pair<T, unsigned> e) {
+    std::cout << "(" << e.first << ", " << e.second << ") ";
+  });
+  std::cout << std::endl;
+}
+
+int main() {
+  Enum<Vector, int> *xs =
+    new Vector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<Vector, char> *xs_letter
+    = as_letter(xs);
+
+  Enum<Vector, std::pair<char, unsigned>> *xs_index
+    = xs_letter->with_index();
+
+  show(xs);
+  show(xs_letter);
+  show(xs_index);
+
+  delete xs;
+  delete xs_letter;
+  delete xs_index;
+  
+  Enum<SortedVector, int> *sorted_xs =
+    new SortedVector<int>({5, 4, 3, 2, 1, 0});
+  
+  Enum<SortedVector, char> *sorted_xs_letter
+    = as_letter(sorted_xs);
+
+  Enum<SortedVector, std::pair<char, unsigned>> *sorted_xs_index
+    = sorted_xs_letter->with_index();
+
+  show(sorted_xs);
+  show(sorted_xs_letter);
+  show(sorted_xs_index);
+
+  delete sorted_xs;
+  delete sorted_xs_letter;
+  delete sorted_xs_index;
+  
+  return 0;
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 :noweb yes :exports results
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <utility>
+
+<<enum_crtp_index>>
+
+<<vector_crtp3>>
+
+<<sorted_vector_crtp>>
+
+<<main_crtp_index>>
+#+end_src
+
+#+RESULTS:
+: 5 4 3 2 1 0 
+: F E D C B A 
+: (F, 0) (E, 1) (D, 2) (C, 3) (B, 4) (A, 5) 
+: 0 1 2 3 4 5 
+: A B C D E F 
+: (A, 0) (B, 1) (C, 2) (D, 3) (E, 4) (F, 5) 
