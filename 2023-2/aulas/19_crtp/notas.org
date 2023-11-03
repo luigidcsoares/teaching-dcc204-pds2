@@ -452,7 +452,7 @@ int main() {
 }
 #+end_src
 
-#+begin_src C++ :flags -std=c++17 :noweb yes :results none
+#+begin_src C++ :flags -std=c++17 :noweb yes :exports results :results none
 #include <iostream>
 #include <vector>
 #include <functional>
@@ -573,7 +573,7 @@ int main() {
 }
 #+end_src
 
-#+begin_src C++ :flags -std=c++17 :noweb yes :results none
+#+begin_src C++ :flags -std=c++17 :noweb yes :exports results :results none
 #include <iostream>
 #include <vector>
 #include <functional>
