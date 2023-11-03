@@ -1,0 +1,520 @@
+#+title: Notas de Aula - 18 POO: Polimorfismo de Sobrecarga e Paramétrico
+#+author: Luigi D. C. Soares
+#+startup: entitiespretty
+#+options: toc:nil  num:nil
+#+property: header-args:C+++ :results scalar
+* Polimorfismo de Sobrecarga (Ad-Hoc)
+
+- Em algumas momentos, precisamos implementar operador de comparação (<, ==, ...) para classes que definimos
+
+- Esses operadores também funcionam (e não precisamos implementar) para inteiros, floats, doubles, strings, etc
+
+- Como pode um único operador (mesmo "nome") funcionar para diferentes tipos?
+
+- Já vimos isso em outro lugares? *Construtores*: podemos ter múltiplos construtores em uma classe
+
+- O que acontece no código a seguir?
+
+#+begin_src C++ :flags -std=c++17 :exports both :results scalar
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Quadrado de " << x << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;
+  std::cout << square(2.5) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Quadrado de 1
+: 1
+: Quadrado de 2
+: 4
+
+- E agora? Funciona?
+
+#+begin_src C++ :flags -std=c++17 :exports both :results none
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Quadrado de " << x << std::endl;
+  return x * x;
+}
+
+float square(float x) {
+  std::cout << "Quadrado de " << x << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;
+  std::cout << square(2.5) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+begin_example
+call of overloaded ‘square(double)’ is ambiguous
+   15 |   std::cout << square(2.5) << std::endl;
+#+end_example
+
+- Oops, o que aconteceu? O literal *2.5* é um *double*, não float
+
+#+begin_src C++ :flags -std=c++17 :exports both :results scalar
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Quadrado de " << x << std::endl;
+  return x * x;
+}
+
+double square(double x) {
+  std::cout << "Quadrado de " << x << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;
+  std::cout << square(2.5) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: Quadrado de 1
+: 1
+: Quadrado de 2.5
+: 6.25
+
+#+begin_src C++ :flags -std=c++17 :exports both :results none
+#include <iostream>
+
+int square(int x) {
+  std::cout << "Quadrado de " << x << std::endl;
+  return x * x;
+}
+
+float square(float x) {
+  std::cout << "Quadrado de " << x << std::endl;
+  return x * x;
+}
+
+int main() {
+  std::cout << square(1) << std::endl;
+  std::cout << square(2.5) << std::endl;
+  return 0;
+}
+#+end_src
+
+- Note que, de maneira geral, podemos ter um mesmo método (mesmo nome) definido para diferentes tipos!
+  
+- Chamamos isto de *sobrecarga*
+
+* Polimorfismo Paramétrico
+
+** Funções
+
+Suponha que desejamos implementar uma função ~max~, que retorna o maior entre dois valores:
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+int max(int x, int y) {
+  return x > y ? x : y;
+}
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: 2
+: 1
+
+Note que esta função lida apenas com números inteiros. Apesar da chamada com floats funcionar, o resultado é estranho.
+
+E se quiséssemos comparar floats? Precisaríamos criar uma outra função? Mas o código é o mesmo, a única coisa que muda é o tipo dos elementos a serem comparados.
+
+Podemos, então, tornar esta função genérica, por meio de *templates*:
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+int main() {
+  std::cout << max<int>(1, 2) << std::endl;
+  std::cout << max<float>(1.5, 1.6) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: 2
+: 1.6
+
+Agora funcionou! O que está acontecendo?
+
+O compilador está enxergando duas coisas:
+
+1. Um template para uma função ~max~
+   
+2. Especializações do template para os tipos ~int~ e ~float~
+
+Por ter acesso ao esqueleto da função (ao código genérico), o compilador consegue produzir códigos especializados para a versão da função que lida com inteiros e para uma outra versão que lida com floats. Basicamente, escrevemos uma única função, mas o compilador gera código para duas funções (algo como um ~max_int~ e um ~max_float~).
+
+Note que (neste caso) o compilador é esperto o suficiente para identificar os tipos em cada chamada. Podemos omitir ~<int>~ e ~<float>~:
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: 2
+: 1.6
+
+A definição de um template começa com a palavra chave "template". Logo depois, entre < > temos "nomes genéricos" para os tipos que só virão a ser conhecidos futuramente. Chamamos nosso tipo de "T", mas poderia ser qualquer coisa. Uma vez que o compilador identificou duas especializações, uma com o tipo "int" o outra "float", ele gerará códigos especializados, trocando o "T" por "int" e por "float".
+
+E se tentássemos comparar duas pessoas?
+
+#+begin_src C++ :flags -std=c++17 :results none
+#include <iostream>
+#include <string>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+struct Pessoa { std::string nome; };
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+
+  Pessoa luigi = { "Luigi" };
+  Pessoa mario = { "Mário" };
+
+  Pessoa maior = max(luigi, mario);
+  std::cout << maior.nome << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+begin_src example
+error: no match for ‘operator>’ (operand types are ‘Pessoa’ and ‘Pessoa’)
+    return x > y ? x : y;
+#+end_src
+
+O compilador não sabe como comparar duas pessoas... Precisamos implementar a comparação. Fazemos isso definindo o operador ">":
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <string>
+
+template <typename T>
+T max(T x, T y) {
+  return x > y ? x : y;
+}
+
+class Pessoa {
+public:
+  std::string nome;
+
+  bool operator>(const Pessoa &other) const {
+    return this->nome > other.nome;
+  }
+};
+
+int main() {
+  std::cout << max(1, 2) << std::endl;
+  std::cout << max(1.5, 1.6) << std::endl;
+
+  Pessoa luigi = { "Luigi" };
+  Pessoa mario = { "Mário" };
+
+  Pessoa maior = max(luigi, mario);
+  std::cout << maior.nome << std::endl;
+
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: 2
+: 1.6
+: Mário
+
+** Classes
+
+Além de funções, também podemos desenvolver classes genéricas.
+
+Imagine que desejamos implementar um par. Poderíamos ter um par de inteiros:
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <string>
+#include <sstream>
+
+class Par {
+public:
+  Par(int x, int y) : _x(x), _y(y) {}
+
+  std::string to_string() const {
+    std::ostringstream os;
+    os << "(" << _x << ", " << _y << ")";
+    return os.str();
+  }
+  
+private:
+  int _x;
+  int _y;
+};
+
+int main() {
+  Par ints(1, 2);
+  std::cout << ints.to_string() << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+
+Mas, por quê não um par de inteiro e float? Ou um par de float e string?
+
+#+begin_src C++ :flags -std=c++17
+#include <iostream>
+#include <string>
+#include <sstream>
+
+template <typename T, typename Q>
+class Par {
+public:
+  Par(T x, Q y) : _x(x), _y(y) {}
+
+  std::string to_string() const {
+    std::ostringstream os;
+    os << "(" << _x << ", " << _y << ")";
+    return os.str();
+  }
+  
+private:
+  T _x;
+  Q _y;
+};
+
+int main() {
+  Par<int, int> ints(1, 2);
+  std::cout << ints.to_string() << std::endl;
+
+  Par<int, float> int_fl(1, 2.5);
+  std::cout << int_fl.to_string() << std::endl;
+
+  Par<float, std::string> fl_str(1.3, "Cruzeiro");
+  std::cout << fl_str.to_string() << std::endl;
+  
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+: (1, 2.5)
+: (1.3, Cruzeiro)
+
+Para este exemplo, agora temos dois tipos genéricos T e Q, que podem até ser diferentes.
+
+** Separando Declaração (.hpp) e Implementação (.cpp)
+
+Até então estamos fazendo tudo em um mesmo arquivo. Vamos tentar criar um header para nosso tipo Par?
+
+=par.hpp=
+
+#+begin_src C++ :tangle include/par.hpp :main no
+#pragma once
+
+#include <string>
+
+template <typename T, typename Q>
+class Par {
+public:
+  Par(T x, Q y);
+  std::string to_string() const;
+
+private:
+  T _x;
+  Q _y;
+};
+#+end_src
+
+=par.cpp=
+
+#+begin_src C++ :tangle src/par.cpp :main no
+#include "par.hpp"
+
+#include <string>
+#include <sstream>
+
+template <typename T, typename Q>
+Par<T, Q>::Par(T x, Q y) : _x(x), _y(y) {}
+
+template <typename T, typename Q>
+std::string Par<T, Q>::to_string() const {
+  std::ostringstream os;
+  os << "(" << _x << ", " << _y << ")";
+  return os.str();
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 -I include src/par.cpp :results none
+#include "par.hpp"
+#include <iostream>
+
+int main() {
+  Par<int, int> p(1, 2);
+  std::cout << p.to_string() << std::endl;
+  return 0;
+}
+#+end_src
+
+#+begin_example
+undefined reference to `Par<int, int>::Par(int, int)'
+#+end_example
+
+- O que aconteceu?
+
+- Por quê? Lembra como funciona o processo de compilação?
+
+Cada arquivo de código (.cpp) é compilado separadamente, para só depois ocorrer a ligação dos objetos (.o). Isto é,
+
+1. Primeiro compila-se o arquivo main.cpp, junto dos headers iostream e par.hpp
+   
+2. Nesse momento, o compilador está enxergando o template que está no par.hpp e a especialização Par<int, int> no main.cpp, mas e o corpo dos métodos ~Par~ e ~to_string~? O código está no par.cpp, que não faz parte desta etapa de compilação. Como o compilador poderia, então, gerar o código para a especialização Par<int, int>? Ele não consegue!
+
+Por isso, no caso de templates, tanto a declaração quanto a definição (o corpo, a implementação) de funções genéricas e dos métodos que fazem parte de uma classe genérica precisam estar no header (.hpp), porque o compilador precisa enxergar a implementação.
+
+Então, para solucionar o erro acima, basta descartar o arquivo par.cpp e fazer a implementação no par.hpp:
+
+=par.hpp (versão 2)=
+
+#+begin_src C++ :tangle include/par_v2.hpp :main no
+#pragma once
+
+#include <string>
+#include <sstream>
+
+template <typename T, typename Q>
+class Par {
+public:
+  Par(T x, Q y);
+  std::string to_string() const;
+
+private:
+  T _x;
+  Q _y;
+};
+
+template <typename T, typename Q>
+Par<T, Q>::Par(T x, Q y) : _x(x), _y(y) {}
+
+template <typename T, typename Q>
+std::string Par<T, Q>::to_string() const {
+  std::ostringstream os;
+  os << "(" << _x << ", " << _y << ")";
+  return os.str();
+}
+#+end_src
+
+Agora irá funcionar:
+
+#+begin_src C++ :flags -std=c++17 -I include
+#include "par_v2.hpp"
+#include <iostream>
+
+int main() {
+  Par<int, int> p(1, 2);
+  std::cout << p.to_string() << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
+
+Podemos ainda tentar separar em arquivos diferentes a definição da classe da implementação, para fins de organização do código, desde que garantamos que o corpo dos métodos esteja visível no cabeçalho:
+
+=par.hpp (versão 3)=
+
+#+begin_src C++ :tangle include/par_v3.hpp :main no
+#pragma once
+
+#include <string>
+#include <sstream>
+
+template <typename T, typename Q>
+class Par {
+public:
+  Par(T x, Q y);
+  std::string to_string() const;
+
+private:
+  T _x;
+  Q _y;
+};
+
+#include "par.tpp"
+#+end_src
+
+=par.tpp=
+
+#+begin_src C++ :tangle include/par.tpp :main no
+#pragma once
+
+template <typename T, typename Q>
+Par<T, Q>::Par(T x, Q y) : _x(x), _y(y) {}
+
+template <typename T, typename Q>
+std::string Par<T, Q>::to_string() const {
+  std::ostringstream os;
+  os << "(" << _x << ", " << _y << ")";
+  return os.str();
+}
+#+end_src
+
+#+begin_src C++ :flags -std=c++17 -I include
+#include "par_v3.hpp"
+#include <iostream>
+
+int main() {
+  Par<int, int> p(1, 2);
+  std::cout << p.to_string() << std::endl;
+  return 0;
+}
+#+end_src
+
+#+RESULTS:
+: (1, 2)
