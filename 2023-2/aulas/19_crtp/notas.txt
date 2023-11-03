@@ -308,7 +308,6 @@ Curiously Recurring Template Pattern (CRTP)
 
   ┌────
   │ void show(Enum<Vector, char> *xs) {
-  │ 
   │   xs->for_each([](char e) { std::cout << e << " "; });
   │   std::cout << std::endl;
   │ }
@@ -391,13 +390,6 @@ Curiously Recurring Template Pattern (CRTP)
   │ private:
   │   std::vector<T> _container;
   │ };
-  └────
-
-  ┌────
-  │ #include <algorithm>
-  │ #include <iostream>
-  │ #include <vector>
-  │ #include <functional>
   └────
 
   ┌────

@@ -320,7 +320,6 @@ private:
 #+name: main_crtp3
 #+begin_src C++
 void show(Enum<Vector, char> *xs) {
-
   xs->for_each([](char e) { std::cout << e << " "; });
   std::cout << std::endl;
 }
