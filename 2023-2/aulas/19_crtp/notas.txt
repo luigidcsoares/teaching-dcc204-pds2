@@ -204,7 +204,7 @@ Curiously Recurring Template Pattern (CRTP)
   │ }
   └────
 
-  O nosso objetivo era, a partir de um vetor de inteiro, retornar um
+  O nosso objetivo era, a partir de um vetor de inteiros, retornar um
   vetor de chars. Mas, quem é `Container' nesse template? De onde vem?
 
   ┌────
@@ -360,14 +360,14 @@ Curiously Recurring Template Pattern (CRTP)
 
   ┌────
   │ template <typename T>
-  │ class SortedVector : public Enum<SortedVector, T> { // <<<
+  │ class SortedVector : public Enum<SortedVector, T> {
   │ public:
   │   SortedVector(std::vector<T> const &v) : _container(v) {
   │     std::sort(_container.begin(), _container.end());
   │   }
   │ 
   │   template <typename Q>
-  │   Enum<SortedVector, Q> *map(std::function<Q (T)> fn) { // <<<
+  │   Enum<SortedVector, Q> *map(std::function<Q (T)> fn) {
   │     std::vector<Q> mapped;
   │     for (T e : _container) mapped.push_back(fn(e));
   │     return new SortedVector<Q>(mapped);
@@ -457,14 +457,14 @@ Curiously Recurring Template Pattern (CRTP)
   │ };
   │ 
   │ template <typename T>
-  │ class SortedVector : public Enum<SortedVector, T> { // <<<
+  │ class SortedVector : public Enum<SortedVector, T> {
   │ public:
   │   SortedVector(std::vector<T> const &v) : _container(v) {
   │     std::sort(_container.begin(), _container.end());
   │   }
   │ 
   │   template <typename Q>
-  │   Enum<SortedVector, Q> *map(std::function<Q (T)> fn) { // <<<
+  │   Enum<SortedVector, Q> *map(std::function<Q (T)> fn) {
   │     std::vector<Q> mapped;
   │     for (T e : _container) mapped.push_back(fn(e));
   │     return new SortedVector<Q>(mapped);
@@ -518,7 +518,7 @@ Curiously Recurring Template Pattern (CRTP)
   └────
 
   Hmm, o que aconteceu? Claro! A função `show' só aceita o enumerável
-  `Vector'. Lembre-se que nosso objetivo é consegui alcançar um efeito
+  `Vector'. Lembre-se que nosso objetivo é conseguir alcançar um efeito
   similar ao de métodos virtuais, então precisamos fazer com que `show'
   aceite um enuméravel qualquer:
 
@@ -648,14 +648,14 @@ Curiously Recurring Template Pattern (CRTP)
   │ };
   │ 
   │ template <typename T>
-  │ class SortedVector : public Enum<SortedVector, T> { // <<<
+  │ class SortedVector : public Enum<SortedVector, T> {
   │ public:
   │   SortedVector(std::vector<T> const &v) : _container(v) {
   │     std::sort(_container.begin(), _container.end());
   │   }
   │ 
   │   template <typename Q>
-  │   Enum<SortedVector, Q> *map(std::function<Q (T)> fn) { // <<<
+  │   Enum<SortedVector, Q> *map(std::function<Q (T)> fn) {
   │     std::vector<Q> mapped;
   │     for (T e : _container) mapped.push_back(fn(e));
   │     return new SortedVector<Q>(mapped);

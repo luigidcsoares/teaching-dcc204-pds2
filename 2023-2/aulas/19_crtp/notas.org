@@ -203,7 +203,7 @@ Enum<Container, Q> *map(std::function<Q (T)> fn) { // <<<
 }
 #+end_src
 
-O nosso objetivo era, a partir de um vetor de inteiro, retornar um vetor de chars. Mas, quem é ~Container~ nesse template? De onde vem?
+O nosso objetivo era, a partir de um vetor de inteiros, retornar um vetor de chars. Mas, quem é ~Container~ nesse template? De onde vem?
 
 #+begin_src C++
 Enum<Vector<int>, int> *xs = new Vector<int>({5, 4, 3, 2, 1, 0});
@@ -393,14 +393,14 @@ Agora, vamos implementar a mesma interface para um vetor ordenado:
 #+name: sorted_vector_crtp
 #+begin_src C++
 template <typename T>
-class SortedVector : public Enum<SortedVector, T> { // <<<
+class SortedVector : public Enum<SortedVector, T> {
 public:
   SortedVector(std::vector<T> const &v) : _container(v) {
     std::sort(_container.begin(), _container.end());
   }
   
   template <typename Q>
-  Enum<SortedVector, Q> *map(std::function<Q (T)> fn) { // <<<
+  Enum<SortedVector, Q> *map(std::function<Q (T)> fn) {
     std::vector<Q> mapped;
     for (T e : _container) mapped.push_back(fn(e));
     return new SortedVector<Q>(mapped);
@@ -470,7 +470,7 @@ int main() {
 error: no matching function for call to ‘show(Enum<SortedVector, int>*&)’
 #+end_example
 
-Hmm, o que aconteceu? Claro! A função ~show~ só aceita o enumerável ~Vector~. Lembre-se que nosso objetivo é consegui alcançar um efeito similar ao de métodos virtuais, então precisamos fazer com que ~show~ aceite um enuméravel qualquer:
+Hmm, o que aconteceu? Claro! A função ~show~ só aceita o enumerável ~Vector~. Lembre-se que nosso objetivo é conseguir alcançar um efeito similar ao de métodos virtuais, então precisamos fazer com que ~show~ aceite um enuméravel qualquer:
 
 #+name: main_crtp5
 #+begin_src C++
