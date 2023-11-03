@@ -72,6 +72,11 @@ private:
 
 E vamos tentar utilizar o vetor:
 
+#+begin_src C++
+#include <functional>
+#include <vector>
+#+end_src
+
 #+name: main_interface
 #+begin_src C++
 int main() {
@@ -83,8 +88,8 @@ int main() {
 #+end_src
 
 #+begin_src C++ :flags -std=c++17 :noweb yes :results none :exports results
-#include <vector>
 #include <functional>
+#include <vector>
 
 <<enum_interface>>
 
@@ -178,8 +183,8 @@ int main() {
 #+end_src
 
 #+begin_src C++ :flags -std=c++17 :noweb yes :results none :exports results
-#include <vector>
 #include <functional>
+#include <vector>
 
 <<enum_crtp>>
 
@@ -255,8 +260,8 @@ int main() {
 #+end_src
 
 #+begin_src C++ :flags -std=c++17 :noweb yes :results none :exports results
-#include <vector>
 #include <functional>
+#include <vector>
 
 <<enum_crtp2>>
 
@@ -306,6 +311,12 @@ private:
 };
 #+end_src
 
+#+begin_src C++
+#include <iostream>
+#include <functional>
+#include <vector>
+#+end_src
+
 #+name: main_crtp3
 #+begin_src C++
 void show(Enum<Vector, char> *xs) {
@@ -332,8 +343,8 @@ int main() {
 
 #+begin_src C++ :flags -std=c++17 :noweb yes :exports results
 #include <iostream>
-#include <vector>
 #include <functional>
+#include <vector>
 
 <<enum_crtp3>>
 
@@ -374,8 +385,8 @@ int main() {
 
 #+begin_src C++ :flags -std=c++17 :noweb yes :exports results
 #include <iostream>
-#include <vector>
 #include <functional>
+#include <vector>
 
 <<enum_crtp3>>
 

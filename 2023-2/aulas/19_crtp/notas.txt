@@ -88,6 +88,11 @@ Motivação
   E vamos tentar utilizar o vetor:
 
   ┌────
+  │ #include <functional>
+  │ #include <vector>
+  └────
+
+  ┌────
   │ int main() {
   │   Enum<int> *xs = new Vector<int>({5, 4, 3, 2, 1, 0});
   │   xs->map<char>([](int e) { return e + 'A'; }); // Transforma em letras
@@ -296,6 +301,12 @@ Curiously Recurring Template Pattern (CRTP)
   └────
 
   ┌────
+  │ #include <iostream>
+  │ #include <functional>
+  │ #include <vector>
+  └────
+
+  ┌────
   │ void show(Enum<Vector, char> *xs) {
   │ 
   │   xs->for_each([](char e) { std::cout << e << " "; });
@@ -380,6 +391,13 @@ Curiously Recurring Template Pattern (CRTP)
   │ private:
   │   std::vector<T> _container;
   │ };
+  └────
+
+  ┌────
+  │ #include <algorithm>
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <functional>
   └────
 
   ┌────
