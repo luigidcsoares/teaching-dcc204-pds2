@@ -49,11 +49,12 @@
 |                      21 | 07/11 | POO: Polimorfismo                        |                   |
 |                      22 | 09/11 | POO: Polimorfismo                        |                   |
 |                      23 | 14/11 | POO: Gerenciamento de Memória            |                   |
-|                      24 | 16/11 | Programação Defensiva                    |                   |
-|                      25 | 21/11 | Tratamento de Exceções                   |                   |
+|                      24 | 16/11 | Tratamento de Exceções                   |                   |
+|                      25 | 21/11 | Programação Defensiva                    |                   |
 |                      26 | 23/11 | Acompanhamento/Dúvidas Projeto           |                   |
 |                      27 | 28/11 | Acompanhamento/Dúvidas Projeto           |                   |
-| \rowcolor{yellow!50} 28 | *30/11* | *Prova 2: Revisão*                         | Entrega Final     |
+| \rowcolor{yellow!50} 28 | *30/11* | *Prova 2: Revisão*                         |                   |
+|                       - | 03/12 | -                                        | Entrega Final     |
 | \rowcolor{yellow!50} 29 | *05/12* | *Prova 2: Aplicação*                       |                   |
 | \rowcolor{yellow!50} 30 | *07/12* | *Prova substitutiva*                       |                   |
 |                         |       |                                          |                   |
