@@ -307,6 +307,24 @@ int main() {
 #+RESULTS:
 : Lidando com erro: O domínio após o @ não pode estar vazio!
 
+* Testando exceções
+
+O Doctest fornece uma macro para checar se uma exceção foi de fato lançada:
+
+#+begin_src C++ :flags -std=c++17 src/core/mailapp_v2.cpp -I include/ -I ../ :results scalar
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+
+#include "doctest.hpp"
+#include "core/mailapp_v2.hpp"
+
+using mail_lib::core::Mailapp;
+using mail_lib::core::InvalidDomainException;
+
+TEST_CASE("Domínio inválido") {
+  CHECK_THROWS_AS(Mailapp("test@yahoo.com.br"), InvalidDomainException);
+}
+#+end_src
+
 * Propagando uma exceção
 
 - Exceções são naturalmente propagadas, até que se encontre um bloco ~try-catch~ lidando com ela (ou o programa aborta)

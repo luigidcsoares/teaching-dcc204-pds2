@@ -326,6 +326,27 @@ Capturando uma exceção
   └────
 
 
+Testando exceções
+═════════════════
+
+  O Doctest fornece uma macro para checar se uma exceção foi de fato
+  lançada:
+
+  ┌────
+  │ #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  │ 
+  │ #include "doctest.hpp"
+  │ #include "core/mailapp_v2.hpp"
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ using mail_lib::core::InvalidDomainException;
+  │ 
+  │ TEST_CASE("Domínio inválido") {
+  │   CHECK_THROWS_AS(Mailapp("test@yahoo.com.br"), InvalidDomainException);
+  │ }
+  └────
+
+
 Propagando uma exceção
 ══════════════════════
 
