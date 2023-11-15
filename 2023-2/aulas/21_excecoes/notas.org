@@ -489,8 +489,7 @@ public:
   }
   
   // Move constructor:
-  SmartPointer(SmartPointer &&pointer)
-    : _raw_pointer(std::move(pointer._raw_pointer)) {
+  SmartPointer(SmartPointer &&pointer) : _raw_pointer(pointer._raw_pointer) {
     pointer._raw_pointer = nullptr;
   }
 
