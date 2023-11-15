@@ -270,7 +270,7 @@ Considere a função ~foo~ abaixo:
 #+begin_src C++ :flags -std=c++17 :exports both
 bool do_some_check() {
   // ...
-  return false;
+  return true;
 }
 
 void foo() {

@@ -322,7 +322,7 @@ RAII: Gerenciamento de Memória
   ┌────
   │ bool do_some_check() {
   │   // ...
-  │   return false;
+  │   return true;
   │ }
   │ 
   │ void foo() {
