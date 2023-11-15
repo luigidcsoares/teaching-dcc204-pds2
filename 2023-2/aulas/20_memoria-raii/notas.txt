@@ -196,11 +196,11 @@ Tentativa 2 (+-)
   │     return _file != nullptr;
   │   }
   │ 
-  │   void open(const char *file_path) {
+  │   void open(char const *file_path) {
   │     _file = fopen(file_path, "w");
   │   }
   │ 
-  │   void write(const char *line) const {
+  │   void write(char const *line) const {
   │     fputs(line, _file);
   │   }
   │ 
@@ -255,14 +255,14 @@ Tentativa 3 (RAII)
   │ 
   │ class OpenFileW {
   │ public:
-  │   OpenFileW(const char *file_path)
+  │   OpenFileW(char const *file_path)
   │     : _file(fopen(file_path, "w")) {}
   │ 
   │   ~OpenFileW() {
   │     fclose(_file);
   │   }
   │ 
-  │   void write(const char *line) const {
+  │   void write(char const *line) const {
   │     fputs(line, _file);
   │   }
   │ 
@@ -497,8 +497,8 @@ RAII: Gerenciamento de Memória
   │     delete _raw_pointer;
   │   }
   │ 
-  │   SmartPointer(const SmartPointer &pointer) = delete;
-  │   SmartPointer &operator=(const SmartPointer &pointer) = delete;
+  │   SmartPointer(SmartPointer const &pointer) = delete;
+  │   SmartPointer &operator=(SmartPointer const &pointer) = delete;
   │ 
   │   T &operator*() {
   │     return *_raw_pointer;
