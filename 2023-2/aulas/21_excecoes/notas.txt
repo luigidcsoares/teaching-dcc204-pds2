@@ -1,0 +1,598 @@
+              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+               NOTAS DE AULA - 21 TRATAMENTO DE EXCEÇÕES
+
+                           Luigi D. C. Soares
+              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+• Uma exceção é um evento inesperado que ocorre no contexto da execução
+  do programa
+
+• Quando falamos de exceções, estamos lidando com erros "recuperáveis",
+  isto é, erros que podemos tratar de alguma forma, tomando um caminho
+  diferente no fluxo do programa
+
+• O que pode gerar uma exceção?
+  • Entradas inválidas
+  • Timeout ao enviar dados pela rede
+  • Abrir uma arquivo inexistente
+  • Acessar um índice inválido em um vetor (no caso de C++, depende da
+    operação de acesso; o método `at()' gera uma exceção)
+
+• Vamos voltar ao exemplo da classe `Mailapp'
+  • A princípio não seria possível impedir a construção do objeto e
+    retornar um valor indicando o erro através do construtor
+  • A estratégia que adotamos consiste em impedir que o usuário acesse o
+    construtor da classe
+  • Bom, na verdade é possível sim, por meio do mecanismo de exceções!
+
+
+Lançando uma exceção
+════════════════════
+
+  • Lançamos a exceção com a palavra-chave `throw'
+  • Podemos lançar qualquer valor/objeto como uma exceção, para indicar
+    um erro
+
+  `mailapp.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <string>
+  │ 
+  │ namespace mail_lib::core {
+  │ 
+  │ // Classes para representar os possíveis erros de validação do email
+  │ class MissingUsernameException {};
+  │ class MissingDomainException {};
+  │ class InvalidDomainException {};
+  │ 
+  │ class Mailapp {
+  │ public:
+  │   Mailapp(std::string const &user); // <<< Voltamos a ter um construtor público
+  │   std::string user() const;
+  │ 
+  │ private:
+  │   std::string _user;
+  │ };
+  │ }
+  └────
+
+  `mailapp.cpp'
+
+  ┌────
+  │ #include "core/mailapp.hpp"
+  │ 
+  │ #include <string>
+  │ #include <sstream>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailapp::Mailapp(std::string const &user) : _user(user) {
+  │   std::istringstream stream(user);
+  │   std::string username, domain;
+  │ 
+  │   std::getline(stream, username, '@');
+  │   std::getline(stream, domain, '@');
+  │ 
+  │   if (username == "") throw MissingUsernameException();
+  │   if (domain == "") throw MissingDomainException();
+  │   if (domain != "gmail.com") throw InvalidDomainException();
+  │ }
+  │ 
+  │ std::string Mailapp::user() const { return _user; }
+  │ }
+  └────
+
+  ┌────
+  │ #include "core/mailapp.hpp"
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ 
+  │ int main() {
+  │   Mailapp mapp("teste");
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ terminate called after throwing an instance of 'mail_lib::core::MissingDomainException'
+  └────
+
+  ┌────
+  │ #include "core/mailapp.hpp"
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ 
+  │ int main() {
+  │   Mailapp mapp("@gmail.com");
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ terminate called after throwing an instance of 'mail_lib::core::MissingUsernameException'
+  └────
+
+  ┌────
+  │ #include "core/mailapp.hpp"
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ 
+  │ int main() {
+  │   Mailapp mapp("teste@yahoo.com");
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ terminate called after throwing an instance of 'mail_lib::core::InvalidDomainException'
+  └────
+
+
+Customizando uma exceção
+════════════════════════
+
+  C++ fornece uma classe base para exceções, a `std::exception':
+  • A classe `std::exception' provê um método virtual `what', que
+    retorna uma string com detalhes sobre o erro encontrado
+  • É preciso declarar este método como `noexcept' (indica que a função
+    nunca gera, nem propaga uma exceção)
+
+  `mailapp.hpp'
+
+  ┌────
+  │ #pragma once
+  │ 
+  │ #include <exception>
+  │ #include <string>
+  │ 
+  │ namespace mail_lib::core {
+  │ 
+  │ // Classes para representar os possíveis erros de validação do email
+  │ class MissingUsernameException : public std::exception {
+  │ public:
+  │   char const *what() const noexcept override;
+  │ };
+  │ 
+  │ class MissingDomainException : public std::exception {
+  │ public:
+  │   char const *what() const noexcept override;
+  │ };
+  │ 
+  │ class InvalidDomainException : public std::exception {
+  │ public:
+  │   char const *what() const noexcept override;
+  │ };
+  │ 
+  │ class Mailapp {
+  │ public:
+  │   Mailapp(std::string const &user); // <<< Voltamos a ter um construtor público
+  │   std::string user() const;
+  │ 
+  │ private:
+  │   std::string _user;
+  │ };
+  │ }
+  └────
+
+  `mailapp.cpp'
+
+  ┌────
+  │ #include "core/mailapp_v2.hpp"
+  │ 
+  │ #include <string>
+  │ #include <sstream>
+  │ 
+  │ namespace mail_lib::core {
+  │ char const *MissingUsernameException::what() const noexcept {
+  │   return "O nome de usuário que precede o @ não pode estar vazio!";
+  │ }
+  │ 
+  │ char const *MissingDomainException::what() const noexcept {
+  │   return "O domínio após o @ não pode estar vazio!";
+  │ }
+  │ 
+  │ char const *InvalidDomainException::what() const noexcept {
+  │   return "O domínio após o @ deve ser gmail.com!";
+  │ }
+  │ 
+  │ Mailapp::Mailapp(std::string const &user) : _user(user) {
+  │   std::istringstream stream(user);
+  │   std::string username, domain;
+  │ 
+  │   std::getline(stream, username, '@');
+  │   std::getline(stream, domain, '@');
+  │ 
+  │   if (username == "") throw MissingUsernameException();
+  │   if (domain == "") throw MissingDomainException();
+  │   if (domain != "gmail.com") throw InvalidDomainException();
+  │ }
+  │ 
+  │ std::string Mailapp::user() const { return _user; }
+  │ }
+  └────
+
+  ┌────
+  │ #include "core/mailapp_v2.hpp"
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ 
+  │ int main() {
+  │   Mailapp mapp("teste");
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ terminate called after throwing an instance of 'mail_lib::core::MissingDomainException'
+  │   what():  O domínio após o @ não pode estar vazio!
+  └────
+
+  A biblioteca de C++ fornece diversas exceções pré-definidas. Por
+  exemplo, poderíamos utilizar a `std::invalid_argument':
+
+  `mailapp.cpp'
+
+  ┌────
+  │ #include "core/mailapp_v2.hpp"
+  │ 
+  │ #include <string>
+  │ #include <sstream>
+  │ #include <stdexcept>
+  │ 
+  │ namespace mail_lib::core {
+  │ Mailapp::Mailapp(std::string const &user) : _user(user) {
+  │   std::istringstream stream(user);
+  │   std::string username, domain;
+  │ 
+  │   std::getline(stream, username, '@');
+  │   std::getline(stream, domain, '@');
+  │ 
+  │   if (username == "") {
+  │     throw std::invalid_argument("O nome de usuário que precede o @ não pode estar vazio!");
+  │   }
+  │ 
+  │   if (domain == "") {
+  │     throw std::invalid_argument("O domínio após o @ não pode estar vazio!");
+  │   }
+  │ 
+  │   if (domain != "gmail.com") {
+  │     throw std::invalid_argument("O domínio após o @ deve ser gmail.com!");
+  │   }
+  │ }
+  │ 
+  │ std::string Mailapp::user() const { return _user; }
+  │ }
+  └────
+
+  A desvantagem, neste exemplo, é que não conseguiríamos diferenciar o
+  erro por meio do objeto lançado.
+
+
+Capturando uma exceção
+══════════════════════
+
+  • Para capturar e lidar com uma exceção, usamos o bloco `try-catch'
+  • Nós *tentamos* (`try') executar alguma operação e, caso alguma
+    exceção seja gerada em algum passo, nós *capturamos* (`catch') esta
+    exceção e lidamos com ela da forma que julgamos ser a mais adequado
+  • Note que existe uma alteração no fluxo do programa, assim como, por
+    exemplo, em um `if-else'
+
+  ┌────
+  │ #include "core/mailapp_v2.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ using mail_lib::core::MissingUsernameException;
+  │ using mail_lib::core::MissingDomainException;
+  │ using mail_lib::core::InvalidDomainException;
+  │ 
+  │ int main() {
+  │   try {
+  │     Mailapp mapp("teste");
+  │   } catch (MissingUsernameException const &e) {
+  │     std::cout << "Lidando com ausência do nome de usuário" << std::endl;
+  │   } catch (MissingDomainException const &e) {
+  │     std::cout << "Lidando com ausência do domínio" << std::endl;
+  │   } catch (InvalidDomainException const &e) {
+  │     std::cout << "Lidando com domínio incorreto" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  Caso o tratamento das exceções seja o mesmo independente do erro
+  específico, podemos usar ao nosso favor o fato de todas elas serem
+  subclasses de `std::exception':
+
+  ┌────
+  │ #include "core/mailapp_v2.hpp"
+  │ #include <iostream>
+  │ 
+  │ using mail_lib::core::Mailapp;
+  │ 
+  │ int main() {
+  │   try {
+  │     Mailapp mapp("teste");
+  │   } catch (std::exception const &e) {
+  │     std::cout << "Lidando com erro: " << e.what() << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+
+Propagando uma exceção
+══════════════════════
+
+  • Exceções são naturalmente propagadas, até que se encontre um bloco
+    `try-catch' lidando com ela (ou o programa aborta)
+
+  ┌────
+  │ #include <stdexcept>
+  │ #include <iostream>
+  │ 
+  │ void funcA() {
+  │   throw std::runtime_error("Erro na função A");
+  │ }
+  │ 
+  │ void funcB() {
+  │   funcA();
+  │ }
+  │ 
+  │ int main() {
+  │   try {
+  │     funcB();
+  │   } catch (const std::exception &e) {
+  │     std::cout << e.what() << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Erro na função A
+  └────
+
+
+  • Porém, em algumas situações você pode querer lidar com a exceção de
+    alguma forma (realizar algum tipo de limpeza, por exemplo, liberar
+    memória), e propagar a exceção para o próximo método
+
+  • Basta utilizar o `throw' sem nenhum argumento
+
+  ┌────
+  │ #include <stdexcept>
+  │ #include <iostream>
+  │ 
+  │ void funcA() {
+  │   throw std::runtime_error("Erro na função A");
+  │ }
+  │ 
+  │ void funcB() {
+  │   try {
+  │     funcA();
+  │   } catch (const std::exception &e) {
+  │     std::cout << "Lidando com a exceção em B()" << std::endl;
+  │     throw;
+  │   }
+  │ }
+  │ 
+  │ int main() {
+  │   try {
+  │     funcB();
+  │   } catch (const std::exception &e) {
+  │     std::cout << e.what() << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Lidando com a exceção em B()
+  │ Erro na função A
+  └────
+
+
+Fluxo de execução
+═════════════════
+
+  • Como vimos, quando uma exceção é lançada, o fluxo do programa é
+    alterado
+  • Instruções subsequentes não são executadas
+
+  • E se alguma destas instruções subsequentes forem importantes?
+    • Deletar um ponteiro
+    • Fechar um arquivo
+
+  • O que acontece com o ponteiro `p' no programa a seguir?
+
+  ┌────
+  │ #include <stdexcept>
+  │ #include <iostream>
+  │ 
+  │ int *new_pointer(int v) {
+  │   int *p = new int;
+  │   *p = v;
+  │   return p;
+  │ }
+  │ 
+  │ void fun_may_throw() {
+  │  throw std::runtime_error("Erro inesperado");
+  │ }
+  │ 
+  │ int main() {
+  │   try {
+  │     int *p = new_pointer(1);
+  │     fun_may_throw();
+  │     delete p;
+  │   } catch (const std::exception &e) {
+  │     std::cout << "Fluxo de execução alterado" << std::endl;
+  │   }
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Fluxo de execução alterado
+  └────
+
+
+  • Como resolver o problema de vazamento de memória?
+    • Algumas linguagems definem um terceiro bloco `finally', cujas
+      instruções serão *sempre* executadas
+    • C++ não possui este operador, então o que fazer? *RAII*!
+
+  ┌────
+  │ #include <stdexcept>
+  │ #include <iostream>
+  │ 
+  │ template <typename T>
+  │ class SmartPointer {
+  │ public:
+  │   SmartPointer(T *pointer) : _raw_pointer(pointer) {}
+  │   ~SmartPointer() {
+  │     std::cout << "Cleaning owned data" << std::endl;
+  │     delete _raw_pointer;
+  │   }
+  │ 
+  │   SmartPointer(SmartPointer const &pointer) = delete;
+  │   SmartPointer &operator=(SmartPointer const &pointer) = delete;
+  │ 
+  │   T &operator*() {
+  │     return *_raw_pointer;
+  │   }
+  │ 
+  │   T *operator->() {
+  │     return _raw_pointer;
+  │   }
+  │ 
+  │ private:
+  │   T *_raw_pointer;
+  │ };
+  │ 
+  │ SmartPointer<int> new_pointer(int v) {
+  │   SmartPointer<int> p(new int);
+  │   *p = v;
+  │   return p;
+  │ }
+  │ 
+  │ void fun_may_throw() {
+  │  throw std::runtime_error("Erro inesperado");
+  │ }
+  │ 
+  │ int main() {
+  │   try {
+  │     SmartPointer<int> p(new_pointer(1));
+  │     fun_may_throw();
+  │   } catch (const std::exception &e) {
+  │     std::cout << "Fluxo de execução alterado" << std::endl;
+  │   }
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ error: use of deleted function ‘SmartPointer<T>::SmartPointer(const SmartPointer<T>&) [with T = int]’
+  │    38 |   return p;
+  └────
+
+  Oops, na aula passada nós impedimos o uso do construtor de
+  cópia. Vamos definir um construtor que, ao invés de copiar o objeto, o
+  transfere (`move constructor'):
+
+  ┌────
+  │ #include <stdexcept>
+  │ #include <iostream>
+  │ 
+  │ template <typename T>
+  │ class SmartPointer {
+  │ public:
+  │   SmartPointer(T *pointer) : _raw_pointer(pointer) {}
+  │   ~SmartPointer() {
+  │     if (_raw_pointer != nullptr) {
+  │       std::cout << "Cleaning owned data" << std::endl;
+  │       delete _raw_pointer;
+  │     }
+  │   }
+  │ 
+  │   // Move constructor:
+  │   SmartPointer(SmartPointer &&pointer) : _raw_pointer(pointer._raw_pointer) {
+  │     pointer._raw_pointer = nullptr;
+  │   }
+  │ 
+  │   SmartPointer(SmartPointer const &pointer) = delete;
+  │   SmartPointer &operator=(SmartPointer const &pointer) = delete;
+  │ 
+  │   T &operator*() {
+  │     return *_raw_pointer;
+  │   }
+  │ 
+  │   T *operator->() {
+  │     return _raw_pointer;
+  │   }
+  │ 
+  │ private:
+  │   T *_raw_pointer;
+  │ };
+  │ 
+  │ SmartPointer<int> new_pointer(int v) {
+  │   SmartPointer<int> p(new int);
+  │   *p = v;
+  │   return p;
+  │ }
+  │ 
+  │ void fun_may_throw() {
+  │   throw std::runtime_error("Erro inesperado");
+  │ }
+  │ 
+  │ int main() {
+  │   try {
+  │     SmartPointer<int> p(new_pointer(1));
+  │     fun_may_throw();
+  │   } catch (const std::exception &e) {
+  │     std::cout << "Fluxo de execução alterado" << std::endl;
+  │   }
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Cleaning owned data
+  │ Fluxo de execução alterado
+  └────
+
+
+  • Por quê isto funciona?
+
+
+Stack Unwinding
+───────────────
+
+  • Quando uma exceção é lançada, uma busca é realizada na pilha de
+    chamadas de funções, até que se encontre o ponto em que a exceção
+    está sendo capturada
+
+  • Se este ponto de captura existe, todas as entradas na pilha acima da
+    função que capturou a exceção são destruídas, o que significa que os
+    objetos construídos são destruídos (destrutores são chamados), assim
+    como acontece quando uma função termina (por meios naturais)
+
+  • Por exemplo, considere que
+    • `funcA' chama `funcB'
+    • `funcB' constrói um objeto e chama `funcC'
+    • `funcC' lança uma exceção
+    • A exceção é capturada em `funcA'
+    • Visualmente:
+
+  ┌────
+  │               2 |→ [ funcC() ] --| 3 - lança exceção
+  │ 1 - cria Objeto |→ [ funcB() ]   | 4 - procura bloco catch, não encontra
+  │               0 |-- [ funcA() ] ←| 5 - procura bloco catch, encontra, destrói Objeto
+  └────
