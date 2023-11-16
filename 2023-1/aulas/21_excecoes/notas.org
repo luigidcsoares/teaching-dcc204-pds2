@@ -465,7 +465,8 @@ public:
     delete _raw_pointer;
   }
   
-  SmartPointer(SmartPointer &&pointer) = default;
+  SmartPointer(SmartPointer &&pointer) {
+
   // Equivalente:
   // SmartPointer(SmartPointer &&pointer)
   //   : _raw_pointer(std::move(pointer._raw_pointer)) {};

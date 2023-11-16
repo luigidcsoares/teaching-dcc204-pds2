@@ -368,7 +368,7 @@ Propagando uma exceção
   │ int main() {
   │   try {
   │     funcB();
-  │   } catch (const std::exception &e) {
+  │   } catch (std::runtime_error const &e) {
   │     std::cout << e.what() << std::endl;
   │   }
   │ 
@@ -398,7 +398,7 @@ Propagando uma exceção
   │ void funcB() {
   │   try {
   │     funcA();
-  │   } catch (const std::exception &e) {
+  │   } catch (std::runtime_error const &e) {
   │     std::cout << "Lidando com a exceção em B()" << std::endl;
   │     throw;
   │   }
@@ -407,7 +407,7 @@ Propagando uma exceção
   │ int main() {
   │   try {
   │     funcB();
-  │   } catch (const std::exception &e) {
+  │   } catch (std::runtime_error const &e) {
   │     std::cout << e.what() << std::endl;
   │   }
   │ 
@@ -453,7 +453,7 @@ Fluxo de execução
   │     int *p = new_pointer(1);
   │     fun_may_throw();
   │     delete p;
-  │   } catch (const std::exception &e) {
+  │   } catch (std::runtime_error const &e) {
   │     std::cout << "Fluxo de execução alterado" << std::endl;
   │   }
   │   return 0;
@@ -512,7 +512,7 @@ Fluxo de execução
   │   try {
   │     SmartPointer<int> p(new_pointer(1));
   │     fun_may_throw();
-  │   } catch (const std::exception &e) {
+  │   } catch (std::runtime_error const &e) {
   │     std::cout << "Fluxo de execução alterado" << std::endl;
   │   }
   │   return 0;
@@ -577,7 +577,7 @@ Fluxo de execução
   │   try {
   │     SmartPointer<int> p(new_pointer(1));
   │     fun_may_throw();
-  │   } catch (const std::exception &e) {
+  │   } catch (std::runtime_error const &e) {
   │     std::cout << "Fluxo de execução alterado" << std::endl;
   │   }
   │   return 0;
