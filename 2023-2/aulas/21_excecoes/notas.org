@@ -62,7 +62,7 @@ Mailapp::Mailapp(std::string const &user) : _user(user) {
   std::string username, domain;
 
   std::getline(stream, username, '@');
-  std::getline(stream, domain, '@');
+  std::getline(stream, domain);
 
   if (username == "") throw MissingUsernameException();
   if (domain == "") throw MissingDomainException();
@@ -187,7 +187,7 @@ Mailapp::Mailapp(std::string const &user) : _user(user) {
   std::string username, domain;
 
   std::getline(stream, username, '@');
-  std::getline(stream, domain, '@');
+  std::getline(stream, domain);
 
   if (username == "") throw MissingUsernameException();
   if (domain == "") throw MissingDomainException();
@@ -231,7 +231,7 @@ Mailapp::Mailapp(std::string const &user) : _user(user) {
   std::string username, domain;
 
   std::getline(stream, username, '@');
-  std::getline(stream, domain, '@');
+  std::getline(stream, domain);
 
   if (username == "") {
     throw std::invalid_argument("O nome de usuário que precede o @ não pode estar vazio!");
