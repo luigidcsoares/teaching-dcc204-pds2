@@ -1,0 +1,664 @@
+               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                NOTAS DE AULA - 22 PROGRAMAÇÃO DEFENSIVA
+
+                           Luigi D. C. Soares
+               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+• Já ouviu falar em "Direção Defensiva"? O que é?
+• O que você entende por "Programação Defensiva"? Como relacionar as
+  duas coisas?
+• Já vimos algum exemplo de programação defensiva ao longo do curso?
+  `Mailapp'!
+• O que seria "não defensivo" no exemplo da classe `Mailapp'?
+  • Não validar o email informado, assim permitindo a construção de um
+    objeto em um estado inválido
+  • Deixar a validação a cargo do usuário da classe `Mailapp' (o usuário
+    sabe como deveria ser feita a validação?)
+  • Ou, talvez expor um método `is_valid' que informe se o estado do
+    objeto é válido (e se o usuário esquecer de utilizá-lo?)
+
+
+Validação de Entradas
+═════════════════════
+
+  • Muitas vezes não temos controle sobre as entradas
+  • Podem ser inesperadas e imprevisíveis
+  • Podem, inclusive, ser mal-intencionadas
+  • Sempre assuma o pior de todas as entradas
+  • Defina um conjunto de valores válidos e valide cada entrada
+  • Defina um comportamento para entradas incorretas
+    • Terminar a execução?
+    • Repetir?
+    • Emitir algum alerta?
+
+  • A ideia aqui é criarmos *barricadas* no programa, para impedir ou
+    minimizar o dano causado por dados incorretos
+  • Barricadas são códigos intermediários responsáveis pela validação
+    dos dados
+  • Podem ser classes intermediárias, mas também podemos pensar em
+    termos da própria classe
+    • Métodos públicos: validam os dados externos
+    • Métodos privados: assumem que os dados são seguros
+
+
+Robustez vs Corretude
+═════════════════════
+
+  Considere a seguinte implementação da função fatorial. O que
+  acontecerá no caso de n = -2?
+
+  ┌────
+  │ #include <iostream>
+  │ 
+  │ int fatorial(int n) {
+  │   int f = 1;
+  │   for (int i = 2; i <= n; i++) {
+  │     f *= i;
+  │   }
+  │   return f;
+  │ }
+  │ 
+  │ int main() {
+  │   std::cout << fatorial(-2) << std::endl;
+  │ }
+  └────
+
+  ┌────
+  │ 1
+  └────
+
+
+  E agora? Pior ou melhor?
+
+  ┌────
+  │ #include <iostream>
+  │ #include <stdexcept>
+  │ 
+  │ int fatorial(int n) {
+  │   if (n < 0) {
+  │     throw std::invalid_argument("Não existe fatorial de número negativo!");
+  │   }
+  │ 
+  │   return n == 0 ? 1 : n * fatorial(n - 1);
+  │ }
+  │ 
+  │ int main() {
+  │   std::cout << fatorial(-2) << std::endl;
+  │ }
+  └────
+
+  • O que você entende por "Robustez"?
+  • E por "Corretude"?
+
+  • As implementações estão corretas?
+  • O quão robusta elas são?
+
+  • Robustez:
+    • Sempre tentar fazer algo que permita que o software continue
+      operando, mesmo que isso às vezes leve a resultados imprecisos
+
+  • Corretude:
+    • Nunca retornar um resultado impreciso
+    • Não retornar nenhum resultado será melhor do que retornar um
+      resultado incorreto
+
+  • Qual priorizar?
+    • No exemplo do fatorial, a segunda implementação parece mais
+      adequada. Resultados incorretos poderiam levar a erros no lado do
+      usuário
+    • Você consegue pensar em alguma situação em que continuar a
+      execução, ainda que a partir de uma entrada inválida, seja a
+      estratégia mais adequada?
+    • Faça o seguinte exercício:
+      1. Abra no seu navegador a página inicial do [Google]
+      2. Clique com o botão direito na barra de pesquisa
+      3. Selecione a opção "inspecionar"
+      4. Na janela que se abriu, clique com o botão direito em
+         "textarea"
+      5. Selecione a opção "Edit as HTML" (ou algo do tipo)
+      6. Insira acima de textarea o seguinte conteúdo: `<h1>Insira
+         abaixo sua pesquisa</h1>'. Note que, ao confirmar a alteração,
+         a barra de pesquisa irá mudar: o texto aparecerá no formato de
+         um título.
+      7. Volte para o modo de edição e altere `h1' para `meu-header'. O
+         que aconteceu? O texto permanece na caixa de pesquisa, mas sem
+         o formato de título. Isto, porque a tag "meu-header" não é
+         válida. Ainda assim, o navegador não acusou nenhum erro; ele
+         apenas ignorou a tag, já que não sabe o que fazer com ela, e
+         renderizou o texto.
+
+
+[Google] <https://google.com>
+
+
+Programação por Contrato
+════════════════════════
+
+  • O que o contrato espera?
+  • O que o contrato garante?
+  • O que o contrato mantém?
+  • Formalização lógica:
+    • {Pré-condições} *ação* {Pós-condições}
+    • {Invariantes}
+
+  • Você já ouviu falar do algoritmo de busca binária?
+    • Considere uma lista ordenada
+    • Se o elemento do meio da lista é o que estamos buscando, acabou
+    • Se não, ou o elemento está na sublista da esquerda ou da direita
+    • Por exemplo, considere a chamada `busca_binaria(3, [1, 2, 3, 4, 5,
+      6, 7])'
+
+  ┌────
+  │ [1, 2, 3, 4, 5, 6, 7]
+  │ meio = 4 != 3
+  │ 3 está na sublista da esquerda
+  │ 
+  │ [1, 2, 3, 4]
+  │ meio = 2 \neq 3
+  │ 3 está na sublista da direita
+  │ 
+  │ [3, 4]
+  │ meio = 3, encontramos!
+  └────
+
+  • Vamos assumir que a função retorna o índice do elemento, se
+    encontrado, ou -1 caso contrário
+  • Quais as pré-condições deste algoritmo?
+    • A lista precisa estar ordenada
+    • Vamos definir uma função `is_sorted' (e assumir que está
+      implementada corretamente)
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <stdexcept>
+  │ 
+  │ template <typename T>
+  │ bool is_sorted(std::vector<T> &xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> &xs) {
+  │   if (!is_sorted(xs)) {
+  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
+  │   }
+  │ 
+  │   return -1;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs;
+  │ 
+  │   int x;
+  │   std::cin >> x;
+  │ 
+  │   std::cout << "Buscando por " << x << " em ";
+  │   int y;
+  │   while (std::cin >> y) {
+  │     xs.push_back(y);
+  │     std::cout << y << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   try {
+  │     int idx = binary_search(x, xs);
+  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │     else std::cout << "Encontrado na posição " << idx << std::endl;
+  │   } catch (std::invalid_argument const &e) {
+  │     std::cout << "Entrada inválida!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Buscando por 3 em 3 2 1 
+  │ Entrada inválida!
+  └────
+
+
+  • E as pós-condições?
+    • Consegue pensar em alguma pós-condição? O que precisa ser verdade
+      se o índice retornado for >= 0?
+    • Ou o índice retornado é -1 ou ele é menor que o tamanho do vetor e
+      o elemento na posição é o que estamos buscando
+    • Faz sentido lançar uma exceção caso a pós-condição não seja
+      satisfeita? É um erro tratável? *Não*: é um erro de implementação
+      (um bug). Neste caso, vamos usar uma outra ferramenta: *asserções*
+
+  ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+  *Asserções*
+
+  • São utilizadas para erros fatais (erros dos quais não podemos nos
+    recuperar, erros de implementação)
+  • Não podem ser capturadas/tratadas
+
+  ┌────
+  │ #include <cassert>
+  │ int main() {
+  │   assert(1 == 2);
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ int main(): Assertion `1 == 2' failed.
+  └────
+  ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <stdexcept>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool is_sorted(std::vector<T> &xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> &xs) {
+  │   if (!is_sorted(xs)) {
+  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
+  │   }
+  │ 
+  │   int idx = -1;
+  │   // ...
+  │ 
+  │   bool is_idx_correct = (idx == -1 || (idx >= 0 && idx < xs.size() && xs[idx] == x));
+  │   assert(is_idx_correct && "Pós-condição quebrada: índice incorreto!");
+  │ 
+  │   return idx;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs;
+  │ 
+  │   int x;
+  │   std::cin >> x;
+  │ 
+  │   std::cout << "Buscando por " << x << " em ";
+  │   int y;
+  │   while (std::cin >> y) {
+  │     xs.push_back(y);
+  │     std::cout << y << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   try {
+  │     int idx = binary_search(x, xs);
+  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │     else std::cout << "Encontrado na posição " << idx << std::endl;
+  │   } catch (std::invalid_argument const &e) {
+  │     std::cout << "Entrada inválida!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Buscando por 3 em 1 2 3 
+  │ Não encontrado!
+  └────
+
+
+  Hmm, não era o que esperávamos…
+  • O elemento existe, o resultado está incorreto, mas a asserção não
+    teve nenhum efeito. Por quê?
+  • A pós-condição está incorreta: o índice é -1 *e* o elemento não está
+    contido no vetor
+  • Como capturar esta segunda parte? Infelizmente, a linguagem não
+    fornece nenhum mecanismo útil para isso
+  • Podemos definir uma função de busca linear (mais fácil de
+    implementar e que, portanto, podemos ter uma maior confiança de que
+    está correta), que irá servir como uma espécie de "oráculo"
+  • Vamos definir uma função que permite identificar se o elemento está
+    contido em uma parte do vetor (será útil mais para frente)
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <stdexcept>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool is_sorted(std::vector<T> &xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ bool is_in(T x, std::vector<T> &xs, int start, int end) {
+  │   assert(start >= 0);
+  │   assert(end >= 0);
+  │   assert(end < xs.size());
+  │ 
+  │   if (start > end) return false;
+  │   if (x == xs[start]) return true;
+  │ 
+  │   return is_in(x, xs, start + 1, end);
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> &xs) {
+  │   if (!is_sorted(xs)) {
+  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
+  │   }
+  │ 
+  │   int idx = -1;
+  │   // ...
+  │ 
+  │   bool is_idx_correct =
+  │     ((idx == -1 && !is_in(x, xs, 0, xs.size() - 1)) ||
+  │      (idx >= 0 && idx < xs.size() && xs[idx] == x));
+  │ 
+  │   assert(is_idx_correct && "Pós-condição quebrada: índice incorreto!");
+  │   return idx;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs;
+  │ 
+  │   int x;
+  │   std::cin >> x;
+  │ 
+  │   std::cout << "Buscando por " << x << " em ";
+  │   int y;
+  │   while (std::cin >> y) {
+  │     xs.push_back(y);
+  │     std::cout << y << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   try {
+  │     int idx = binary_search(x, xs);
+  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │     else std::cout << "Encontrado na posição " << idx << std::endl;
+  │   } catch (std::invalid_argument const &e) {
+  │     std::cout << "Entrada inválida!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Buscando por 3 em 1 2 3 
+  └────
+
+
+  ┌────
+  │ Assertion `is_idx_correct && "Pós-condição quebrada: índice incorreto!"' failed.
+  └────
+
+  • Mas, agora temos um problema… O objetivo da busca binária é
+    aproveitar a ordem dos elementos para agilizar a pesquisa; realizar
+    uma busca linear apenas para verificar que a busca binária está
+    correta nos tira qualquer ganho de desempenho da busca binária…
+
+  • Podemos desabilitar as asserções no código final (produção) por meio
+    da macro `NDEBUG'
+
+  • No código:
+    • Antes de incluir a biblioteca
+    • Basta comentar, para habilitar as asserções
+
+  ┌────
+  │ #define NDEBUG
+  │ #include <cassert>
+  └────
+
+  • Ou no comando de compilação, via `-DNDEBUG'
+  • De qualquer forma, deve-se ponderar se vale realmente a pena
+    implementar asserções desta complexidade
+
+  Vamos implementar a busca binária:
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <stdexcept>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool is_sorted(std::vector<T> &xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ bool is_in(T x, std::vector<T> &xs, int start, int end) {
+  │   assert(start >= 0);
+  │   assert(end >= 0);
+  │   assert(end < xs.size());
+  │ 
+  │   if (start > end) return false;
+  │   if (x == xs[start]) return true;
+  │ 
+  │   return is_in(x, xs, start + 1, end);
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> &xs) {
+  │   if (!is_sorted(xs)) {
+  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
+  │   }
+  │ 
+  │   int idx = -1;
+  │   int start = 0;
+  │   int end = xs.size() - 1;
+  │ 
+  │   while (start <= end) {
+  │     int mid = (start + end) / 2;
+  │     if (x == xs[mid]) {
+  │       idx = mid;
+  │       break;
+  │     }
+  │ 
+  │     if (x < xs[mid]) {
+  │       end = mid - 1;
+  │     } else {
+  │       start = mid + 1;
+  │     }
+  │   }
+  │ 
+  │   bool is_idx_correct =
+  │     ((idx == -1 && !is_in(x, xs, 0, xs.size() - 1)) ||
+  │      (idx >= 0 && idx < xs.size() && xs[idx] == x));
+  │ 
+  │   assert(is_idx_correct && "Pós-condição quebrada: índice incorreto!");
+  │   return idx;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs;
+  │ 
+  │   int x;
+  │   std::cin >> x;
+  │ 
+  │   std::cout << "Buscando por " << x << " em ";
+  │   int y;
+  │   while (std::cin >> y) {
+  │     xs.push_back(y);
+  │     std::cout << y << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   try {
+  │     int idx = binary_search(x, xs);
+  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │     else std::cout << "Encontrado na posição " << idx << std::endl;
+  │   } catch (std::invalid_argument const &e) {
+  │     std::cout << "Entrada inválida!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Buscando por 3 em 1 2 3 
+  │ Encontrado na posição 2
+  └────
+
+
+  Será que a pos-condição realmente está correta agora?
+  • O que acontecerá no código a seguir, ao pesquisarmos pelo elemento
+    4?
+
+  ┌────
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> &xs) {
+  │   xs.push_back(4); // <<<
+  │   if (!is_sorted(xs)) {
+  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
+  │   }
+  │ 
+  │   // ...
+  │   assert(is_idx_correct && "Pós-condição quebrada: índice incorreto!");
+  │   return idx;
+  │ }
+  └────
+
+  ┌────
+  │ Buscando por 4 em 1 2 3 
+  │ Encontrado na posição 3
+  └────
+
+
+  • Falta um detalhe na pós-condição: o vetor precisa permanecer o mesmo
+    ao final da execução!
+  • Podemos resolver isso com a palavra-chave `const' na declaração do
+    parâmetro
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <stdexcept>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool is_sorted(std::vector<T> const &xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ bool is_in(T x, std::vector<T> const &xs, int start, int end) {
+  │   assert(start >= 0);
+  │   assert(end >= 0);
+  │   assert(end < xs.size());
+  │ 
+  │   if (start > end) return false;
+  │   if (x == xs[start]) return true;
+  │ 
+  │   return is_in(x, xs, start + 1, end);
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> const &xs) {
+  │   xs.push_back(4);
+  │   if (!is_sorted(xs)) {
+  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
+  │   }
+  │ 
+  │   int idx = -1;
+  │   int start = 0;
+  │   int end = xs.size() - 1;
+  │ 
+  │   while (start <= end) {
+  │     int mid = (start + end) / 2;
+  │     if (x == xs[mid]) {
+  │       idx = mid;
+  │       break;
+  │     }
+  │ 
+  │     if (x < xs[mid]) {
+  │       end = mid - 1;
+  │     } else {
+  │       start = mid + 1;
+  │     }
+  │   }
+  │ 
+  │   bool is_idx_correct =
+  │     ((idx == -1 && !is_in(x, xs, 0, xs.size() - 1)) ||
+  │      (idx >= 0 && idx < xs.size() && xs[idx] == x));
+  │ 
+  │   assert(is_idx_correct && "Pós-condição quebrada: índice incorreto!");
+  │   return idx;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs;
+  │ 
+  │   int x;
+  │   std::cin >> x;
+  │ 
+  │   std::cout << "Buscando por " << x << " em ";
+  │   int y;
+  │   while (std::cin >> y) {
+  │     xs.push_back(y);
+  │     std::cout << y << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   try {
+  │     int idx = binary_search(x, xs);
+  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │     else std::cout << "Encontrado na posição " << idx << std::endl;
+  │   } catch (std::invalid_argument const &e) {
+  │     std::cout << "Entrada inválida!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  Agora o erro é capturado na compilação:
+
+  ┌────
+  │ error: passing ‘const std::vector<int>’ as ‘this’ argument discards qualifiers
+  └────
+
+  A última parte de um contrato são as invariantes
+  • Você sabe o que é uma invariante?
+
+  • Um *invariante de loop* é uma condição que
+    • É verdadeira no início de cada iteração
+    • Se mantém verdadeira ao final de cada iteração
+
+  • Observe o laço de repetição na implementação da busca binária
+    • Você consegue identificar alguma propriedade interessante que está
+      sendo mantida a cada iteração do laço?
+    • Pense na pós-condição, será que tem algo parecido que podemos
+      garantir a cada iteração?
+    • Se o elemento x existe na lista, então ele existe na sublista
+      [start, end]
+
+  • Suponha que tenhamos invertido a atualização de `start' e `end':
+
+  ┌────
+  │ Buscando por 3 em 1 2 3 
+  └────
+
+
+  ┌────
+  │ Assertion `(!is_in(x, xs, 0, xs.size() - 1) || is_in(x, xs, start, end)) && "Invariante quebrada: elemento existe mas não está na sublista"'
+  └────
