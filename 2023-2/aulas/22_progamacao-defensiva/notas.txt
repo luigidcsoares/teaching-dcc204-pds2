@@ -155,7 +155,7 @@ Programação por Contrato
   │ 3 está na sublista da esquerda
   │ 
   │ [1, 2, 3, 4]
-  │ meio = 2 \neq 3
+  │ meio = 2 != 3
   │ 3 está na sublista da direita
   │ 
   │ [3, 4]
@@ -653,6 +653,93 @@ Programação por Contrato
       [start, end]
 
   • Suponha que tenhamos invertido a atualização de `start' e `end':
+
+  ┌────
+  │ #include <iostream>
+  │ #include <vector>
+  │ #include <stdexcept>
+  │ #include <cassert>
+  │ 
+  │ template <typename T>
+  │ bool is_sorted(std::vector<T> const &xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ bool is_in(T x, std::vector<T> const &xs, int start, int end) {
+  │   assert(start >= 0);
+  │   assert(end >= 0);
+  │   assert(end < xs.size());
+  │ 
+  │   if (start > end) return false;
+  │   if (x == xs[start]) return true;
+  │ 
+  │   return is_in(x, xs, start + 1, end);
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> const &xs) {
+  │   if (!is_sorted(xs)) {
+  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
+  │   }
+  │ 
+  │   int idx = -1;
+  │   int start = 0;
+  │   int end = xs.size() - 1;
+  │ 
+  │   while (start <= end) {
+  │     assert((!is_in(x, xs, 0, xs.size() - 1) || is_in(x, xs, start, end)) // <<<
+  │            && "Invariante quebrada: elemento existe mas não está na sublista");
+  │ 
+  │     int mid = (start + end) / 2;
+  │     if (x == xs[mid]) {
+  │       idx = mid;
+  │       break;
+  │     }
+  │ 
+  │     if (x < xs[mid]) {
+  │       start = mid + 1; //<<
+  │     } else {
+  │       end = mid - 1; // <<<
+  │     }
+  │   }
+  │ 
+  │   bool is_idx_correct =
+  │     ((idx == -1 && !is_in(x, xs, 0, xs.size() - 1)) ||
+  │      (idx >= 0 && idx < xs.size() && xs[idx] == x));
+  │ 
+  │   assert(is_idx_correct && "Pós-condição quebrada: índice incorreto!");
+  │   return idx;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs;
+  │ 
+  │   int x;
+  │   std::cin >> x;
+  │ 
+  │   std::cout << "Buscando por " << x << " em ";
+  │   int y;
+  │   while (std::cin >> y) {
+  │     xs.push_back(y);
+  │     std::cout << y << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   try {
+  │     int idx = binary_search(x, xs);
+  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │     else std::cout << "Encontrado na posição " << idx << std::endl;
+  │   } catch (std::invalid_argument const &e) {
+  │     std::cout << "Entrada inválida!" << std::endl;
+  │   }
+  │ 
+  │   return 0;
+  │ }
+  └────
 
   ┌────
   │ Buscando por 3 em 1 2 3 

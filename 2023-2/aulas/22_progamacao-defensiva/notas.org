@@ -117,7 +117,7 @@ meio = 4 != 3
 3 está na sublista da esquerda
 
 [1, 2, 3, 4]
-meio = 2 \neq 3
+meio = 2 != 3
 3 está na sublista da direita
 
 [3, 4]
@@ -667,7 +667,7 @@ A última parte de um contrato são as invariantes
 
 - Suponha que tenhamos invertido a atualização de ~start~ e ~end~:
 
-#+begin_src C++ :flags -std=c++17 :exports results :cmdline <<< "3 1 2 3"
+#+begin_src C++ :flags -std=c++17 :exports both :cmdline <<< "3 1 2 3"
 #include <iostream>
 #include <vector>
 #include <stdexcept>
