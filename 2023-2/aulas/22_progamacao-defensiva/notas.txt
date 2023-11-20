@@ -662,3 +662,20 @@ Programação por Contrato
   ┌────
   │ Assertion `(!is_in(x, xs, 0, xs.size() - 1) || is_in(x, xs, start, end)) && "Invariante quebrada: elemento existe mas não está na sublista"'
   └────
+
+  • Note que esta abordagem tem seus limites: precisamos executar o
+    código para testar
+  • Existe uma área da computação, *Métodos Formais*, que lida com este
+    tipo de verificação, visando um processo automatizado
+  • Algumas linguagens (por exemplo, Dafny) fornecem mecanismos de
+    verificação formal
+
+
+Exercício: Ordenação
+────────────────────
+
+  • Considere o algoritmo de ordenação Bubblesort
+  • Quais as pré-condições?
+  • Quais as pós-condições?
+  • Quais os invariantes de loop, isto é as propriedades mantidas a cada
+    iteração do loop?
