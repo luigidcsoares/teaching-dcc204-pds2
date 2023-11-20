@@ -319,10 +319,10 @@ Programação por Contrato
 
   • Agora, podemos testar a implementação enquanto desenvolvemos, e
     desabilitar a asserção no código final
-  • De qualquer forma, deve-se ponderar se vale realmente a pena
-    implementar asserções desta complexidade
-  • Uma alternativa é documentar as pré- e pós-condições no cabeçalho da
-    função
+  • Neste caso, é importante documentar as pré- e pós-condições no
+    cabeçalho da função
+  • Deve-se, também, ponderar se vale realmente a pena implementar
+    asserções desta complexidade (em termos de tempo de trabalho)
 
   E as pós-condições?
   • Consegue pensar em alguma pós-condição? O que precisa ser verdade se
