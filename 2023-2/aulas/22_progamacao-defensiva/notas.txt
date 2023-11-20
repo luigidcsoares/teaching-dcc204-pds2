@@ -164,10 +164,11 @@ Programação por Contrato
 
   • Vamos assumir que a função retorna o índice do elemento, se
     encontrado, ou -1 caso contrário
-  • Quais as pré-condições deste algoritmo?
-    • A lista precisa estar ordenada
-    • Vamos definir uma função `is_sorted' (e assumir que está
-      implementada corretamente)
+
+  Quais as pré-condições deste algoritmo?
+  • A lista precisa estar ordenada
+  • Vamos definir uma função `is_sorted' (e assumir que está
+    implementada corretamente)
 
   ┌────
   │ #include <iostream>
@@ -223,14 +224,14 @@ Programação por Contrato
   └────
 
 
-  • E as pós-condições?
-    • Consegue pensar em alguma pós-condição? O que precisa ser verdade
-      se o índice retornado for >= 0?
-    • Ou o índice retornado é -1 ou ele é menor que o tamanho do vetor e
-      o elemento na posição é o que estamos buscando
-    • Faz sentido lançar uma exceção caso a pós-condição não seja
-      satisfeita? É um erro tratável? *Não*: é um erro de implementação
-      (um bug). Neste caso, vamos usar uma outra ferramenta: *asserções*
+  • Faz sentido tratar o caso de entrada desordenada, lançando uma
+    exceção?
+  • O objetivo da busca binária é aproveitar a ordem dos elementos para
+    agilizar a pesquisa, sem percorrer o vetor inteiro
+  • Mas, agora estamos percorrendo o vetor inteiro para verificar se
+    está ordenado…
+  • Neste caso, faz mais sentido tratar a entrada inválida como erro de
+    implementação. Para isso, vamos usar *asserções*
 
   ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
   *Asserções*
@@ -250,7 +251,84 @@ Programação por Contrato
   ┌────
   │ int main(): Assertion `1 == 2' failed.
   └────
+
+  • Podemos desabilitar as asserções no código final (produção) por meio
+    da macro `NDEBUG'
+
+  • No código:
+    • Antes de incluir a biblioteca
+    • Basta comentar, para habilitar as asserções
+
+  ┌────
+  │ #define NDEBUG
+  │ #include <cassert>
+  └────
+
+  • Ou no comando de compilação, via `-DNDEBUG'
   ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+  ┌────
+  │ #include <cassert>
+  │ #include <iostream>
+  │ #include <vector>
+  │ 
+  │ template <typename T>
+  │ bool is_sorted(std::vector<T> &xs) {
+  │   for (std::size_t i = 0; i < xs.size() - 1; i++) {
+  │     if (xs[i] > xs[i + 1]) return false;
+  │   }
+  │   return true;
+  │ }
+  │ 
+  │ template <typename T>
+  │ int binary_search(T x, std::vector<T> &xs) {
+  │   assert(is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!");
+  │   return -1;
+  │ }
+  │ 
+  │ int main() {
+  │   std::vector<int> xs;
+  │ 
+  │   int x;
+  │   std::cin >> x;
+  │ 
+  │   std::cout << "Buscando por " << x << " em ";
+  │   int y;
+  │   while (std::cin >> y) {
+  │     xs.push_back(y);
+  │     std::cout << y << " ";
+  │   }
+  │   std::cout << std::endl;
+  │ 
+  │   int idx = binary_search(x, xs);
+  │   if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │   else std::cout << "Encontrado na posição " << idx << std::endl;
+  │ 
+  │   return 0;
+  │ }
+  └────
+
+  ┌────
+  │ Buscando por 3 em 3 2 1 
+  └────
+
+
+  ┌────
+  │ Assertion `is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!"' failed.
+  └────
+
+  • Agora, podemos testar a implementação enquanto desenvolvemos, e
+    desabilitar a asserção no código final
+  • De qualquer forma, deve-se ponderar se vale realmente a pena
+    implementar asserções desta complexidade
+  • Uma alternativa é documentar as pré- e pós-condições no cabeçalho da
+    função
+
+  E as pós-condições?
+  • Consegue pensar em alguma pós-condição? O que precisa ser verdade se
+    o índice retornado for >= 0?
+  • Ou o índice retornado é -1 ou ele é menor que o tamanho do vetor e o
+    elemento na posição é o que estamos buscando
 
   ┌────
   │ #include <iostream>
@@ -268,9 +346,7 @@ Programação por Contrato
   │ 
   │ template <typename T>
   │ int binary_search(T x, std::vector<T> &xs) {
-  │   if (!is_sorted(xs)) {
-  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
-  │   }
+  │   assert(is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!");
   │ 
   │   int idx = -1;
   │   // ...
@@ -295,13 +371,9 @@ Programação por Contrato
   │   }
   │   std::cout << std::endl;
   │ 
-  │   try {
-  │     int idx = binary_search(x, xs);
-  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
-  │     else std::cout << "Encontrado na posição " << idx << std::endl;
-  │   } catch (std::invalid_argument const &e) {
-  │     std::cout << "Entrada inválida!" << std::endl;
-  │   }
+  │   int idx = binary_search(x, xs);
+  │   if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │   else std::cout << "Encontrado na posição " << idx << std::endl;
   │ 
   │   return 0;
   │ }
@@ -354,9 +426,7 @@ Programação por Contrato
   │ 
   │ template <typename T>
   │ int binary_search(T x, std::vector<T> &xs) {
-  │   if (!is_sorted(xs)) {
-  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
-  │   }
+  │   assert(is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!");
   │ 
   │   int idx = -1;
   │   // ...
@@ -383,13 +453,9 @@ Programação por Contrato
   │   }
   │   std::cout << std::endl;
   │ 
-  │   try {
-  │     int idx = binary_search(x, xs);
-  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
-  │     else std::cout << "Encontrado na posição " << idx << std::endl;
-  │   } catch (std::invalid_argument const &e) {
-  │     std::cout << "Entrada inválida!" << std::endl;
-  │   }
+  │   int idx = binary_search(x, xs);
+  │   if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │   else std::cout << "Encontrado na posição " << idx << std::endl;
   │ 
   │   return 0;
   │ }
@@ -403,27 +469,6 @@ Programação por Contrato
   ┌────
   │ Assertion `is_idx_correct && "Pós-condição quebrada: índice incorreto!"' failed.
   └────
-
-  • Mas, agora temos um problema… O objetivo da busca binária é
-    aproveitar a ordem dos elementos para agilizar a pesquisa; realizar
-    uma busca linear apenas para verificar que a busca binária está
-    correta nos tira qualquer ganho de desempenho da busca binária…
-
-  • Podemos desabilitar as asserções no código final (produção) por meio
-    da macro `NDEBUG'
-
-  • No código:
-    • Antes de incluir a biblioteca
-    • Basta comentar, para habilitar as asserções
-
-  ┌────
-  │ #define NDEBUG
-  │ #include <cassert>
-  └────
-
-  • Ou no comando de compilação, via `-DNDEBUG'
-  • De qualquer forma, deve-se ponderar se vale realmente a pena
-    implementar asserções desta complexidade
 
   Vamos implementar a busca binária:
 
@@ -455,9 +500,7 @@ Programação por Contrato
   │ 
   │ template <typename T>
   │ int binary_search(T x, std::vector<T> &xs) {
-  │   if (!is_sorted(xs)) {
-  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
-  │   }
+  │   assert(is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!");
   │ 
   │   int idx = -1;
   │   int start = 0;
@@ -499,13 +542,9 @@ Programação por Contrato
   │   }
   │   std::cout << std::endl;
   │ 
-  │   try {
-  │     int idx = binary_search(x, xs);
-  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
-  │     else std::cout << "Encontrado na posição " << idx << std::endl;
-  │   } catch (std::invalid_argument const &e) {
-  │     std::cout << "Entrada inválida!" << std::endl;
-  │   }
+  │   int idx = binary_search(x, xs);
+  │   if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │   else std::cout << "Encontrado na posição " << idx << std::endl;
   │ 
   │   return 0;
   │ }
@@ -525,9 +564,7 @@ Programação por Contrato
   │ template <typename T>
   │ int binary_search(T x, std::vector<T> &xs) {
   │   xs.push_back(4); // <<<
-  │   if (!is_sorted(xs)) {
-  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
-  │   }
+  │   assert(is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!");
   │ 
   │   // ...
   │   assert(is_idx_correct && "Pós-condição quebrada: índice incorreto!");
@@ -575,9 +612,7 @@ Programação por Contrato
   │ template <typename T>
   │ int binary_search(T x, std::vector<T> const &xs) {
   │   xs.push_back(4);
-  │   if (!is_sorted(xs)) {
-  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
-  │   }
+  │   assert(is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!");
   │ 
   │   int idx = -1;
   │   int start = 0;
@@ -619,13 +654,9 @@ Programação por Contrato
   │   }
   │   std::cout << std::endl;
   │ 
-  │   try {
-  │     int idx = binary_search(x, xs);
-  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
-  │     else std::cout << "Encontrado na posição " << idx << std::endl;
-  │   } catch (std::invalid_argument const &e) {
-  │     std::cout << "Entrada inválida!" << std::endl;
-  │   }
+  │   int idx = binary_search(x, xs);
+  │   if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │   else std::cout << "Encontrado na posição " << idx << std::endl;
   │ 
   │   return 0;
   │ }
@@ -682,9 +713,7 @@ Programação por Contrato
   │ 
   │ template <typename T>
   │ int binary_search(T x, std::vector<T> const &xs) {
-  │   if (!is_sorted(xs)) {
-  │     throw std::invalid_argument("Pré-condição quebrada: elementos não estão ordenados!");
-  │   }
+  │   assert(is_sorted(xs) && "Pré-condição quebrada: elementos não estão ordenados!");
   │ 
   │   int idx = -1;
   │   int start = 0;
@@ -729,13 +758,9 @@ Programação por Contrato
   │   }
   │   std::cout << std::endl;
   │ 
-  │   try {
-  │     int idx = binary_search(x, xs);
-  │     if (idx == -1) std::cout << "Não encontrado!" << std::endl;
-  │     else std::cout << "Encontrado na posição " << idx << std::endl;
-  │   } catch (std::invalid_argument const &e) {
-  │     std::cout << "Entrada inválida!" << std::endl;
-  │   }
+  │   int idx = binary_search(x, xs);
+  │   if (idx == -1) std::cout << "Não encontrado!" << std::endl;
+  │   else std::cout << "Encontrado na posição " << idx << std::endl;
   │ 
   │   return 0;
   │ }
