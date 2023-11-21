@@ -37,11 +37,8 @@ Considere a seguinte implementação da função fatorial. O que acontecerá no 
 #include <iostream>
 
 int fatorial(int n) {
-  int f = 1;
-  for (int i = 2; i <= n; i++) {
-    f *= i;
-  }
-  return f;
+  if (n <= 0) return 1;
+  return n * fatorial(n - 1);
 }
 
 int main() {
